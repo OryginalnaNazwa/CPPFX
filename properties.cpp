@@ -17,7 +17,7 @@ const std::unordered_set<std::string>& Colour::ValidColours() {
         "RAYWHITE", "DARKGRAY", "GRAY", "LIGHTGRAY",
         "DARKGREEN", "DARKBLUE", "DARKPURPLE", "DARKBROWN",
         "BROWN", "BEIGE", "MAGENTA", "VIOLET", "SKYBLUE",
-        "LIME", "GOLD", "MAROON", "GREY"
+        "LIME", "GOLD", "MAROON", "GREY", "DARKGREY", "LIGHTGREY"
     };
     return colours;
 }
@@ -34,9 +34,11 @@ Color Colour::StringToColour(const std::string& s) {
     if (s == "PINK")        return PINK;
     if (s == "RAYWHITE")    return RAYWHITE;
     if (s == "DARKGRAY")    return DARKGRAY;
+    if (s == "DARKGREY")    return DARKGRAY;
     if (s == "GRAY")        return GRAY;
     if (s == "GREY")        return GRAY;
     if (s == "LIGHTGRAY")   return LIGHTGRAY;
+    if (s == "LIGHTGREY")   return LIGHTGRAY;
     if (s == "DARKGREEN")   return DARKGREEN;
     if (s == "DARKBLUE")    return DARKBLUE;
     if (s == "DARKPURPLE")  return DARKPURPLE;
@@ -79,6 +81,7 @@ std::string Colour::ColourToString(Color c) {
     if (c.r == LIME.r        && c.g == LIME.g        && c.b == LIME.b)        return "LIME";
     if (c.r == GOLD.r        && c.g == GOLD.g        && c.b == GOLD.b)        return "GOLD";
     if (c.r == MAROON.r      && c.g == MAROON.g      && c.b == MAROON.b)      return "MAROON";
+    if (c.r == RAYWHITE.r       && c.g == RAYWHITE.g       && c.b == RAYWHITE.b)       return "RAYWHITE";
     // Fallback: hex string for custom colours
     char buf[10];
     snprintf(buf, sizeof(buf), "#%02X%02X%02X%02X", c.r, c.g, c.b, c.a);
@@ -118,7 +121,19 @@ std::string Property::GetFxID() const {
 
 // --- Border ---
 void Border::DrawMyself(const float& x, const float& y, const float& width, const float& height) const {
-    DrawRectangleLinesEx({x, y, width, height}, thickness, colour.GetColour());
+    if (drawMyself) {
+        drawMyself(x, y, width, height);
+    } else {
+        DrawRectangleLinesEx({x - thickness, y - thickness, width + thickness, height + thickness}, thickness, colour.GetColour());
+    }
+}
+
+void Border::SetDrawingMethod(const std::function<void(const float& x, const float& y, const float& width, const float& height)>& drawMyself) {
+    this->drawMyself = drawMyself;
+}
+
+void Border::RemoveDrawingMethod() {
+    this->drawMyself = NULL;
 }
 
 // --- Setters ---
@@ -195,36 +210,21 @@ std::string _Alignment::AlignmentToString(const Alignments& alignment) const {
 }
 
 bool _Alignment::IsRightAlignment() const {
-    if (alignment == _Alignment::Alignments::TOP_RIGHT || alignment == _Alignment::Alignments::CENTRE_RIGHT || alignment == _Alignment::Alignments::BOTTOM_RIGHT) {
-        return true;
-    }
-    return false;
+    return alignment == _Alignment::Alignments::TOP_RIGHT || alignment == _Alignment::Alignments::CENTRE_RIGHT || alignment == _Alignment::Alignments::BOTTOM_RIGHT;
 }
 
 bool _Alignment::IsLeftAlignment() const {
-    if (alignment == _Alignment::Alignments::TOP_LEFT || alignment == _Alignment::Alignments::CENTRE_LEFT || alignment == _Alignment::Alignments::BOTTOM_LEFT) {
-        return true;
-    }
-    return false;
+    return alignment == _Alignment::Alignments::TOP_LEFT || alignment == _Alignment::Alignments::CENTRE_LEFT || alignment == _Alignment::Alignments::BOTTOM_LEFT;
 }
 
 bool _Alignment::IsCentreAlignment() const {
-    if (alignment == _Alignment::Alignments::TOP_CENTRE || alignment == _Alignment::Alignments::CENTRE || alignment == _Alignment::Alignments::BOTTOM_CENTRE) {
-        return true;
-    }
-    return false;
+    return alignment == _Alignment::Alignments::TOP_CENTRE || alignment == _Alignment::Alignments::CENTRE || alignment == _Alignment::Alignments::BOTTOM_CENTRE;
 }
 
 bool _Alignment::IsBottomAlignment() const {
-    if (alignment == _Alignment::Alignments::BOTTOM_CENTRE || alignment == _Alignment::Alignments::BOTTOM_LEFT || alignment == _Alignment::Alignments::BOTTOM_RIGHT) {
-        return true;
-    }
-    return false;
+    return alignment == _Alignment::Alignments::BOTTOM_CENTRE || alignment == _Alignment::Alignments::BOTTOM_LEFT || alignment == _Alignment::Alignments::BOTTOM_RIGHT;
 }
 
 bool _Alignment::IsTopAlignment() const {
-    if (alignment == _Alignment::Alignments::TOP_CENTRE || alignment == _Alignment::Alignments::TOP_LEFT || alignment == _Alignment::Alignments::TOP_RIGHT) {
-        return true;
-    }
-    return false;
+    return alignment == _Alignment::Alignments::TOP_CENTRE || alignment == _Alignment::Alignments::TOP_LEFT || alignment == _Alignment::Alignments::TOP_RIGHT;
 }

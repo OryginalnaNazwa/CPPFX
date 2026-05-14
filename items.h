@@ -13,6 +13,7 @@
 #include <functional>
 #include <iostream>
 #include <vector>
+#include <numeric>
 
 namespace CPPFX {
 
@@ -32,10 +33,11 @@ public:
 
     bool active;
     size_t priority; ///<order of drawing. Set to 3 by default for convenience of moving priority around.
+    bool visible;
     float currentFrameTime;
 
-    Item(const std::string& i) : xAnchor(0), yAnchor(0), height(100), width(200), active(false), priority(3), fxID(i)  {}
-    Item(const std::string& i, const float& w, const float& h) : xAnchor(0), yAnchor(0), height(h), width(w), active(false), priority(3), fxID(i)  {}
+    Item(const std::string& i) : xAnchor(0), yAnchor(0), height(100), width(200), active(false), priority(3), visible(true), fxID(i)  {}
+    Item(const std::string& i, const float& w, const float& h) : xAnchor(0), yAnchor(0), height(h), width(w), active(false), priority(3), visible(true), fxID(i)  {}
 
     virtual void DrawMyself(const float& dt) const;
     virtual bool WasIClicked(const Vector2& mousePosition) const;
@@ -115,12 +117,12 @@ public:
      *  @brief Returns height of the item.
      *  @returns height of the item
      */
-    float GetHeight() const;
+    virtual float GetHeight() const;
     /**
      *  @brief Returns width of the item.
      *  @returns width of the item
      */
-    float GetWidth() const;
+    virtual float GetWidth() const;
     /**
      *  @brief Returns priority of the item.
      *  @details Remember that larger number is lesser priority.
@@ -268,6 +270,8 @@ public:
 
     void DrawMyself(const float& dt) const override;
     void DoActiveAction(const float& dt) override;
+
+    float GetTotalWidth() const;
 
     /**
      *  @brief Sets the distance between the text and the box.
@@ -505,11 +509,13 @@ public:
 
     virtual void SetPositionsOfItems() = 0;
 
+    bool IsIDTaken(const std::string& ID) const;
+
 protected:
     std::map<std::string, Item*> Items;
     std::vector<Item*> ItemsInDrawingOrder;
 
-    bool IsIDTaken(const std::string& ID) const;
+
 
     /**
      *  @brief Sorts the drawing order by priority.
@@ -665,7 +671,6 @@ public:
 
 class ProgressIndicator : public Item {
 public:
-    float value; ///< Raw value of the progress - between 0 and 1, or -1;
     bool displayValue;
 
     enum Shapes {DOTS, CIRCLE, RING};
@@ -673,8 +678,8 @@ public:
     Shapes shape;
     Font font;
 
-    ProgressIndicator() : Item("ProgressIndicator"), value(-1), displayValue(true), shape(ProgressIndicator::Shapes::DOTS), font(height / 4) {}
-    ProgressIndicator(const std::string& i) : Item(i), value(-1), displayValue(true), font(height / 4) {}
+    ProgressIndicator() : Item("ProgressIndicator"), displayValue(true), value(-1), shape(ProgressIndicator::Shapes::DOTS), font(height / 4) {}
+    ProgressIndicator(const std::string& i) : Item(i), displayValue(true), value(-1), font(height / 4) {}
 
     /**
      *  @brief Sets progress value;
@@ -724,6 +729,8 @@ public:
     void DoActiveAction(const float& dt) override;
 
 protected:
+    float value; ///< Raw value of the progress - between 0 and 1, or -1;
+
     Shapes StringToShape(const std::string& shape) const;
     std::string ShapeToString(const ProgressIndicator::Shapes& shape) const;
 };
@@ -792,6 +799,196 @@ public:
     void SetPressedText(const std::string& value);
     void ClearPressedText();
     std::string GetPressedText() const;
+};
+
+template<typename T>
+class List : public Item {
+public:
+    Font font;
+    Border border;
+
+    List() : Item("List"), font(height / 4), vertical(true), padding(10) {}
+
+    void AddItem(const T& item) {
+        items.push_back(item);
+    }
+    void RemoveItem(const int& index) {
+        if (index < 0 || index >= items.size()) {
+            throw std::out_of_range("In List " + this->ID + ": index beyond range at removal.");
+        }
+        items.erase(items.begin() + index);
+    }
+    void ReplaceItem(const int& index, const T& item) {
+        if (index < 0 || index >= items.size()) {
+            throw std::out_of_range("In List " + this->ID + ": index beyond range at replacing.");
+        }
+        items[index] = item;
+    }
+
+    const T& GetItem(const int& index) const {
+        if (index < 0 || index >= items.size()) {
+            throw std::out_of_range("In List " + this->ID + ": index beyond range at getting.");
+        }
+        return items[index];
+    }
+    std::vector<T> GetItems() const {
+        return items;
+    }
+
+    void Sort() {
+        std::sort(items.begin(), items.end());
+    }
+    void ReverseSort() {
+        std::sort(items.begin(), items.end());
+        std::reverse(items.begin(), items.end());
+
+    }
+    template<typename Compare>
+    void SortBy(Compare sortingMethod) {
+        std::sort(items.begin(), items.end(), sortingMethod);
+    }
+
+    template<typename Compare>
+    void ReverseSortBy(Compare sortingMethod) {
+        std::sort(items.begin(), items.end(), sortingMethod);
+        std::reverse(items.begin(), items.end());
+    }
+
+    void SetDisplayMethod(const std::function<std::string(const T&)>& displayMethod) {
+        this->displayMethod = displayMethod;
+    }
+
+    size_t GetSize() const {
+        return items.size();
+    }
+
+    void DrawMyself(const float& dt) const override {
+        if (displayMethod) {
+            if (vertical) {
+                float nextY = 0;
+                for (const auto& item : items) {
+                    DrawText(displayMethod(item).c_str(), xAnchor, yAnchor + nextY, font.fontSize, font.colour.GetColour());
+                    nextY += font.fontSize + padding;
+                }
+            } else {
+                float nextX = 0;
+                std::string text = "";
+                for (const auto& item : items) {
+                    text = displayMethod(item);
+                    DrawText(text.c_str(), xAnchor + nextX, yAnchor, font.fontSize, font.colour.GetColour());
+                    nextX += MeasureText(text.c_str(), font.fontSize) + padding;
+                }
+            }
+        } else {
+            if constexpr (std::is_same_v<T, std::string>) {
+                if (vertical) {
+                    float nextY = 0;
+                    for (const auto& item : items) {
+                        DrawText(item.c_str(), xAnchor, yAnchor + nextY, font.fontSize, font.colour.GetColour());
+                        nextY += font.fontSize + padding;
+                    }
+                } else {
+                    float nextX = 0;
+                    for (const auto& item : items) {
+                        DrawText(item.c_str(), xAnchor + nextX, yAnchor, font.fontSize, font.colour.GetColour());
+                        nextX += MeasureText(item.c_str(), font.fontSize) + padding;
+                    }
+                }
+            } else if constexpr (requires { std::to_string(T{}); }) {
+                if (vertical) {
+                    float nextY = 0;
+                    for (const auto& item : items) {
+                        DrawText(std::to_string(item).c_str(), xAnchor, yAnchor + nextY, font.fontSize, font.colour.GetColour());
+                        nextY += font.fontSize + padding;
+                    }
+                } else {
+                    float nextX = 0;
+                    std::string text = "";
+                    for (const auto& item : items) {
+                        text = std::to_string(item);
+                        DrawText(text.c_str(), xAnchor + nextX, yAnchor, font.fontSize, font.colour.GetColour());
+                        nextX += MeasureText(text.c_str(), font.fontSize) + padding;
+                    }
+                }
+            } else {
+                static_assert(!sizeof(T), "List: no display method set for a non-standard type.");
+            }
+        }
+    }
+    void DoActiveAction(const float& dt) override {
+        return;
+    }
+
+    void SetVertical() {
+        vertical = true;
+    }
+    void SetHorizontal() {
+        vertical = false;
+    }
+    bool IsVertical() const {
+        return vertical;
+    }
+
+    void SetPadding(const float& padding) {
+        if (padding < 0) {
+            throw std::invalid_argument("In List " + this->ID + ": negative padding");
+        }
+        this->padding = padding;
+    }
+    float GetPadding() const {
+        return padding;
+    }
+
+private:
+    std::vector<T> items;
+    std::function<std::string(const T&)> displayMethod;
+
+    bool vertical;
+    float padding;
+};
+
+class Chart : public Item {
+public:
+    Font font;
+    Border border;
+
+    Chart (const std::string& i) : Item(i), font(height / 4) {}
+
+    void AddElement(const std::string& label, const double& value);
+    void AddElement(const double& value);
+
+    double GetElement(const std::string& label) const;
+    double GetElement(const int& index) const;
+
+    void SetElement(const std::string& label, const double& newValue);
+    void SetElement(const int& index, const double& newValue);
+
+    void RemoveElement(const std::string& label);
+    void RemoveElement(const int& index);
+
+    size_t GetLabelsSize() const;
+    size_t GetValuesSize() const;
+
+protected:
+    std::vector<std::string> labels;
+    std::vector<double> values;
+};
+
+class PieChart : public Chart {
+public:
+
+    bool showLabels;
+    bool showPercentage;
+
+    PieChart() : Chart("PieChart"), showLabels(false), showPercentage(false) {
+        border.SetDrawingMethod([this](const float& x, const float& y, const float& w, const float& h){
+            DrawCircle(x, y, w + border.GetThickness(), border.colour.GetColour());
+        });
+    }
+
+    void DoActiveAction(const float& dt) override;
+    void DrawMyself(const float& dt) const override;
+
 };
 
 }

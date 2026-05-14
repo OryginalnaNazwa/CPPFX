@@ -8,9 +8,11 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <functional>
 
 #define GREY GRAY //a hack to make British spelling work with Raylib colours.
 #define DARKGREY DARKGRAY
+#define LIGHTGREY LIGHTGRAY
 
 /****************************
  * This file contains the properties used in the FX items.
@@ -23,8 +25,8 @@ class Colour {
 public:
 
 
-    Colour() : name("LIGHTGRAY"), value(LIGHTGRAY) {}
-    Colour(const std::string& colour) : name(colour), value(StringToColour(colour)) {}
+    Colour() : name("LIGHTGREY"), value(LIGHTGREY) {}
+    Colour(const std::string& colour) : name(colour), value(StringToColour(Normalise(colour))) {}
     Colour(const Color& colour) : name(ColourToString(colour)), value(colour) {}
 
     /**
@@ -100,10 +102,14 @@ public:
     void SetThickness(const float& thickness);
     float GetThickness() const;
 
+    void SetDrawingMethod(const std::function<void(const float& x, const float& y, const float& width, const float& height)>& drawMyself);
+    void RemoveDrawingMethod();
+
     void DrawMyself(const float& x, const float& y, const float& width, const float& height) const;
 
 private:
     float thickness;
+    std::function<void(const float& x, const float& y, const float& width, const float& height)> drawMyself;
 };
 
 class Font : public Property {

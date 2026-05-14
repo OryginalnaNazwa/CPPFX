@@ -268,7 +268,7 @@ void CheckBox::DrawMyself(const float& dt) const {
        DrawText(text.c_str(), xAnchor + width + textMargin + labelMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
     }
     if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width + textMargin + labelMargin + MeasureText(text.c_str(), font.fontSize), height);
+        border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
     }
     if (pressed && drawsX) { //TODO add other shapes options
         DrawLineEx({xAnchor, yAnchor}, {xAnchor + width, yAnchor + height}, width / 10, unPressedColour.GetColour());
@@ -300,6 +300,10 @@ void CheckBox::SetLabelMargin(const float& value) {
 
 float CheckBox::GetLabelMargin() const {
     return labelMargin;
+}
+
+float CheckBox::GetTotalWidth() const {
+    return width + labelMargin + (2 * textMargin) + MeasureText(text.c_str(), font.fontSize);
 }
 
 //--- Container ---
@@ -814,7 +818,7 @@ void PasswordField::DrawMyself(const float& dt) const {
         std::string truncated = Truncate(password);
         DrawText(Truncate(truncated).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
         if (active && fmod(dt, 1.0f) < 0.5f) {
-            DrawText("|", MeasureText(Truncate(truncated).c_str(), font.fontSize) + xAnchor + textMargin + 2, yAnchor + (height / 2) - (font.fontSize / 2),
+            DrawText("|", MeasureText(truncated.c_str(), font.fontSize) + xAnchor + textMargin + 2, yAnchor + (height / 2) - (font.fontSize / 2),
                       font.fontSize, font.colour.GetColour());
         }
     }
@@ -1052,4 +1056,113 @@ void PressedButton::ClearPressedText() {
 
 std::string PressedButton::GetPressedText() const {
     return pressedText;
+}
+
+void Chart::AddElement(const std::string& label, const double& value) {
+    labels.push_back(label);
+    values.push_back(value);
+}
+
+void Chart::AddElement(const double& value) {
+    values.push_back(value);
+}
+
+double Chart::GetElement(const std::string& label) const {
+    auto it = std::find(labels.begin(), labels.end(), label);
+    if (it != labels.end()) {
+        size_t index = std::distance(labels.begin(), it);
+        return values[index];
+    } else throw std::out_of_range("Chart " + this->ID + " at element getting: does not contain a label " + label);
+}
+
+double Chart::GetElement(const int& index) const {
+    if (index < 0 || size_t(index) > values.size()) {
+        return values[index];
+    } else throw std::out_of_range("Chart " + this->ID + ": invalid index at getting");
+}
+
+void Chart::SetElement(const std::string& label, const double& newValue) {
+    auto it = std::find(labels.begin(), labels.end(), label);
+    if (it != labels.end()) {
+        size_t index = std::distance(labels.begin(), it);
+        values[index] = newValue;
+    } else throw std::out_of_range("Chart " + this->ID + " in element setting: does not contain a label " + label);
+}
+
+void Chart::SetElement(const int& index, const double& newValue) {
+    if (index < 0 || size_t(index) > values.size()) {
+        values[index] = newValue;
+    } else throw std::out_of_range("Chart " + this->ID + ": invalid index at setting element");
+}
+
+void Chart::RemoveElement(const std::string& label) {
+    auto it = std::find(labels.begin(), labels.end(), label);
+    if (it != labels.end()) {
+        size_t index = std::distance(labels.begin(), it);
+        values.erase(values.begin() + index);
+        labels.erase(it);
+    } else throw std::out_of_range("Chart " + this->ID + " at element removal: does not contain a label " + label);
+}
+
+void Chart::RemoveElement(const int& index) {
+    if (index < 0 || size_t(index) > values.size()) {
+        throw std::out_of_range("Chart " + this->ID + ": invalid index at removal");
+    } else {
+        values.erase(values.begin() + index);
+        if (size_t(index) < labels.size()) {
+            labels.erase(labels.begin() + index);
+        }
+    }
+
+}
+
+size_t Chart::GetLabelsSize() const {
+    return labels.size();
+}
+
+size_t Chart::GetValuesSize() const {
+    return values.size();
+}
+
+void PieChart::DoActiveAction(const float& dt) {
+    return;
+}
+
+void PieChart::DrawMyself(const float& dt) const {
+    double sum = std::accumulate(values.begin(), values.end(), 0.0);
+    std::vector<Color> colours = {BLUE, RED, GREEN, PINK, BROWN, DARKGREEN, PURPLE}; //TODO Add user colours
+
+    if (border.GetThickness() > 0) {
+        border.DrawMyself(xAnchor, yAnchor, width, height);
+    }
+
+    float currentAngle = 0;
+    size_t index = 0;
+    for (auto& element : values) {
+        double percent = element / sum;
+        Color c;
+        if (index >= colours.size()) {
+            c = colours[index % colours.size()];
+        } else c = colours[index];
+        DrawCircleSector(Vector2{xAnchor, yAnchor}, width, currentAngle, currentAngle + (percent * 360), std::max(4, (int)(percent * 36)), c);
+
+        if (showPercentage) {
+            float textAngle = currentAngle + (180 * percent); //average of start and end angle, simplified
+            std::string valueString = percent * 100 == (int)(percent * 100) ? TextFormat("%d", (int)(percent * 100)) : TextFormat("%.1f", percent * 100);
+            valueString += "%";
+            DrawText(valueString.c_str(), xAnchor + ((width / 2) * cos(textAngle * DEG2RAD)) - (MeasureText(valueString.c_str(), font.fontSize) / 2), yAnchor + ((width / 2) * sin(textAngle * DEG2RAD)), font.fontSize, font.colour.GetColour());
+        }
+        if (showLabels) {
+            if (values.size() == labels.size()) {
+                float textAngle = currentAngle + (180 * percent); //average of start and end angle, simplified
+                DrawText(labels[index].c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(labels[index].c_str(), font.fontSize) / 2), yAnchor + (width * sin(textAngle * DEG2RAD)), font.fontSize, font.colour.GetColour());
+            } else {
+                float textAngle = currentAngle + (180 * percent); //average of start and end angle, simplified
+                std::string elementText = std::to_string(element);
+                DrawText(elementText.c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(elementText.c_str(), font.fontSize) / 2), yAnchor + (width * sin(textAngle * DEG2RAD)), font.fontSize, font.colour.GetColour());
+            }
+        }
+        currentAngle += 360 * percent;
+        index++;
+    }
 }
