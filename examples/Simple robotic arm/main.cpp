@@ -91,7 +91,7 @@ int main() {
     auto nodePick   = gui.AddHBox();
     nodePick->AddItem(nodeLabel);
     nodePick->AddItem(nodeChoice);
-    nodePick->priority = 10;
+    nodePick->priority = 10; //should be under the buttons; number is random
     nodePick->SetPadding(10);
 
     auto lengthPick = gui.AddHBox();
@@ -124,12 +124,8 @@ int main() {
     ui->AddItem(anglePick);
     ui->AddItem(addButton);
     ui->AddItem(removeButton);
-    ui->priority = 10;
+    ui->priority = 11; //must go before the previous ones to set them first
     ui->SetPadding(10);
-    ui->SetPositionsOfItems();
-    nodePick->SetPositionsOfItems();
-    lengthPick->SetPositionsOfItems();
-    anglePick->SetPositionsOfItems();
 
     gui.SortOrder();
 
