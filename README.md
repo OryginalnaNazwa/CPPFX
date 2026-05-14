@@ -10,9 +10,13 @@ raylib 6.0, mingw-w64 64bit or GNU C++ Compiler (those were tested), C++20
 
 ## Setup
 Compiler path: ../CPPFX/include
+
 Linker path: ../CPPFX/lib
-Linker flags: 
-Windows: -lCPPFX -lraylib -lopengl32 -lgdi32 -lwinmm
+
+Linker flags:
+
+Windows:      -lCPPFX -lraylib -lopengl32 -lgdi32 -lwinmm
+
 Linux Ubuntu: -lCPPFX -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 ## Quick example
