@@ -123,7 +123,6 @@ public:
 
 /**
  *  @class Alignment
-
  */
 class Alignment : public Property {
 public:

@@ -33,14 +33,21 @@ public:
 
     bool active;
     size_t priority; ///<order of drawing. Set to 3 by default for convenience of moving priority around.
-    bool visible;
+    bool visible; ///<invisible items are still interactable
+    bool inactive; ///<inactive items are not interactable
+    bool eatsClick; ///<if false, allows the click to continue under it
     float currentFrameTime;
 
-    Item(const std::string& i) : xAnchor(0), yAnchor(0), height(100), width(200), active(false), priority(3), visible(true), fxID(i)  {}
-    Item(const std::string& i, const float& w, const float& h) : xAnchor(0), yAnchor(0), height(h), width(w), active(false), priority(3), visible(true), fxID(i)  {}
+    Item(const std::string& i) : xAnchor(0), yAnchor(0), height(100), width(200), active(false), priority(3), visible(true), inactive(false), eatsClick(true), fxID(i)  {}
+    Item(const std::string& i, const float& w, const float& h) : xAnchor(0), yAnchor(0), height(h), width(w), active(false), priority(3), visible(true), inactive(false), eatsClick(true), fxID(i)  {}
 
     virtual void DrawMyself(const float& dt) const;
     virtual bool WasIClicked(const Vector2& mousePosition) const;
+    /**
+     *  @brief Action done every frame.
+     *  @param dt frame time
+     */
+    virtual void DoPassiveAction(const float& dt);
     /**
      *  @brief Action done while the item is active.
      *  @param dt Frame time
@@ -59,10 +66,17 @@ public:
     virtual void Deactivate();
 
     /**
+     *  @brief Sets both inactive and invisible to true.
+     */
+    void Hide();
+    void Show();
+
+    /**
      *  @brief Launches on click.
      *  @details Lambda, put in your own.
      */
     std::function<void()> onClick;
+    std::function<void()> onHover;
 
     /**
      *  @brief Sets the x coordinate of the item.
@@ -508,19 +522,22 @@ public:
 
     virtual void SetPositionsOfItems() = 0;
 
-    bool IsIDTaken(const std::string& ID) const;
-
-protected:
-    std::map<std::string, Item*> Items;
-    std::vector<Item*> ItemsInDrawingOrder;
-
-
+    void DoPassiveAction(const float& dt) override;
 
     /**
      *  @brief Sorts the drawing order by priority.
      *  @note Remember to call after manual priority change.
      */
     void SortOrder();
+
+    bool IsIDTaken(const std::string& ID) const;
+
+protected:
+    std::map<std::string, Item*> Items;
+    std::vector<Item*> ItemsInDrawingOrder;
+
+    bool needsSorting = false;
+    bool needsOrdering = false;
 };
 
 class Workspace : public Container {

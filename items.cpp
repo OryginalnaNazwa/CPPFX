@@ -21,8 +21,22 @@ void Item::DoActiveAction(const float& dt, const Vector2& mousePosition) {
     return DoActiveAction(dt);
 }
 
+void Item::DoPassiveAction(const float& dt) {
+    return;
+}
+
 void Item::Deactivate() {
     active = false;
+}
+
+void Item::Hide() {
+    inactive = true;
+    visible = false;
+}
+
+void Item::Show() {
+    inactive = false;
+    visible = true;
 }
 
 // --- Helpers ---
@@ -101,7 +115,7 @@ std::string TextItem::Truncate(const std::string& text) const {
         std::string truncated = "";
         for (const auto& c : text) {
             const std::string characterString(1,c);
-            if (MeasureText(truncated.c_str(), font.fontSize) + MeasureText("...|", font.fontSize) + MeasureText(characterString.c_str(), font.fontSize) + 2 > width) {//may have to switch to MeasureTextEx with fonts
+            if (MeasureText(truncated.c_str(), font.fontSize) + MeasureText("_...|", font.fontSize) + MeasureText(characterString.c_str(), font.fontSize) + 2 > width) {//may have to switch to MeasureTextEx with fonts //'_' - little hack to make sure the blinker will stay inbound
                 return truncated + "...";
             }
             truncated += c;
@@ -315,6 +329,8 @@ void Container::AddItem(Item* item) {
     } else {
         throw std::invalid_argument("Item " + item->ID + " is already in the container " + ID);
     }
+    needsSorting = true;
+    needsOrdering = true;
 }
 
 void Container::RemoveItem(const std::string& ID) {
@@ -341,6 +357,17 @@ void Container::SortOrder() {
     std::sort(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [](const Item* a, const Item* b) {
         return a->priority > b->priority;
     });
+    needsSorting = false;
+}
+
+void Container::DoPassiveAction(const float& dt) {
+    if (needsSorting) {
+        SortOrder();
+    }
+    if (needsOrdering) {
+        SetPositionsOfItems();
+        needsOrdering = false;
+    }
 }
 
 void Box::SetPadding(const float& value) {
@@ -348,6 +375,7 @@ void Box::SetPadding(const float& value) {
         throw std::out_of_range("Error: Negative padding in " + ID);
     }
     padding = value;
+    needsOrdering = true;
 }
 
 void Workspace::SetPositionsOfItems() {
@@ -1077,8 +1105,8 @@ double Chart::GetElement(const std::string& label) const {
 
 double Chart::GetElement(const int& index) const {
     if (index < 0 || size_t(index) > values.size()) {
-        return values[index];
-    } else throw std::out_of_range("Chart " + this->ID + ": invalid index at getting");
+        throw std::out_of_range("Chart " + this->ID + ": invalid index at getting");
+    } else return values[index];
 }
 
 void Chart::SetElement(const std::string& label, const double& newValue) {
@@ -1091,8 +1119,8 @@ void Chart::SetElement(const std::string& label, const double& newValue) {
 
 void Chart::SetElement(const int& index, const double& newValue) {
     if (index < 0 || size_t(index) > values.size()) {
-        values[index] = newValue;
-    } else throw std::out_of_range("Chart " + this->ID + ": invalid index at setting element");
+        throw std::out_of_range("Chart " + this->ID + ": invalid index at setting element");
+    } else values[index] = newValue;
 }
 
 void Chart::RemoveElement(const std::string& label) {

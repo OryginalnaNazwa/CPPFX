@@ -81,7 +81,6 @@ std::string Colour::ColourToString(Color c) {
     if (c.r == LIME.r        && c.g == LIME.g        && c.b == LIME.b)        return "LIME";
     if (c.r == GOLD.r        && c.g == GOLD.g        && c.b == GOLD.b)        return "GOLD";
     if (c.r == MAROON.r      && c.g == MAROON.g      && c.b == MAROON.b)      return "MAROON";
-    if (c.r == RAYWHITE.r       && c.g == RAYWHITE.g       && c.b == RAYWHITE.b)       return "RAYWHITE";
     // Fallback: hex string for custom colours
     char buf[10];
     snprintf(buf, sizeof(buf), "#%02X%02X%02X%02X", c.r, c.g, c.b, c.a);

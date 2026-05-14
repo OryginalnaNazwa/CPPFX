@@ -14,19 +14,6 @@ public:
 
     GUI() {}
 
-    /*~GUI() {
-        std::vector<std::string> ids = GetItemsIDs();
-        for (const auto& id : ids) {
-            if (!IsContainer(Items.at(id)->GetFxID())) {
-                RemoveItem(id);
-            }
-        }
-        ids = GetItemsIDs();
-        for (const auto& id : ids) {
-            RemoveItem(id);
-        }
-    }*/ //unnecessary
-
     /**
      *  @brief Primary UI drawing and interaction loop.
      *  @details Put in your main loop.
@@ -61,6 +48,7 @@ public:
     ProgressIndicator* AddProgressIndicator(const std::string& ID = "");
     ProgressBar* AddProgressBar(const std::string& ID = "");
     PressedButton* AddPressedButton(const std::string& ID = "");
+    PieChart* AddPieChart(const std::string& ID = "");
 
     /**
      *  @brief Creates a dropdown.
@@ -74,6 +62,14 @@ public:
         CreateItem(dropdown);
         return pointer;
     }
+    template <typename T>
+    List<T>* AddList(const std::string& ID = "") {
+        std::unique_ptr<Item> alist = std::make_unique<List<T>>();
+        CreateItemID(alist, ID);
+        auto pointer = static_cast<List<T>*>(alist.get());
+        CreateItem(alist);
+        return pointer;
+    }
 
     /**
      *  @brief Removes an item.
@@ -81,6 +77,16 @@ public:
      */
     void RemoveItem(const std::string& ID);
 
+    template <typename T>
+    T* GetItem(const std::string& ID) {
+        try {
+            auto* ptr = dynamic_cast<T*>(Items.at(ID).get());
+            if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a " + typeid(T).name());
+            return ptr;
+        } catch (const std::out_of_range&) {
+            throw std::out_of_range("No item with ID " + ID + " exists");
+        }
+    }
     /**
      *  @brief Gets an usable Text Field of specified ID
      *  @param ID ID of the wanted text field
@@ -123,17 +129,29 @@ public:
     template <typename T>
     DropDown<T>* GetDropDown(const std::string& ID) {
         try {
-            return static_cast<DropDown<T>*>(Items.at(ID).get());
-        } catch (const std::out_of_range&) {
-            throw std::out_of_range("DropDown not found: " + ID);
+            auto* ptr = dynamic_cast<DropDown<T>*>(Items.at(ID).get());
+            if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a Dropdown");
+            return ptr;
+        } catch (const std::out_of_range& e) {
+            throw std::out_of_range("No Dropdown with the ID " + ID + " exists");
+        }
+    }
+    template <typename T>
+    List<T>* GetList(const std::string& ID) {
+       try {
+            auto* ptr = dynamic_cast<List<T>*>(Items.at(ID).get());
+            if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a List");
+            return ptr;
+        } catch (const std::out_of_range& e) {
+            throw std::out_of_range("No List with the ID " + ID + " exists");
         }
     }
     /**
-     *  @fn GetX
+     *  @fn Get*
      *  @brief Gets an Item of specified ID
      *  @param ID ID of the item to be grabbed
-     *  @returns raw pointer to the item of type X
-     *  @throws std::runtime_error if the ID belongs to an item that is not X type.
+     *  @returns raw pointer to the item of type *
+     *  @throws std::runtime_error if the ID belongs to an item that is not * type.
      *  @throws std::out_of_range if there's no item of ID
      */
     AnchorPane* GetAnchorPane(const std::string& ID);
@@ -146,6 +164,7 @@ public:
     ProgressIndicator* GetProgressIndicator(const std::string& ID);
     ProgressBar* GetProgressBar(const std::string& ID);
     PressedButton* GetPressedButton(const std::string& ID);
+    PieChart* GetPieChart(const std::string& ID);
 
     /**
      *  @brief Sets the item's priority to highest available.
@@ -221,7 +240,9 @@ private:
         {"PasswordField", 0},
         {"ProgressIndicator", 0},
         {"ProgressBar", 0},
-        {"PressedButton", 0}
+        {"PressedButton", 0},
+        {"List", 0},
+        {"PieChart", 0}
     };
 
     float dt = 0; ///frame time
@@ -229,8 +250,8 @@ private:
 
     void DrawUI() const;
     void onMouseClick(const Vector2& mousePos);
-    void DoItemsActions();
     void DoItemsActions(const Vector2& mousePos);
+    void DoClickedItemsActions(const Vector2& mousePos);
 
     void DeactivateItems();
 

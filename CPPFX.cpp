@@ -1,4 +1,4 @@
-#include "FX.h"
+#include "CPPFX.h"
 
 using namespace CPPFX;
 
@@ -10,12 +10,12 @@ void GUI::DoUI(const Camera2D& camera) {
         SortOrder();
         needsSorting = false;
     }
+    Vector2 mousePos = GetScreenToWorld2D({(float)GetMouseX(), (float)GetMouseY()}, camera);
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        Vector2 mousePos = GetScreenToWorld2D({(float)GetMouseX(), (float)GetMouseY()}, camera);
         onMouseClick(mousePos);
-        DoItemsActions(mousePos);
+        DoClickedItemsActions(mousePos);
     } else {
-        DoItemsActions();
+        DoItemsActions(mousePos);
     }
 
     DrawUI();
@@ -24,13 +24,16 @@ void GUI::DoUI(const Camera2D& camera) {
 void GUI::onMouseClick(const Vector2& mousePos) {
     for (auto it = ItemsInDrawingOrder.rbegin(); it != ItemsInDrawingOrder.rend(); ++it) {
         Item* item = *it;
-        if (item->WasIClicked(mousePos)) {
+        if (!item->inactive && item->WasIClicked(mousePos))  {
             if (!item->active) {
                 DeactivateItems();
                 item->active = true;
             }
             if (item->onClick) item->onClick();
-            return;
+            if (item->eatsClick) {
+                return;
+            }
+
         }
     }
     DeactivateItems();
@@ -38,15 +41,8 @@ void GUI::onMouseClick(const Vector2& mousePos) {
 
 void GUI::DrawUI() const {
     for (auto& item : ItemsInDrawingOrder) {
-        item->DrawMyself(dt);
-    }
-}
-
-void GUI::DoItemsActions() {
-    for (auto& item : ItemsInDrawingOrder) {
-        item->currentFrameTime = dt;
-        if (item->active) {
-            item->DoActiveAction(dt);
+        if (item->visible) {
+            item->DrawMyself(dt);
         }
     }
 }
@@ -54,8 +50,26 @@ void GUI::DoItemsActions() {
 void GUI::DoItemsActions(const Vector2& mousePos) {
     for (auto& item : ItemsInDrawingOrder) {
         item->currentFrameTime = dt;
-        if (item->active) {
-            item->DoActiveAction(dt, mousePos);
+        if (!item->inactive) {
+            item->DoPassiveAction(dt);
+            if (item->onHover) {
+                item->onHover();
+            }
+            if (item->active) {
+                item->DoActiveAction(dt);
+            }
+        }
+    }
+}
+
+void GUI::DoClickedItemsActions(const Vector2& mousePos) {
+    for (auto& item : ItemsInDrawingOrder) {
+        item->currentFrameTime = dt;
+        if (!item->inactive) {
+            item->DoPassiveAction(dt);
+            if (item->active) {
+                item->DoActiveAction(dt, mousePos);
+            }
         }
     }
 }
@@ -97,6 +111,12 @@ void GUI::AddItem(const std::string& fxID, const std::string& ID) {
         AddProgressIndicator(ID);
     } else if (fxID == "ProgressBar") {
         AddProgressBar(ID);
+    } else if (fxID == "PressedButton") {
+        AddPressedButton(ID);
+    } else if (fxID == "List") {
+        AddList<std::string>(ID);
+    } else if (fxID == "PieChart") {
+        AddPieChart(ID);
     } else {
         throw std::invalid_argument("Invalid ID: " + fxID);
     }
@@ -230,6 +250,14 @@ PressedButton* GUI::AddPressedButton(const std::string& ID) {
     return pointer;
 }
 
+PieChart* GUI::AddPieChart(const std::string& ID) {
+    std::unique_ptr<Item> item = std::make_unique<PieChart>();
+    CreateItemID(item, ID);
+    auto pointer = static_cast<PieChart*>(item.get());
+    CreateItem(item);
+    return pointer;
+}
+
 //--- Remover ---
 
 void GUI::RemoveItem(const std::string& ID) {
@@ -264,7 +292,7 @@ bool GUI::IsContainer(const std::string& fxID) const {
 
 bool GUI::IsFxID(const std::string& fxID) const {
     static const std::unordered_set<std::string> FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
-    "PasswordField", "ProgressBar", "ProgressIndicator"};
+    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "Chart", "PieChart"};
     return FXIDs.contains(fxID);
 }
 
@@ -425,6 +453,16 @@ PressedButton* GUI::GetPressedButton(const std::string& ID) {
         return ptr;
     } catch (const std::out_of_range& e) {
         throw std::out_of_range("No PressedButton with the ID " + ID + " exists");
+    }
+}
+
+PieChart* GUI::GetPieChart(const std::string& ID) {
+    try {
+        auto* ptr = dynamic_cast<PieChart*>(Items.at(ID).get());
+        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a PieChart");
+        return ptr;
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range("No PieChart with the ID " + ID + " exists");
     }
 }
 
