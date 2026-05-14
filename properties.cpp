@@ -154,23 +154,23 @@ float Border::GetThickness() const {
 //--- Alignment ---
 
 //--- Setters ---
-void _Alignment::SetAlignment(const Alignments& alignment) {
+void Alignment::SetAlignment(const Alignments& alignment) {
     this->alignment = alignment;
 }
 
-void _Alignment::SetAlignment(const std::string& alignment) {
+void Alignment::SetAlignment(const std::string& alignment) {
     this->alignment = StringToAlignment(alignment);
 }
 
-_Alignment::Alignments _Alignment::GetAlignment() const {
+Alignment::Alignments Alignment::GetAlignment() const {
     return this->alignment;
 }
 
-std::string _Alignment::GetAlignmentString() const {
+std::string Alignment::GetAlignmentString() const {
     return AlignmentToString(this->alignment);
 }
 
-_Alignment::Alignments _Alignment::StringToAlignment(const std::string& alignment) const {
+Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment) const {
     if (alignment == "TOP_CENTRE") {
         return Alignments::TOP_CENTRE;
     } else if (alignment == "TOP_LEFT") {
@@ -194,7 +194,7 @@ _Alignment::Alignments _Alignment::StringToAlignment(const std::string& alignmen
     }
 }
 
-std::string _Alignment::AlignmentToString(const Alignments& alignment) const {
+std::string Alignment::AlignmentToString(const Alignments& alignment) const {
     switch (alignment) {
         case Alignments::TOP_LEFT:      return "TOP_LEFT";
         case Alignments::TOP_CENTRE:    return "TOP_CENTRE";
@@ -209,22 +209,22 @@ std::string _Alignment::AlignmentToString(const Alignments& alignment) const {
     }
 }
 
-bool _Alignment::IsRightAlignment() const {
-    return alignment == _Alignment::Alignments::TOP_RIGHT || alignment == _Alignment::Alignments::CENTRE_RIGHT || alignment == _Alignment::Alignments::BOTTOM_RIGHT;
+bool Alignment::IsRightAlignment() const {
+    return alignment == Alignment::Alignments::TOP_RIGHT || alignment == Alignment::Alignments::CENTRE_RIGHT || alignment == Alignment::Alignments::BOTTOM_RIGHT;
 }
 
-bool _Alignment::IsLeftAlignment() const {
-    return alignment == _Alignment::Alignments::TOP_LEFT || alignment == _Alignment::Alignments::CENTRE_LEFT || alignment == _Alignment::Alignments::BOTTOM_LEFT;
+bool Alignment::IsLeftAlignment() const {
+    return alignment == Alignment::Alignments::TOP_LEFT || alignment == Alignment::Alignments::CENTRE_LEFT || alignment == Alignment::Alignments::BOTTOM_LEFT;
 }
 
-bool _Alignment::IsCentreAlignment() const {
-    return alignment == _Alignment::Alignments::TOP_CENTRE || alignment == _Alignment::Alignments::CENTRE || alignment == _Alignment::Alignments::BOTTOM_CENTRE;
+bool Alignment::IsCentreAlignment() const {
+    return alignment == Alignment::Alignments::TOP_CENTRE || alignment == Alignment::Alignments::CENTRE || alignment == Alignment::Alignments::BOTTOM_CENTRE;
 }
 
-bool _Alignment::IsBottomAlignment() const {
-    return alignment == _Alignment::Alignments::BOTTOM_CENTRE || alignment == _Alignment::Alignments::BOTTOM_LEFT || alignment == _Alignment::Alignments::BOTTOM_RIGHT;
+bool Alignment::IsBottomAlignment() const {
+    return alignment == Alignment::Alignments::BOTTOM_CENTRE || alignment == Alignment::Alignments::BOTTOM_LEFT || alignment == Alignment::Alignments::BOTTOM_RIGHT;
 }
 
-bool _Alignment::IsTopAlignment() const {
-    return alignment == _Alignment::Alignments::TOP_CENTRE || alignment == _Alignment::Alignments::TOP_LEFT || alignment == _Alignment::Alignments::TOP_RIGHT;
+bool Alignment::IsTopAlignment() const {
+    return alignment == Alignment::Alignments::TOP_CENTRE || alignment == Alignment::Alignments::TOP_LEFT || alignment == Alignment::Alignments::TOP_RIGHT;
 }

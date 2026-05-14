@@ -203,23 +203,23 @@ void Label::DrawMyself(const float& dt) const {
         float startX, startY, textOffset = 0, yTextOffSet = 0;
         float textWidth = MeasureText(text.c_str(), font.fontSize);
         switch (alignment.GetAlignment()) {
-            case _Alignment::Alignments::TOP_LEFT:
+            case Alignment::Alignments::TOP_LEFT:
                 startX = xAnchor; startY = yAnchor; textOffset = textMargin; yTextOffSet = textMargin; break;
-            case _Alignment::Alignments::TOP_CENTRE:
+            case Alignment::Alignments::TOP_CENTRE:
                 startX = xAnchor + (width / 2); startY = yAnchor; textOffset = -textWidth; yTextOffSet = textMargin; break;
-            case _Alignment::Alignments::TOP_RIGHT:
+            case Alignment::Alignments::TOP_RIGHT:
                 startX = xAnchor + width; startY = yAnchor; textOffset = -textMargin - textWidth; yTextOffSet = textMargin; break;
-            case _Alignment::Alignments::CENTRE_LEFT:
+            case Alignment::Alignments::CENTRE_LEFT:
                 startX = xAnchor; startY = yAnchor + (height / 2); textOffset = textMargin; yTextOffSet = -font.fontSize / 2; break;
-            case _Alignment::Alignments::CENTRE:
+            case Alignment::Alignments::CENTRE:
                 startX = xAnchor + (width / 2); startY = yAnchor + (height / 2); textOffset = -(textWidth / 2); yTextOffSet = -font.fontSize / 2; break;
-            case _Alignment::Alignments::CENTRE_RIGHT:
+            case Alignment::Alignments::CENTRE_RIGHT:
                 startX = xAnchor + width; startY = yAnchor + (height / 2); textOffset = -textMargin - textWidth; yTextOffSet = -font.fontSize / 2; break;
-            case _Alignment::Alignments::BOTTOM_LEFT:
+            case Alignment::Alignments::BOTTOM_LEFT:
                 startX = xAnchor; startY = yAnchor + height; textOffset = textMargin; yTextOffSet = -font.fontSize; break;
-            case _Alignment::Alignments::BOTTOM_CENTRE:
+            case Alignment::Alignments::BOTTOM_CENTRE:
                 startX = xAnchor + (width / 2); startY = yAnchor + height; textOffset = -(textWidth / 2); yTextOffSet = -font.fontSize; break;
-            case _Alignment::Alignments::BOTTOM_RIGHT:
+            case Alignment::Alignments::BOTTOM_RIGHT:
                 startX = xAnchor + width; startY = yAnchor + height; textOffset = -textMargin - textWidth; yTextOffSet = -font.fontSize; break;
         }
        DrawText(text.c_str(), startX + textOffset, startY + yTextOffSet, font.fontSize, font.colour.GetColour());
@@ -368,39 +368,39 @@ void Workspace::SetPositionsOfItems() {
 void AnchorPane::SetPositionsOfItems() {
     for (auto& item : ItemsInDrawingOrder) {
         switch (alignment.GetAlignment()) {
-            case _Alignment::Alignments::TOP_LEFT:
+            case Alignment::Alignments::TOP_LEFT:
                 item->SetX(item->xAnchor - previousX + xAnchor);
                 item->SetY(item->yAnchor - previousY + yAnchor);
                 break;
-            case _Alignment::Alignments::TOP_CENTRE:
+            case Alignment::Alignments::TOP_CENTRE:
                 item->SetX(item->xAnchor - (previousX + previousWidth / 2) + (xAnchor + width / 2));
                 item->SetY(item->yAnchor - previousY + yAnchor);
                 break;
-            case _Alignment::Alignments::TOP_RIGHT:
+            case Alignment::Alignments::TOP_RIGHT:
                 item->SetX(item->xAnchor - (previousX + previousWidth) + (xAnchor + width));
                 item->SetY(item->yAnchor - previousY + yAnchor);
                 break;
-            case _Alignment::Alignments::CENTRE_LEFT:
+            case Alignment::Alignments::CENTRE_LEFT:
                 item->SetX(item->xAnchor - previousX + xAnchor);
                 item->SetY(item->yAnchor - (previousY + previousHeight / 2) + (yAnchor + height / 2));
                 break;
-            case _Alignment::Alignments::CENTRE:
+            case Alignment::Alignments::CENTRE:
                 item->SetX(item->xAnchor - (previousX + previousWidth / 2) + (xAnchor + width / 2));
                 item->SetY(item->yAnchor - (previousY + previousHeight / 2) + (yAnchor + height / 2));
                 break;
-            case _Alignment::Alignments::CENTRE_RIGHT:
+            case Alignment::Alignments::CENTRE_RIGHT:
                 item->SetX(item->xAnchor - (previousX + previousWidth) + (xAnchor + width));
                 item->SetY(item->yAnchor - (previousY + previousHeight / 2) + (yAnchor + height / 2));
                 break;
-            case _Alignment::Alignments::BOTTOM_LEFT:
+            case Alignment::Alignments::BOTTOM_LEFT:
                 item->SetX(item->xAnchor - previousX + xAnchor);
                 item->SetY(item->yAnchor - (previousY + previousHeight) + (yAnchor + height));
                 break;
-            case _Alignment::Alignments::BOTTOM_CENTRE:
+            case Alignment::Alignments::BOTTOM_CENTRE:
                 item->SetX(item->xAnchor - (previousX + previousWidth / 2) + (xAnchor + width / 2));
                 item->SetY(item->yAnchor - (previousY + previousHeight) + (yAnchor + height));
                 break;
-            case _Alignment::Alignments::BOTTOM_RIGHT:
+            case Alignment::Alignments::BOTTOM_RIGHT:
                 item->SetX(item->xAnchor - (previousX + previousWidth) + (xAnchor + width));
                 item->SetY(item->yAnchor - (previousY + previousHeight) + (yAnchor + height));
                 break;
@@ -486,23 +486,23 @@ void VBox::SetPositionsOfItems() {
     }*/
     float startX, startY;
     switch (alignment.GetAlignment()) {
-        case _Alignment::Alignments::TOP_LEFT:
+        case Alignment::Alignments::TOP_LEFT:
             startX = xAnchor; startY = yAnchor; break;
-        case _Alignment::Alignments::TOP_CENTRE:
+        case Alignment::Alignments::TOP_CENTRE:
             startX = xAnchor + (width / 2); startY = yAnchor; break;
-        case _Alignment::Alignments::TOP_RIGHT:
+        case Alignment::Alignments::TOP_RIGHT:
             startX = xAnchor + width; startY = yAnchor; break;
-        case _Alignment::Alignments::CENTRE_LEFT:
+        case Alignment::Alignments::CENTRE_LEFT:
             startX = xAnchor; startY = yAnchor + (height / 2); break;
-        case _Alignment::Alignments::CENTRE:
+        case Alignment::Alignments::CENTRE:
             startX = xAnchor + (width / 2); startY = yAnchor + (height / 2); break;
-        case _Alignment::Alignments::CENTRE_RIGHT:
+        case Alignment::Alignments::CENTRE_RIGHT:
             startX = xAnchor + width; startY = yAnchor + (height / 2); break;
-        case _Alignment::Alignments::BOTTOM_LEFT:
+        case Alignment::Alignments::BOTTOM_LEFT:
             startX = xAnchor; startY = yAnchor + height; break;
-        case _Alignment::Alignments::BOTTOM_CENTRE:
+        case Alignment::Alignments::BOTTOM_CENTRE:
             startX = xAnchor + (width / 2); startY = yAnchor + height; break;
-        case _Alignment::Alignments::BOTTOM_RIGHT:
+        case Alignment::Alignments::BOTTOM_RIGHT:
             startX = xAnchor + width; startY = yAnchor + height; break;
     }
     float currentY = startY;
@@ -540,23 +540,23 @@ void HBox::SetPositionsOfItems() {
     }*/
     float startX, startY;
     switch (alignment.GetAlignment()) {
-        case _Alignment::Alignments::TOP_LEFT:
+        case Alignment::Alignments::TOP_LEFT:
             startX = xAnchor; startY = yAnchor; break;
-        case _Alignment::Alignments::TOP_CENTRE:
+        case Alignment::Alignments::TOP_CENTRE:
             startX = xAnchor + (width / 2); startY = yAnchor; break;
-        case _Alignment::Alignments::TOP_RIGHT:
+        case Alignment::Alignments::TOP_RIGHT:
             startX = xAnchor + width; startY = yAnchor; break;
-        case _Alignment::Alignments::CENTRE_LEFT:
+        case Alignment::Alignments::CENTRE_LEFT:
             startX = xAnchor; startY = yAnchor + (height / 2); break;
-        case _Alignment::Alignments::CENTRE:
+        case Alignment::Alignments::CENTRE:
             startX = xAnchor + (width / 2); startY = yAnchor + (height / 2); break;
-        case _Alignment::Alignments::CENTRE_RIGHT:
+        case Alignment::Alignments::CENTRE_RIGHT:
             startX = xAnchor + width; startY = yAnchor + (height / 2); break;
-        case _Alignment::Alignments::BOTTOM_LEFT:
+        case Alignment::Alignments::BOTTOM_LEFT:
             startX = xAnchor; startY = yAnchor + height; break;
-        case _Alignment::Alignments::BOTTOM_CENTRE:
+        case Alignment::Alignments::BOTTOM_CENTRE:
             startX = xAnchor + (width / 2); startY = yAnchor + height; break;
-        case _Alignment::Alignments::BOTTOM_RIGHT:
+        case Alignment::Alignments::BOTTOM_RIGHT:
             startX = xAnchor + width; startY = yAnchor + height; break;
     }
 

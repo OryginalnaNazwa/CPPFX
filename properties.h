@@ -122,10 +122,10 @@ public:
 };
 
 /**
- *  @class _Alignment
- *  For some god forsaken reason Alignment is a keyword.
+ *  @class Alignment
+
  */
-class _Alignment : public Property {
+class Alignment : public Property {
 public:
     enum Alignments {
         TOP_CENTRE,     TOP_LEFT,   TOP_RIGHT,
@@ -133,7 +133,7 @@ public:
         BOTTOM_LEFT,    BOTTOM_CENTRE, BOTTOM_RIGHT
     };
 
-    _Alignment() : Property("Alignment"), alignment(TOP_LEFT) {}
+    Alignment() : Property("Alignment"), alignment(TOP_LEFT) {}
 
     /**
      *  @brief Sets the alignment based on a string.

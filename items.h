@@ -200,7 +200,7 @@ protected:
 class Label : public TextItem {
 public:
     Border border;
-    _Alignment alignment;
+    Alignment alignment;
 
     Label() : TextItem("Label") {text = "Label";}
 
@@ -477,7 +477,6 @@ private:
     }
 };
 
-
 /**
  * @class Container
  * @brief A virtual layout organiser base.
@@ -486,7 +485,7 @@ private:
  */
 class Container : public Item {
 public:
-    _Alignment alignment;
+    Alignment alignment;
     Border border;
 
     Container(const std::string& i) : Item(i) {colour.SetColour(BLANK);}
