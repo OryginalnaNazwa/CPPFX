@@ -9,6 +9,19 @@ void Item::DrawMyself(const float& dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
 }
 
+void Item::DrawMyself(const float& dt, const Camera2D& camera) const {
+    float savedX = xAnchor, savedY = yAnchor;
+    const_cast<float&>(xAnchor) = camera.target.x + (xAnchor - camera.offset.x) / camera.zoom;
+    const_cast<float&>(yAnchor) = camera.target.y + (yAnchor - camera.offset.y) / camera.zoom;
+    DrawMyself(dt);
+    const_cast<float&>(xAnchor) = savedX;
+    const_cast<float&>(yAnchor) = savedY;
+}
+
+bool Item::WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const {
+    return Item::WasIClicked(mousePosition);
+}
+
 bool Item::WasIClicked(const Vector2& mousePosition) const {
     int xClick = mousePosition.x, yClick = mousePosition.y;
     if (xClick >= xAnchor && xClick <= (xAnchor + width) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
@@ -21,8 +34,20 @@ void Item::DoActiveAction(const float& dt, const Vector2& mousePosition) {
     return DoActiveAction(dt);
 }
 
+void Item::DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
+    return DoActiveAction(dt, mousePosition);
+}
+
+void Item::DoActiveAction(const float& dt, const Camera2D& camera) {
+    return DoActiveAction(dt);
+}
+
 void Item::DoPassiveAction(const float& dt) {
     return;
+}
+
+void Item::DoPassiveAction(const float& dt, const Camera2D& camera) {
+    return DoPassiveAction(dt);
 }
 
 void Item::Deactivate() {
@@ -37,6 +62,18 @@ void Item::Hide() {
 void Item::Show() {
     inactive = false;
     visible = true;
+}
+
+void Item::SetToWorld() {
+    screenBased = false;
+}
+
+void Item::SetToScreen() {
+    screenBased = true;
+}
+
+bool Item::IsScreenBased() const {
+    return screenBased;
 }
 
 // --- Helpers ---
@@ -260,7 +297,6 @@ void Button::DrawMyself(const float& dt) const {
 
 void Button::DoActiveAction(const float& dt) {
     if (active) {
-
         if (timer > 0) {
             if (dt > timer) {
                 colour.SetColour(unPressedColour.GetColour());
@@ -613,6 +649,21 @@ void Spinner::DrawMyself(const float& dt) const {
     }
 }
 
+void Spinner::DrawMyself(const float& dt, const Camera2D& camera) const {
+    float xAnchor = camera.target.x + this->xAnchor / camera.zoom;
+    float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
+
+    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+    DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
+
+    incrementButton.Item::DrawMyself(dt, camera);
+    decrementButton.Item::DrawMyself(dt, camera);
+
+    if (border.GetThickness() > 0) {
+        border.DrawMyself(xAnchor, yAnchor, width, height);
+    }
+}
+
 void Spinner::DoActiveAction(const float& dt, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.active = true;
@@ -625,12 +676,32 @@ void Spinner::DoActiveAction(const float& dt, const Vector2& mousePosition) {
     incrementButton.DoActiveAction(dt);
 }
 
+void Spinner::DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
+    if (incrementButton.WasIClicked(mousePosition, camera)) {
+        incrementButton.active = true;
+        incrementButton.onClick();
+    } else if (decrementButton.WasIClicked(mousePosition, camera)) {
+        decrementButton.active = true;
+        decrementButton.onClick();
+    }
+    decrementButton.Item::DoActiveAction(dt, camera);
+    incrementButton.Item::DoActiveAction(dt, camera);
+}
+
 void Spinner::DoActiveAction(const float& dt) {
     incrementButton.DoActiveAction(dt);
     decrementButton.DoActiveAction(dt);
 }
 
 bool Spinner::WasIClicked(const Vector2& mousePosition) const {
+    int xClick = mousePosition.x, yClick = mousePosition.y;
+    if (xClick >= xAnchor && xClick <= (xAnchor + width + incrementButton.width) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
+        return true;
+    }
+    return false;
+}
+
+bool Spinner::WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const {
     int xClick = mousePosition.x, yClick = mousePosition.y;
     if (xClick >= xAnchor && xClick <= (xAnchor + width + incrementButton.width) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
         return true;
@@ -735,6 +806,18 @@ void Spinner::SetMin(const float& value) {
     minValue = value;
 }
 
+void Spinner::SetToWorld() {
+    screenBased = false;
+    incrementButton.SetToWorld();
+    decrementButton.SetToWorld();
+}
+
+void Spinner::SetToScreen() {
+    screenBased = true;
+    incrementButton.SetToScreen();
+    decrementButton.SetToScreen();
+}
+
 //--- EditableSpinner ---
 
 void EditableSpinner::SetValue(const float& value) {
@@ -751,6 +834,24 @@ void EditableSpinner::DrawMyself(const float& dt) const {
     }
     incrementButton.DrawMyself(dt);
     decrementButton.DrawMyself(dt);
+
+    if (border.GetThickness() > 0) {
+        border.DrawMyself(xAnchor, yAnchor, width, height);
+    }
+}
+
+void EditableSpinner::DrawMyself(const float& dt, const Camera2D& camera) const {
+    float xAnchor = camera.target.x + this->xAnchor / camera.zoom;
+    float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
+
+    if (!editArea.active) {
+       DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+       DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
+    } else {
+        editArea.Item::DrawMyself(dt, camera);
+    }
+    incrementButton.Item::DrawMyself(dt, camera);
+    decrementButton.Item::DrawMyself(dt, camera);
 
     if (border.GetThickness() > 0) {
         border.DrawMyself(xAnchor, yAnchor, width, height);
@@ -784,6 +885,35 @@ void EditableSpinner::DoActiveAction(const float& dt, const Vector2& mousePositi
     decrementButton.DoActiveAction(dt);
     incrementButton.DoActiveAction(dt);
     editArea.DoActiveAction(dt);
+}
+
+void EditableSpinner::DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
+    if (incrementButton.WasIClicked(mousePosition, camera)) {
+        incrementButton.active = true;
+        incrementButton.onClick();
+        editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
+        editArea.active = false;
+    } else if (decrementButton.WasIClicked(mousePosition, camera)) {
+        decrementButton.active = true;
+        editArea.active = false;
+        decrementButton.onClick();
+        editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
+    } else if (editArea.WasIClicked(mousePosition, camera)) {
+        editArea.active = true;
+        editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
+    } else {
+        if (editArea.active) {
+            try {
+                value = std::stof(editArea.GetText());
+            } catch (const std::invalid_argument&) {
+                //do nothing. Doesn't change the value.
+            }
+            editArea.active = false;
+        }
+    }
+    decrementButton.Item::DoActiveAction(dt, camera);
+    incrementButton.Item::DoActiveAction(dt, camera);
+    editArea.Item::DoActiveAction(dt, camera);
 }
 
 void EditableSpinner::DoActiveAction(const float& dt) {
@@ -831,6 +961,16 @@ void EditableSpinner::Deactivate() {
         return; //no need to reset the value if it didn't change
     }
     editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
+}
+
+void EditableSpinner::SetToWorld() {
+    editArea.SetToWorld();
+    Spinner::SetToWorld();
+}
+
+void EditableSpinner::SetToScreen() {
+    editArea.SetToScreen();
+    Spinner::SetToScreen();
 }
 
 //--- PasswordField ---
@@ -1175,19 +1315,38 @@ void PieChart::DrawMyself(const float& dt) const {
         DrawCircleSector(Vector2{xAnchor, yAnchor}, width, currentAngle, currentAngle + (percent * 360), std::max(4, (int)(percent * 36)), c);
 
         if (showPercentage) {
+            float xShift = 0;
             float textAngle = currentAngle + (180 * percent); //average of start and end angle, simplified
+
             std::string valueString = percent * 100 == (int)(percent * 100) ? TextFormat("%d", (int)(percent * 100)) : TextFormat("%.1f", percent * 100);
             valueString += "%";
-            DrawText(valueString.c_str(), xAnchor + ((width / 2) * cos(textAngle * DEG2RAD)) - (MeasureText(valueString.c_str(), font.fontSize) / 2), yAnchor + ((width / 2) * sin(textAngle * DEG2RAD)), font.fontSize, font.colour.GetColour());
+
+            if (textAngle < 90) {
+                xShift = MeasureText(valueString.c_str(), font.fontSize);
+            }
+
+            DrawText(valueString.c_str(), xAnchor + ((width / 2) * cos(textAngle * DEG2RAD)) - (MeasureText(valueString.c_str(), font.fontSize) / 2) + xShift, yAnchor + ((width / 2) * sin(textAngle * DEG2RAD)), font.fontSize, font.colour.GetColour());
         }
         if (showLabels) {
+            float xShift = 0, yShift = 0;
+            float textAngle = currentAngle + (180 * percent); //average of start and end angle, simplified
+
+            if (textAngle > 180) {
+                yShift = -font.fontSize;
+            }
+
             if (values.size() == labels.size()) {
-                float textAngle = currentAngle + (180 * percent); //average of start and end angle, simplified
-                DrawText(labels[index].c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(labels[index].c_str(), font.fontSize) / 2), yAnchor + (width * sin(textAngle * DEG2RAD)), font.fontSize, font.colour.GetColour());
+                std::string label = labels[index];
+                if (textAngle > 90 && textAngle < 270) {
+                    xShift = -MeasureText(label.c_str(), font.fontSize);
+                } else if (textAngle < 90) {
+                    xShift = MeasureText(label.c_str(), font.fontSize);
+                }
+
+                DrawText(label.c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(label.c_str(), font.fontSize) / 2) + xShift, yAnchor + (width * sin(textAngle * DEG2RAD)) + yShift, font.fontSize, font.colour.GetColour());
             } else {
-                float textAngle = currentAngle + (180 * percent); //average of start and end angle, simplified
                 std::string elementText = std::to_string(element);
-                DrawText(elementText.c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(elementText.c_str(), font.fontSize) / 2), yAnchor + (width * sin(textAngle * DEG2RAD)), font.fontSize, font.colour.GetColour());
+                DrawText(elementText.c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(elementText.c_str(), font.fontSize) / 2) + xShift, yAnchor + (width * sin(textAngle * DEG2RAD)) + yShift, font.fontSize, font.colour.GetColour());
             }
         }
         currentAngle += 360 * percent;

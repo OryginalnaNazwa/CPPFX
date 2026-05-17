@@ -132,7 +132,7 @@ void Border::SetDrawingMethod(const std::function<void(const float& x, const flo
 }
 
 void Border::RemoveDrawingMethod() {
-    this->drawMyself = NULL;
+    this->drawMyself = nullptr;
 }
 
 // --- Setters ---

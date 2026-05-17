@@ -32,27 +32,33 @@ public:
     float width;
 
     bool active;
-    size_t priority; ///<order of drawing. Set to 3 by default for convenience of moving priority around.
+    size_t priority; ///<order of drawing. Set to 3 by default for convenience of moving priority around. The higher the priority, the quicker it gets done - but gets drawn under.
     bool visible; ///<invisible items are still interactable
     bool inactive; ///<inactive items are not interactable
     bool eatsClick; ///<if false, allows the click to continue under it
     float currentFrameTime;
 
-    Item(const std::string& i) : xAnchor(0), yAnchor(0), height(100), width(200), active(false), priority(3), visible(true), inactive(false), eatsClick(true), fxID(i)  {}
-    Item(const std::string& i, const float& w, const float& h) : xAnchor(0), yAnchor(0), height(h), width(w), active(false), priority(3), visible(true), inactive(false), eatsClick(true), fxID(i)  {}
+    Item(const std::string& i)
+        : xAnchor(0), yAnchor(0), height(100), width(200), active(false), priority(3), visible(true), inactive(false), eatsClick(true), screenBased(false), fxID(i)  {}
+    Item(const std::string& i, const float& w, const float& h)
+        : xAnchor(0), yAnchor(0), height(h), width(w), active(false), priority(3), visible(true), inactive(false), eatsClick(true), screenBased(false), fxID(i)  {}
 
     virtual void DrawMyself(const float& dt) const;
-    virtual bool WasIClicked(const Vector2& mousePosition) const;
+    virtual void DrawMyself(const float& dt, const Camera2D& camera) const;
+    virtual bool WasIClicked(const Vector2& mousePosition) const; //screen
+    virtual bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const; //world
     /**
      *  @brief Action done every frame.
      *  @param dt frame time
      */
     virtual void DoPassiveAction(const float& dt);
+    virtual void DoPassiveAction(const float& dt, const Camera2D& camera);
     /**
      *  @brief Action done while the item is active.
      *  @param dt Frame time
      */
     virtual void DoActiveAction(const float& dt) = 0;
+    virtual void DoActiveAction(const float& dt, const Camera2D& camera);
     /**
      *  @brief Action done while the item is active and it depends on mouse click.
      *  @details Defaults to the previous DoActiveAction().
@@ -60,10 +66,15 @@ public:
      *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
      */
     virtual void DoActiveAction(const float& dt, const Vector2& mousePosition);
+    virtual void DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera);
     /**
      *  @brief Sets active to false;
      */
     virtual void Deactivate();
+
+    virtual void SetToWorld();
+    virtual void SetToScreen();
+    bool IsScreenBased() const;
 
     /**
      *  @brief Sets both inactive and invisible to true.
@@ -152,6 +163,7 @@ public:
     std::string GetFxID() const;
 
 protected:
+    bool screenBased;
     const std::string fxID; ///ID for the library.
     float timer = 0;
 
@@ -314,7 +326,7 @@ public:
 
     DropDown() : TextItem("DropDown"), currentLabel("") {}
 
-    void DrawMyself(const float& dt) const {
+    void DrawMyself(const float& dt) const override {
         DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
         if (currentLabel != "") {
             DrawText(Truncate(currentLabel).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
@@ -343,11 +355,26 @@ public:
         } else return Item::WasIClicked(mousePosition);
     }
 
+    bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const override {
+        if (active) {
+            if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y >= yAnchor && mousePosition.y <= yAnchor + ((values.size() + 1) * height)) {
+                return true;
+            }
+            return false;
+        } else return Item::WasIClicked(mousePosition, camera);
+    }
+
     void DoActiveAction(const float& dt) {
         return;
     }
 
-    void DoActiveAction(const float& dt, const Vector2& mousePosition) {
+    void DoPassiveAction(const float& dt) override {
+        if (currentLabel == "" && !values.empty()) {
+            SetCurrent(values.begin()->first);
+        }
+    }
+
+    void DoActiveAction(const float& dt, const Vector2& mousePosition) override {
         if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
             int index = (mousePosition.y - (yAnchor + height)) / height;
             auto it = std::next(values.begin(), index);
@@ -357,6 +384,20 @@ public:
             return;
         }
         if (!Item::WasIClicked(mousePosition)) {
+            active = false;
+        }
+    }
+
+    void DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override {
+        if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
+            int index = (mousePosition.y - (yAnchor + height)) / height;
+            auto it = std::next(values.begin(), index);
+            currentLabel = it->first;
+            currentValue = it->second;
+            active = false;
+            return;
+        }
+        if (!WasIClicked(mousePosition, camera)) {
             active = false;
         }
     }
@@ -494,7 +535,7 @@ private:
 /**
  * @class Container
  * @brief A virtual layout organiser base.
- * @details Has border. Has alignement. Has colour - blank by default.
+ * @details Has border. Has alignement. Has colour - blank by default. Containers have default priority of 10 (makes sure they're under most items so they don't interfere).
  * @note Containers mostly just set X and Ys of their children.
  */
 class Container : public Item {
@@ -502,8 +543,8 @@ public:
     Alignment alignment;
     Border border;
 
-    Container(const std::string& i) : Item(i) {colour.SetColour(BLANK);}
-    Container(const std::string& i, const float& w, const float& h) : Item(i, w, h) {colour.SetColour(BLANK);}
+    Container(const std::string& i) : Item(i) {colour.SetColour(BLANK); priority = 10;}
+    Container(const std::string& i, const float& w, const float& h) : Item(i, w, h) {colour.SetColour(BLANK); priority = 10;}
 
     void AddItem(Item* item);
 
@@ -626,9 +667,15 @@ public:
     }
 
     void DrawMyself(const float& dt) const override;
+    void DrawMyself(const float& dt, const Camera2D& camera) const override;
     void DoActiveAction(const float& dt) override;
     void DoActiveAction(const float& dt, const Vector2& mousePosition) override;
+    void DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override;
     bool WasIClicked(const Vector2& mousePosition) const override;
+    bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const override;
+
+    void SetToScreen() override;
+    void SetToWorld() override;
 
     virtual void SetValue(const float& value);
     void SetStep(const float& step);
@@ -666,9 +713,14 @@ public:
     }
 
     void DrawMyself(const float& dt) const override;
+    void DrawMyself(const float& dt, const Camera2D& camera) const override;
     void DoActiveAction(const float& dt) override;
     void DoActiveAction(const float& dt, const Vector2& mousePosition) override;
+    void DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override;
     void Deactivate() override;
+
+    void SetToScreen() override;
+    void SetToWorld() override;
 
     void SetX(const float& x) override;
     void SetY(const float& y) override;

@@ -10,65 +10,87 @@ void GUI::DoUI(const Camera2D& camera) {
         SortOrder();
         needsSorting = false;
     }
-    Vector2 mousePos = GetScreenToWorld2D({(float)GetMouseX(), (float)GetMouseY()}, camera);
+    Vector2 mousePos = {(float)GetMouseX(), (float)GetMouseY()};
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        onMouseClick(mousePos);
-        DoClickedItemsActions(mousePos);
+        onMouseClick(mousePos, camera);
+        DoClickedItemsActions(mousePos, camera);
     } else {
-        DoItemsActions(mousePos);
+        DoItemsActions(mousePos, camera);
     }
 
-    DrawUI();
+    DrawUI(camera);
 }
 
-void GUI::onMouseClick(const Vector2& mousePos) {
+void GUI::onMouseClick(const Vector2& mousePos, const Camera2D& camera) {
     for (auto it = ItemsInDrawingOrder.rbegin(); it != ItemsInDrawingOrder.rend(); ++it) {
         Item* item = *it;
-        if (!item->inactive && item->WasIClicked(mousePos))  {
-            if (!item->active) {
-                DeactivateItems();
-                item->active = true;
+        if (!item->inactive)  {
+            if (((screenBased || item->IsScreenBased()) && item->WasIClicked(mousePos, camera)) || ((!screenBased && !item->IsScreenBased()) && item->WasIClicked(GetScreenToWorld2D(mousePos, camera)))) {
+                if (!item->active) {
+                    DeactivateItems();
+                    item->active = true;
+                }
+                if (item->onClick) item->onClick();
+                if (item->eatsClick) {
+                    return;
+                }
             }
-            if (item->onClick) item->onClick();
-            if (item->eatsClick) {
-                return;
-            }
-
         }
     }
     DeactivateItems();
 }
 
-void GUI::DrawUI() const {
+void GUI::DrawUI(const Camera2D& camera) const {
     for (auto& item : ItemsInDrawingOrder) {
         if (item->visible) {
-            item->DrawMyself(dt);
+            if (screenBased || item->IsScreenBased()) {
+                item->DrawMyself(dt, camera);
+            } else item->DrawMyself(dt);
         }
     }
 }
 
-void GUI::DoItemsActions(const Vector2& mousePos) {
+void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
     for (auto& item : ItemsInDrawingOrder) {
         item->currentFrameTime = dt;
         if (!item->inactive) {
-            item->DoPassiveAction(dt);
-            if (item->onHover) {
-                item->onHover();
+            if (screenBased || item->IsScreenBased()) {
+                item->DoPassiveAction(dt, camera);
+                if (item->WasIClicked(mousePos, camera)) {
+                    if (item->onHover) {
+                        item->onHover();
+                    }
+                }
+            } else {
+                item->DoPassiveAction(dt);
+                if (item->WasIClicked(GetScreenToWorld2D(mousePos, camera))) {
+                    if (item->onHover) {
+                        item->onHover();
+                    }
+                }
             }
             if (item->active) {
-                item->DoActiveAction(dt);
+                if (screenBased || item->IsScreenBased()) {
+                    item->DoActiveAction(dt, camera);
+                } else item->DoActiveAction(dt);
             }
         }
     }
 }
 
-void GUI::DoClickedItemsActions(const Vector2& mousePos) {
+void GUI::DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera) {
     for (auto& item : ItemsInDrawingOrder) {
         item->currentFrameTime = dt;
         if (!item->inactive) {
-            item->DoPassiveAction(dt);
+            if (screenBased || item->IsScreenBased()) {
+                item->DoPassiveAction(dt, camera);
+            } else {
+                item->DoPassiveAction(dt);
+            }
             if (item->active) {
-                item->DoActiveAction(dt, mousePos);
+                if (screenBased || item->IsScreenBased()) {
+                    item->DoActiveAction(dt, mousePos, camera);
+                } else item->DoActiveAction(dt, GetScreenToWorld2D(mousePos, camera));
             }
         }
     }

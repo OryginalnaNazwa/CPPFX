@@ -12,7 +12,9 @@ namespace CPPFX {
 class GUI {
 public:
 
-    GUI() {}
+    bool screenBased;
+
+    GUI() : screenBased(false) {}
 
     /**
      *  @brief Primary UI drawing and interaction loop.
@@ -248,10 +250,10 @@ private:
     float dt = 0; ///frame time
     bool needsSorting = false; ///lazy sort
 
-    void DrawUI() const;
-    void onMouseClick(const Vector2& mousePos);
-    void DoItemsActions(const Vector2& mousePos);
-    void DoClickedItemsActions(const Vector2& mousePos);
+    void DrawUI(const Camera2D& camera) const;
+    void onMouseClick(const Vector2& mousePos, const Camera2D& camera);
+    void DoItemsActions(const Vector2& mousePos, const Camera2D& camera);
+    void DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera);
 
     void DeactivateItems();
 
