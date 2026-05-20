@@ -2,6 +2,9 @@
 
 using namespace CPPFX;
 
+const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
+    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "Chart", "PieChart"};
+
 //--- Main loop ---
 
 void GUI::DoUI(const Camera2D& camera) {
@@ -24,25 +27,25 @@ void GUI::DoUI(const Camera2D& camera) {
 void GUI::onMouseClick(const Vector2& mousePos, const Camera2D& camera) {
     for (auto it = ItemsInDrawingOrder.rbegin(); it != ItemsInDrawingOrder.rend(); ++it) {
         Item* item = *it;
-        if (!item->inactive)  {
+        if (!item->IsInactive())  {
             if (((screenBased || item->IsScreenBased()) && item->WasIClicked(mousePos, camera)) || ((!screenBased && !item->IsScreenBased()) && item->WasIClicked(GetScreenToWorld2D(mousePos, camera)))) {
-                if (!item->active) {
-                    DeactivateItems();
-                    item->active = true;
+                if (!item->IsFocused()) {
+                    DefocusItems();
+                    item->Focus();
                 }
                 if (item->onClick) item->onClick();
-                if (item->eatsClick) {
+                if (item->DoesEatClicks()) {
                     return;
                 }
             }
         }
     }
-    DeactivateItems();
+    DefocusItems();
 }
 
 void GUI::DrawUI(const Camera2D& camera) const {
     for (auto& item : ItemsInDrawingOrder) {
-        if (item->visible) {
+        if (item->IsVisible()) {
             if (screenBased || item->IsScreenBased()) {
                 item->DrawMyself(dt, camera);
             } else item->DrawMyself(dt);
@@ -53,7 +56,7 @@ void GUI::DrawUI(const Camera2D& camera) const {
 void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
     for (auto& item : ItemsInDrawingOrder) {
         item->currentFrameTime = dt;
-        if (!item->inactive) {
+        if (!item->IsInactive()) {
             if (screenBased || item->IsScreenBased()) {
                 item->DoPassiveAction(dt, camera);
                 if (item->WasIClicked(mousePos, camera)) {
@@ -69,10 +72,10 @@ void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
                     }
                 }
             }
-            if (item->active) {
+            if (item->IsFocused()) {
                 if (screenBased || item->IsScreenBased()) {
-                    item->DoActiveAction(dt, camera);
-                } else item->DoActiveAction(dt);
+                    item->DoFocusAction(dt, camera);
+                } else item->DoFocusAction(dt);
             }
         }
     }
@@ -81,24 +84,24 @@ void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
 void GUI::DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera) {
     for (auto& item : ItemsInDrawingOrder) {
         item->currentFrameTime = dt;
-        if (!item->inactive) {
+        if (!item->IsInactive()) {
             if (screenBased || item->IsScreenBased()) {
                 item->DoPassiveAction(dt, camera);
             } else {
                 item->DoPassiveAction(dt);
             }
-            if (item->active) {
+            if (item->IsFocused()) {
                 if (screenBased || item->IsScreenBased()) {
-                    item->DoActiveAction(dt, mousePos, camera);
-                } else item->DoActiveAction(dt, GetScreenToWorld2D(mousePos, camera));
+                    item->DoFocusAction(dt, mousePos, camera);
+                } else item->DoFocusAction(dt, GetScreenToWorld2D(mousePos, camera));
             }
         }
     }
 }
 
-void GUI::DeactivateItems() {
+void GUI::DefocusItems() {
     for (auto& [key, item] : Items) {
-        item->Deactivate();
+        item->Defocus();
     }
 }
 
@@ -146,7 +149,7 @@ void GUI::AddItem(const std::string& fxID, const std::string& ID) {
 
 void GUI::CreateItem(std::unique_ptr<Item>& item) {
     ItemsInDrawingOrder.push_back(item.get());
-    Items.insert({item->ID, std::move(item)});
+    Items.insert({item->GetID(), std::move(item)});
     needsSorting = true;
 }
 
@@ -155,8 +158,8 @@ void GUI::CreateItemID(std::unique_ptr<Item>& item, const std::string& ID) {
         size_t currentCount = ItemsCounter.at(item->GetFxID());
         std::string newID = currentCount == 0 ? item->GetFxID()
                                     : item->GetFxID() + std::to_string(currentCount);
-        item->ID = "GUI_AUTO_" + newID;
-    } else item->ID = ID;
+        item->SetID("GUI_AUTO_" + newID);
+    } else item->SetID(ID);
     ItemsCounter[item->GetFxID()]++;
 }
 
@@ -286,10 +289,10 @@ void GUI::RemoveItem(const std::string& ID) {
     if (IsIDTaken(ID)) {
         for (auto& [key, item] : Items) {
             if (IsContainer(item->GetFxID())) {
-                GetContainer(item->ID)->SafeRemoveItem(ID);
+                GetContainer(item->GetID())->SafeRemoveItem(ID);
             }
         }
-        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&ID](const Item* item) { return item->ID == ID; }),ItemsInDrawingOrder.end());
+        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&ID](const Item* item) { return item->GetID() == ID; }),ItemsInDrawingOrder.end());
         Items.erase(ID);
     } else {
         throw std::invalid_argument("Item " + ID + " doesn't exist");
@@ -313,8 +316,6 @@ bool GUI::IsContainer(const std::string& fxID) const {
 }
 
 bool GUI::IsFxID(const std::string& fxID) const {
-    static const std::unordered_set<std::string> FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
-    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "Chart", "PieChart"};
     return FXIDs.contains(fxID);
 }
 
@@ -492,7 +493,7 @@ PieChart* GUI::GetPieChart(const std::string& ID) {
 
 void GUI::SortOrder() {
     std::sort(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [](const Item* a, const Item* b) {
-        return a->priority > b->priority;
+        return a->GetPriority() > b->GetPriority();
     });
 }
 
@@ -503,7 +504,7 @@ void GUI::SetHighestPriority(const std::string& ID) {
     } catch (const std::out_of_range& e) {
         throw std::out_of_range("No item with the ID " + ID + " exists");
     }
-    size_t highestPriority = ItemsInDrawingOrder.back()->priority;
+    size_t highestPriority = ItemsInDrawingOrder.back()->GetPriority();
     item->SetPriority(highestPriority);
     needsSorting = true;
 }
@@ -515,7 +516,7 @@ void GUI::SetAboveHighestPriority(const std::string& ID) {
     } catch (const std::out_of_range& e) {
         throw std::out_of_range("No item with the ID " + ID + " exists");
     }
-    size_t highestPriority = ItemsInDrawingOrder.back()->priority;
+    size_t highestPriority = ItemsInDrawingOrder.back()->GetPriority();
     item->SetPriority(highestPriority);
     item->MoveUpPriority();
     needsSorting = true;
@@ -545,4 +546,20 @@ void GUI::SetGlobalPrimaryColour(const std::string& colour) {
     for (auto& [key, item] : Items) {
         item->colour.SetColour(colour);
     }
+}
+
+void GUI::SetGlobalScreenBased() {
+    screenBased = true;
+}
+
+void GUI::SetGlobalWorldBased() {
+    screenBased = false;
+}
+
+void GUI::SetGlobalCoordinateBase(const bool& flag) {
+    screenBased = flag;
+}
+
+bool GUI::IsGlobalScreenBased() const {
+    return screenBased;
 }

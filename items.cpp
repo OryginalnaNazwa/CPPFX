@@ -30,16 +30,16 @@ bool Item::WasIClicked(const Vector2& mousePosition) const {
     return false;
 }
 
-void Item::DoActiveAction(const float& dt, const Vector2& mousePosition) {
-    return DoActiveAction(dt);
+void Item::DoFocusAction(const float& dt, const Vector2& mousePosition) {
+    return DoFocusAction(dt);
 }
 
-void Item::DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
-    return DoActiveAction(dt, mousePosition);
+void Item::DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
+    return DoFocusAction(dt, mousePosition);
 }
 
-void Item::DoActiveAction(const float& dt, const Camera2D& camera) {
-    return DoActiveAction(dt);
+void Item::DoFocusAction(const float& dt, const Camera2D& camera) {
+    return DoFocusAction(dt);
 }
 
 void Item::DoPassiveAction(const float& dt) {
@@ -48,32 +48,6 @@ void Item::DoPassiveAction(const float& dt) {
 
 void Item::DoPassiveAction(const float& dt, const Camera2D& camera) {
     return DoPassiveAction(dt);
-}
-
-void Item::Deactivate() {
-    active = false;
-}
-
-void Item::Hide() {
-    inactive = true;
-    visible = false;
-}
-
-void Item::Show() {
-    inactive = false;
-    visible = true;
-}
-
-void Item::SetToWorld() {
-    screenBased = false;
-}
-
-void Item::SetToScreen() {
-    screenBased = true;
-}
-
-bool Item::IsScreenBased() const {
-    return screenBased;
 }
 
 // --- Helpers ---
@@ -122,6 +96,68 @@ void Item::MoveDownPriority() {
     priority++;
 }
 
+void Item::SetID(const std::string& id) {
+    ID = id;
+}
+
+void Item::Focus() {
+    focused = true;
+}
+
+void Item::Defocus() {
+    focused = false;
+}
+
+void Item::MakeInactive() {
+    inactive = true;
+}
+
+void Item::MakeActive() {
+    inactive = false;
+}
+
+void Item::SetInactive(const bool& flag) {
+    inactive = flag;
+}
+
+void Item::MakeInvisible() {
+    visible = false;
+}
+
+void Item::MakeVisible() {
+    visible = true;
+}
+
+void Item::SetVisible(const bool& flag) {
+    visible = flag;
+}
+
+void Item::Hide() {
+    inactive = true;
+    visible = false;
+}
+
+void Item::Show() {
+    inactive = false;
+    visible = true;
+}
+
+void Item::SetToWorld() {
+    screenBased = false;
+}
+
+void Item::SetToScreen() {
+    screenBased = true;
+}
+
+void Item::ConsumeClicks() {
+    eatsClick = true;
+}
+
+void Item::LetClicksThrough() {
+    eatsClick = false;
+}
+
 // --- Getters ---
 float Item::GetX() const {
     return xAnchor;
@@ -146,6 +182,32 @@ std::string Item::GetFxID() const {
 size_t Item::GetPriority() const {
     return priority;
 }
+
+std::string Item::GetID() const {
+    return ID;
+}
+
+bool Item::IsFocused() const {
+    return focused;
+}
+
+bool Item::IsInactive() const {
+    return inactive;
+}
+
+bool Item::IsScreenBased() const {
+    return screenBased;
+}
+
+bool Item::DoesEatClicks() const {
+    return eatsClick;
+}
+
+bool Item::IsVisible() const {
+    return visible;
+}
+
+//end Item
 
 std::string TextItem::Truncate(const std::string& text) const {
     if (MeasureText(text.c_str(), font.fontSize) + MeasureText("|", font.fontSize) + textMargin + 2 > width) {//makes sure that the blinker won't get out
@@ -195,18 +257,29 @@ std::string TextItem::GetText() const {
     return text;
 }
 
+void TextItem::SetTextMargin(const float& margin) {
+    if (margin < 0) {
+        textMargin = 0;
+        throw std::invalid_argument("Negative text margin value in " + ID + " type " + fxID);
+    } else textMargin = margin;
+}
+
+float TextItem::GetTextMargin() const {
+    return textMargin;
+}
+
 //--- Text Field ---
 
 void TextField::DrawMyself(const float& dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
-        if (promptText != "" && !active) {
+        if (promptText != "" && !focused) {
             DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, GREY);
         }
     } else {
         std::string truncated = Truncate(text);
         DrawText(truncated.c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
-        if (active && fmod(dt, 1.0f) < 0.5f) { //checks whether half a second passed
+        if (focused && fmod(dt, 1.0f) < 0.5f) { //checks whether half a second passed
             DrawText("|", MeasureText(truncated.c_str(), font.fontSize) + xAnchor + textMargin + 2, yAnchor + (height / 2) - (font.fontSize / 2),
                       font.fontSize, font.colour.GetColour());
         }
@@ -216,8 +289,8 @@ void TextField::DrawMyself(const float& dt) const {
     }
 }
 
-void TextField::DoActiveAction(const float& dt) {
-    if (active) {
+void TextField::DoFocusAction(const float& dt) {
+    if (focused) {
         if (IsKeyPressed(KEY_BACKSPACE)) {
             if (text != "") {
                 text.erase(text.size() - 1);
@@ -280,7 +353,7 @@ void Label::DrawMyself(const float& dt) const {
     }
 }
 
-void Label::DoActiveAction(const float& dt) {
+void Label::DoFocusAction(const float& dt) {
     return;
 }
 
@@ -295,13 +368,13 @@ void Button::DrawMyself(const float& dt) const {
     }
 }
 
-void Button::DoActiveAction(const float& dt) {
-    if (active) {
+void Button::DoFocusAction(const float& dt) {
+    if (focused) {
         if (timer > 0) {
             if (dt > timer) {
                 colour.SetColour(unPressedColour.GetColour());
                 timer = 0;
-                active = false;
+                focused = false;
             }
         } else {
             timer = dt + 0.1f;
@@ -326,8 +399,8 @@ void CheckBox::DrawMyself(const float& dt) const {
     }
 }
 
-void CheckBox::DoActiveAction(const float& dt) {
-   if (active) {
+void CheckBox::DoFocusAction(const float& dt) {
+   if (focused) {
         if (pressed) {
             colour.SetColour(unPressedColour.GetColour());
             pressed = false;
@@ -335,7 +408,7 @@ void CheckBox::DoActiveAction(const float& dt) {
             colour.SetColour(pressedColour.GetColour());
             pressed = true;
         }
-        active = false;
+        focused = false;
    }
 }
 
@@ -356,14 +429,34 @@ float CheckBox::GetTotalWidth() const {
     return width + labelMargin + (2 * textMargin) + MeasureText(text.c_str(), font.fontSize);
 }
 
+void CheckBox::SetPressed(const bool& flag) {
+    pressed = flag;
+}
+
+void CheckBox::Press() {
+    pressed = true;
+}
+
+void CheckBox::Unpress() {
+    pressed = false;
+}
+
+void CheckBox::SwitchPress() {
+    pressed = !pressed;
+}
+
+bool CheckBox::IsPressed() const {
+    return pressed;
+}
+
 //--- Container ---
 
 void Container::AddItem(Item* item) {
-    if (!IsIDTaken(item->ID)) {
-        Items.insert({item->ID, item});
+    if (!IsIDTaken(item->GetID())) {
+        Items.insert({item->GetID(), item});
         ItemsInDrawingOrder.push_back(item);
     } else {
-        throw std::invalid_argument("Item " + item->ID + " is already in the container " + ID);
+        throw std::invalid_argument("Item " + item->GetID() + " is already in the container " + ID);
     }
     needsSorting = true;
     needsOrdering = true;
@@ -371,7 +464,7 @@ void Container::AddItem(Item* item) {
 
 void Container::RemoveItem(const std::string& ID) {
     if (IsIDTaken(ID)) {
-        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&ID](const Item* item) { return item->ID == ID; }),ItemsInDrawingOrder.end());
+        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&ID](const Item* item) { return item->GetID() == ID; }),ItemsInDrawingOrder.end());
         Items.erase(ID);
     } else {
         throw std::invalid_argument("Item " + ID + " is not in the container " + this->ID + " or doesn't exist");
@@ -380,7 +473,7 @@ void Container::RemoveItem(const std::string& ID) {
 
 void Container::SafeRemoveItem(const std::string& ID) {
     if (IsIDTaken(ID)) {
-        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [&ID](const Item* item) { return item->ID == ID; }), ItemsInDrawingOrder.end());
+        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [&ID](const Item* item) { return item->GetID() == ID; }), ItemsInDrawingOrder.end());
         Items.erase(ID);
     }
 }
@@ -391,7 +484,7 @@ bool Container::IsIDTaken(const std::string& ID) const {
 
 void Container::SortOrder() {
     std::sort(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [](const Item* a, const Item* b) {
-        return a->priority > b->priority;
+        return a->GetPriority() > b->GetPriority();
     });
     needsSorting = false;
 }
@@ -416,15 +509,15 @@ void Box::SetPadding(const float& value) {
 
 void Workspace::SetPositionsOfItems() {
     for (auto& item : ItemsInDrawingOrder) {
-        if (item->xAnchor < this->xAnchor) {
+        if (item->GetX() < this->xAnchor) {
             item->SetX(this->xAnchor);
-        } else if (item->xAnchor > this->xAnchor + this->width) {
-            item->SetX(this->xAnchor + this->width - item->width);
+        } else if (item->GetX() > this->xAnchor + this->width) {
+            item->SetX(this->xAnchor + this->width - item->GetWidth());
         }
-        if (item->yAnchor < this->yAnchor) {
+        if (item->GetY() < this->yAnchor) {
             item->SetY(this->yAnchor);
-        } else if (item->yAnchor > this->yAnchor + this->height) {
-            item->SetY(this->yAnchor + this->height - item->height);
+        } else if (item->GetY() > this->yAnchor + this->height) {
+            item->SetY(this->yAnchor + this->height - item->GetHeight());
         }
     }
 }
@@ -433,40 +526,40 @@ void AnchorPane::SetPositionsOfItems() {
     for (auto& item : ItemsInDrawingOrder) {
         switch (alignment.GetAlignment()) {
             case Alignment::Alignments::TOP_LEFT:
-                item->SetX(item->xAnchor - previousX + xAnchor);
-                item->SetY(item->yAnchor - previousY + yAnchor);
+                item->SetX(item->GetX() - previousX + xAnchor);
+                item->SetY(item->GetY() - previousY + yAnchor);
                 break;
             case Alignment::Alignments::TOP_CENTRE:
-                item->SetX(item->xAnchor - (previousX + previousWidth / 2) + (xAnchor + width / 2));
-                item->SetY(item->yAnchor - previousY + yAnchor);
+                item->SetX(item->GetX() - (previousX + previousWidth / 2) + (xAnchor + width / 2));
+                item->SetY(item->GetY() - previousY + yAnchor);
                 break;
             case Alignment::Alignments::TOP_RIGHT:
-                item->SetX(item->xAnchor - (previousX + previousWidth) + (xAnchor + width));
-                item->SetY(item->yAnchor - previousY + yAnchor);
+                item->SetX(item->GetX() - (previousX + previousWidth) + (xAnchor + width));
+                item->SetY(item->GetY() - previousY + yAnchor);
                 break;
             case Alignment::Alignments::CENTRE_LEFT:
-                item->SetX(item->xAnchor - previousX + xAnchor);
-                item->SetY(item->yAnchor - (previousY + previousHeight / 2) + (yAnchor + height / 2));
+                item->SetX(item->GetX() - previousX + xAnchor);
+                item->SetY(item->GetY() - (previousY + previousHeight / 2) + (yAnchor + height / 2));
                 break;
             case Alignment::Alignments::CENTRE:
-                item->SetX(item->xAnchor - (previousX + previousWidth / 2) + (xAnchor + width / 2));
-                item->SetY(item->yAnchor - (previousY + previousHeight / 2) + (yAnchor + height / 2));
+                item->SetX(item->GetX() - (previousX + previousWidth / 2) + (xAnchor + width / 2));
+                item->SetY(item->GetY() - (previousY + previousHeight / 2) + (yAnchor + height / 2));
                 break;
             case Alignment::Alignments::CENTRE_RIGHT:
-                item->SetX(item->xAnchor - (previousX + previousWidth) + (xAnchor + width));
-                item->SetY(item->yAnchor - (previousY + previousHeight / 2) + (yAnchor + height / 2));
+                item->SetX(item->GetX() - (previousX + previousWidth) + (xAnchor + width));
+                item->SetY(item->GetY() - (previousY + previousHeight / 2) + (yAnchor + height / 2));
                 break;
             case Alignment::Alignments::BOTTOM_LEFT:
-                item->SetX(item->xAnchor - previousX + xAnchor);
-                item->SetY(item->yAnchor - (previousY + previousHeight) + (yAnchor + height));
+                item->SetX(item->GetX() - previousX + xAnchor);
+                item->SetY(item->GetY() - (previousY + previousHeight) + (yAnchor + height));
                 break;
             case Alignment::Alignments::BOTTOM_CENTRE:
-                item->SetX(item->xAnchor - (previousX + previousWidth / 2) + (xAnchor + width / 2));
-                item->SetY(item->yAnchor - (previousY + previousHeight) + (yAnchor + height));
+                item->SetX(item->GetX() - (previousX + previousWidth / 2) + (xAnchor + width / 2));
+                item->SetY(item->GetY() - (previousY + previousHeight) + (yAnchor + height));
                 break;
             case Alignment::Alignments::BOTTOM_RIGHT:
-                item->SetX(item->xAnchor - (previousX + previousWidth) + (xAnchor + width));
-                item->SetY(item->yAnchor - (previousY + previousHeight) + (yAnchor + height));
+                item->SetX(item->GetX() - (previousX + previousWidth) + (xAnchor + width));
+                item->SetY(item->GetY() - (previousY + previousHeight) + (yAnchor + height));
                 break;
         }
     }
@@ -515,7 +608,7 @@ void AnchorPane::DrawMyself(const float& dt) const {
     }
 }
 
-void AnchorPane::DoActiveAction(const float& dt) {
+void AnchorPane::DoFocusAction(const float& dt) {
     return;
 }
 
@@ -526,7 +619,7 @@ void Workspace::DrawMyself(const float& dt) const {
     }
 }
 
-void Workspace::DoActiveAction(const float& dt) {
+void Workspace::DoFocusAction(const float& dt) {
     return;
 }
 
@@ -537,7 +630,7 @@ void Box::DrawMyself(const float& dt) const {
     }
 }
 
-void Box::DoActiveAction(const float& dt) {
+void Box::DoFocusAction(const float& dt) {
     return;
 }
 
@@ -573,13 +666,13 @@ void VBox::SetPositionsOfItems() {
     float itemOffsetX = 0, itemOffsetY = 0;
     for (auto& item : ItemsInDrawingOrder) {
         if (alignment.IsRightAlignment()) {
-            itemOffsetX = -item->width;
+            itemOffsetX = -item->GetWidth();
             itemOffsetY = 0;
         } else if (alignment.IsCentreAlignment()) {
-            itemOffsetX = -item->width / 2;
+            itemOffsetX = -item->GetWidth() / 2;
             itemOffsetY = 0;
         } else if (alignment.IsBottomAlignment()) {
-            itemOffsetY = -item->height;
+            itemOffsetY = -item->GetHeight();
         } else {
             itemOffsetY = 0;
             itemOffsetX = 0;
@@ -588,7 +681,7 @@ void VBox::SetPositionsOfItems() {
 
         item->SetY(currentY + itemOffsetY);
 
-        currentY += padding + item->height;
+        currentY += padding + item->GetHeight();
         if (currentY > yAnchor + height) {
             height = currentY - yAnchor;
         }
@@ -628,7 +721,7 @@ void HBox::SetPositionsOfItems() {
     for (auto& item : ItemsInDrawingOrder) { //TODO Make it work properly
         item->SetX(currentX);
         item->SetY(startY);
-        currentX += padding + item->width;
+        currentX += padding + item->GetWidth();
         if (currentX > xAnchor + width) {
             width = currentX - xAnchor;
         }
@@ -664,38 +757,38 @@ void Spinner::DrawMyself(const float& dt, const Camera2D& camera) const {
     }
 }
 
-void Spinner::DoActiveAction(const float& dt, const Vector2& mousePosition) {
+void Spinner::DoFocusAction(const float& dt, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
-        incrementButton.active = true;
-        incrementButton.onClick();
+        incrementButton.Focus();
+        if (incrementButton.onClick) incrementButton.onClick();
     } else if (decrementButton.WasIClicked(mousePosition)) {
-        decrementButton.active = true;
-        decrementButton.onClick();
+        decrementButton.Focus();
+        if (decrementButton.onClick) decrementButton.onClick();
     }
-    decrementButton.DoActiveAction(dt);
-    incrementButton.DoActiveAction(dt);
+    decrementButton.DoFocusAction(dt);
+    incrementButton.DoFocusAction(dt);
 }
 
-void Spinner::DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
+void Spinner::DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
     if (incrementButton.WasIClicked(mousePosition, camera)) {
-        incrementButton.active = true;
-        incrementButton.onClick();
+        incrementButton.Focus();
+        if (incrementButton.onClick) incrementButton.onClick();
     } else if (decrementButton.WasIClicked(mousePosition, camera)) {
-        decrementButton.active = true;
-        decrementButton.onClick();
+        decrementButton.Focus();
+        if (decrementButton.onClick) decrementButton.onClick();
     }
-    decrementButton.Item::DoActiveAction(dt, camera);
-    incrementButton.Item::DoActiveAction(dt, camera);
+    decrementButton.Item::DoFocusAction(dt, camera);
+    incrementButton.Item::DoFocusAction(dt, camera);
 }
 
-void Spinner::DoActiveAction(const float& dt) {
-    incrementButton.DoActiveAction(dt);
-    decrementButton.DoActiveAction(dt);
+void Spinner::DoFocusAction(const float& dt) {
+    incrementButton.DoFocusAction(dt);
+    decrementButton.DoFocusAction(dt);
 }
 
 bool Spinner::WasIClicked(const Vector2& mousePosition) const {
     int xClick = mousePosition.x, yClick = mousePosition.y;
-    if (xClick >= xAnchor && xClick <= (xAnchor + width + incrementButton.width) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
+    if (xClick >= xAnchor && xClick <= (xAnchor + width + incrementButton.GetWidth()) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
         return true;
     }
     return false;
@@ -703,7 +796,7 @@ bool Spinner::WasIClicked(const Vector2& mousePosition) const {
 
 bool Spinner::WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const {
     int xClick = mousePosition.x, yClick = mousePosition.y;
-    if (xClick >= xAnchor && xClick <= (xAnchor + width + incrementButton.width) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
+    if (xClick >= xAnchor && xClick <= (xAnchor + width + incrementButton.GetWidth()) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
         return true;
     }
     return false;
@@ -798,12 +891,18 @@ void Spinner::SetButtonsWidth(const float& value) {
     decrementButton.SetWidth(value);
 }
 
-void Spinner::SetMax(const float& value) {
+void Spinner::SetMaxValue(const float& value) {
     maxValue = value;
+    if (minValue > maxValue) {
+        CPPFX_WARN("minValue greater than maxValue in Spinner " + ID);
+    }
 }
 
-void Spinner::SetMin(const float& value) {
+void Spinner::SetMinValue(const float& value) {
     minValue = value;
+    if (minValue > maxValue) {
+        CPPFX_WARN("minValue greater than maxValue in Spinner " + ID);
+    }
 }
 
 void Spinner::SetToWorld() {
@@ -818,6 +917,40 @@ void Spinner::SetToScreen() {
     decrementButton.SetToScreen();
 }
 
+float Spinner::GetMaxValue() const {
+    return maxValue;
+}
+
+float Spinner::GetMinValue() const {
+    return minValue;
+}
+
+void Spinner::SetMaxLimit(const bool& flag) {
+    hasMax = flag;
+}
+
+bool Spinner::HasMax() const {
+    return hasMax;
+}
+
+void Spinner::SetMinLimit(const bool& flag) {
+    hasMin = flag;
+}
+
+bool Spinner::HasMin() const {
+    return hasMin;
+}
+
+bool Spinner::IsAtMax() const {
+    if (!hasMax) return false;
+    return maxValue == value;
+}
+
+bool Spinner::IsAtMin() const {
+    if (!hasMin) return false;
+    return minValue == value;
+}
+
 //--- EditableSpinner ---
 
 void EditableSpinner::SetValue(const float& value) {
@@ -826,7 +959,7 @@ void EditableSpinner::SetValue(const float& value) {
 }
 
 void EditableSpinner::DrawMyself(const float& dt) const {
-    if (!editArea.active) {
+    if (!editArea.IsFocused()) {
        DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
        DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
     } else {
@@ -844,7 +977,7 @@ void EditableSpinner::DrawMyself(const float& dt, const Camera2D& camera) const 
     float xAnchor = camera.target.x + this->xAnchor / camera.zoom;
     float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
 
-    if (!editArea.active) {
+    if (!editArea.IsFocused()) {
        DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
        DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
     } else {
@@ -858,69 +991,69 @@ void EditableSpinner::DrawMyself(const float& dt, const Camera2D& camera) const 
     }
 }
 
-void EditableSpinner::DoActiveAction(const float& dt, const Vector2& mousePosition) {
+void EditableSpinner::DoFocusAction(const float& dt, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
-        incrementButton.active = true;
-        incrementButton.onClick();
+        incrementButton.Focus();
+        if (incrementButton.onClick) incrementButton.onClick();
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
-        editArea.active = false;
+        editArea.Defocus();
     } else if (decrementButton.WasIClicked(mousePosition)) {
-        decrementButton.active = true;
-        editArea.active = false;
-        decrementButton.onClick();
+        decrementButton.Focus();
+        editArea.Defocus();
+        if (decrementButton.onClick) decrementButton.onClick();
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
     } else if (editArea.WasIClicked(mousePosition)) {
-        editArea.active = true;
+        editArea.Focus();
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
     } else {
-        if (editArea.active) {
+        if (editArea.IsFocused()) {
             try {
                 value = std::stof(editArea.GetText());
             } catch (const std::invalid_argument&) {
                 //do nothing. Doesn't change the value.
             }
-            editArea.active = false;
+            editArea.Defocus();
         }
     }
-    decrementButton.DoActiveAction(dt);
-    incrementButton.DoActiveAction(dt);
-    editArea.DoActiveAction(dt);
+    decrementButton.DoFocusAction(dt);
+    incrementButton.DoFocusAction(dt);
+    editArea.DoFocusAction(dt);
 }
 
-void EditableSpinner::DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
+void EditableSpinner::DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
     if (incrementButton.WasIClicked(mousePosition, camera)) {
-        incrementButton.active = true;
-        incrementButton.onClick();
+        incrementButton.Focus();
+        if (incrementButton.onClick) incrementButton.onClick();
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
-        editArea.active = false;
+        editArea.Defocus();
     } else if (decrementButton.WasIClicked(mousePosition, camera)) {
-        decrementButton.active = true;
-        editArea.active = false;
-        decrementButton.onClick();
+        decrementButton.Focus();
+        editArea.Defocus();
+        if (decrementButton.onClick) decrementButton.onClick();
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
     } else if (editArea.WasIClicked(mousePosition, camera)) {
-        editArea.active = true;
+        editArea.Focus();
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
     } else {
-        if (editArea.active) {
+        if (editArea.IsFocused()) {
             try {
                 value = std::stof(editArea.GetText());
             } catch (const std::invalid_argument&) {
                 //do nothing. Doesn't change the value.
             }
-            editArea.active = false;
+            editArea.Defocus();
         }
     }
-    decrementButton.Item::DoActiveAction(dt, camera);
-    incrementButton.Item::DoActiveAction(dt, camera);
-    editArea.Item::DoActiveAction(dt, camera);
+    decrementButton.Item::DoFocusAction(dt, camera);
+    incrementButton.Item::DoFocusAction(dt, camera);
+    editArea.Item::DoFocusAction(dt, camera);
 }
 
-void EditableSpinner::DoActiveAction(const float& dt) {
-    if (!active) editArea.active = false;
-    incrementButton.DoActiveAction(dt);
-    decrementButton.DoActiveAction(dt);
-    editArea.DoActiveAction(dt);
+void EditableSpinner::DoFocusAction(const float& dt) {
+    if (!IsFocused()) editArea.Defocus();
+    incrementButton.DoFocusAction(dt);
+    decrementButton.DoFocusAction(dt);
+    editArea.DoFocusAction(dt);
 }
 
 void EditableSpinner::SetX(const float& x) {
@@ -952,9 +1085,9 @@ void EditableSpinner::SetHeight(const float& value) {
     editArea.SetHeight(height);
 }
 
-void EditableSpinner::Deactivate() {
-    editArea.active = false;
-    active = false;
+void EditableSpinner::Defocus() {
+    editArea.Defocus();
+    focused = false;
     try {
         value = std::stof(editArea.GetText());
     } catch (const std::invalid_argument&) {
@@ -978,14 +1111,14 @@ void EditableSpinner::SetToScreen() {
 void PasswordField::DrawMyself(const float& dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
-        if (promptText != "" && !active) {
+        if (promptText != "" && !focused) {
             DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, GREY);
         }
     } else {
         std::string password(text.size(), '*');
         std::string truncated = Truncate(password);
         DrawText(Truncate(truncated).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
-        if (active && fmod(dt, 1.0f) < 0.5f) {
+        if (focused && fmod(dt, 1.0f) < 0.5f) {
             DrawText("|", MeasureText(truncated.c_str(), font.fontSize) + xAnchor + textMargin + 2, yAnchor + (height / 2) - (font.fontSize / 2),
                       font.fontSize, font.colour.GetColour());
         }
@@ -1036,7 +1169,7 @@ bool ProgressIndicator::IsComplete() const {
     return false;
 }
 
-void ProgressIndicator::DoActiveAction(const float& dt) {
+void ProgressIndicator::DoFocusAction(const float& dt) {
     return;
 }
 
@@ -1117,6 +1250,24 @@ void ProgressIndicator::DrawMyself(const float& dt) const {
     }
 }
 
+void ProgressIndicator::DoDisplayValue() {
+    displayValue = true;
+}
+
+void ProgressIndicator::DoNotDisplayValue() {
+    displayValue = false;
+}
+
+void ProgressIndicator::SetDisplayValue(const bool& flag) {
+    displayValue = flag;
+}
+
+bool ProgressIndicator::IsDisplayingValue() const {
+    return displayValue;
+}
+
+// ProgressBar
+
 void ProgressBar::DrawMyself(const float& dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (segmented) {
@@ -1188,6 +1339,24 @@ void ProgressBar::SetSegments(const int& number, const float& gap) {
     SetGapBetweenSegments(gap);
 }
 
+void ProgressBar::Segmented() {
+    segmented = true;
+}
+
+void ProgressBar::Solid() {
+    segmented = false;
+}
+
+void ProgressBar::SetSegemented(const bool& flag) {
+    segmented = flag;
+}
+
+bool ProgressBar::IsSegmented() const {
+    return segmented;
+}
+
+// Pressed button
+
 void PressedButton::DrawMyself(const float& dt) const {
     std::string textToDisplay;
     if (pressed) {
@@ -1206,11 +1375,11 @@ void PressedButton::DrawMyself(const float& dt) const {
     }
 };
 
-void PressedButton::DoActiveAction(const float& dt) {
+void PressedButton::DoFocusAction(const float& dt) {
     return;
 }
 
-void PressedButton::DoActiveAction(const float& dt, const Vector2& mousePosition) {
+void PressedButton::DoFocusAction(const float& dt, const Vector2& mousePosition) {
     pressed = !pressed;
 }
 
@@ -1225,6 +1394,28 @@ void PressedButton::ClearPressedText() {
 std::string PressedButton::GetPressedText() const {
     return pressedText;
 }
+
+void PressedButton::SetPressed(const bool& flag) {
+    pressed = flag;
+}
+
+void PressedButton::Press() {
+    pressed = true;
+}
+
+void PressedButton::Unpress() {
+    pressed = false;
+}
+
+void PressedButton::SwitchPress() {
+    pressed = !pressed;
+}
+
+bool PressedButton::IsPressed() const {
+    return pressed;
+}
+
+// ------- Chart ---------
 
 void Chart::AddElement(const std::string& label, const double& value) {
     labels.push_back(label);
@@ -1292,7 +1483,9 @@ size_t Chart::GetValuesSize() const {
     return values.size();
 }
 
-void PieChart::DoActiveAction(const float& dt) {
+// ---------- Pie chart -----------
+
+void PieChart::DoFocusAction(const float& dt) {
     return;
 }
 
@@ -1352,4 +1545,36 @@ void PieChart::DrawMyself(const float& dt) const {
         currentAngle += 360 * percent;
         index++;
     }
+}
+
+void PieChart::DoShowLabels() {
+    showLabels = true;
+}
+
+void PieChart::DoNotShowLabels() {
+    showLabels = false;
+}
+
+void PieChart::SetShowingLabels(const bool& flag) {
+    showLabels = flag;
+}
+
+bool PieChart::IsShowingLabels() const {
+    return showLabels;
+}
+
+void PieChart::DoShowPercentage() {
+    showPercentage =  true;
+}
+
+void PieChart::DoNotShowPercentage() {
+    showPercentage = false;
+}
+
+void PieChart::SetShowingPercentage(const bool& flag) {
+    showPercentage = flag;
+}
+
+bool PieChart::IsShowingPercentage() const {
+    return showPercentage;
 }

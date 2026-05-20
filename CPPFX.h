@@ -12,9 +12,11 @@ namespace CPPFX {
 class GUI {
 public:
 
-    bool screenBased;
-
-    GUI() : screenBased(false) {}
+    GUI() : screenBased(false) {
+        for (auto& id : FXIDs) {
+            ItemsCounter.insert({id, 0});
+        }
+    }
 
     /**
      *  @brief Primary UI drawing and interaction loop.
@@ -223,29 +225,22 @@ public:
 
     std::vector<std::string> GetItemsIDs() const;
 
+    void SetGlobalScreenBased();
+    void SetGlobalWorldBased();
+    /**
+     *  @brief Sets whether the items will be screen based or world based.
+     *  @param flag true - screen, false - world.
+     */
+    void SetGlobalCoordinateBase(const bool& flag);
+    bool IsGlobalScreenBased() const;
+
 private:
+    bool screenBased;
+
     std::map<std::string, std::unique_ptr<Item>> Items;
     std::vector<Item*> ItemsInDrawingOrder;
 
-    std::map<std::string, size_t> ItemsCounter = {
-        {"TextField", 0},
-        {"Label", 0},
-        {"Button", 0},
-        {"CheckBox", 0},
-        {"DropDown", 0},
-        {"AnchorPane", 0},
-        {"VBox", 0},
-        {"HBox", 0},
-        {"Workspace", 0},
-        {"Spinner", 0},
-        {"EditableSpinner", 0},
-        {"PasswordField", 0},
-        {"ProgressIndicator", 0},
-        {"ProgressBar", 0},
-        {"PressedButton", 0},
-        {"List", 0},
-        {"PieChart", 0}
-    };
+    std::map<std::string, size_t> ItemsCounter;
 
     float dt = 0; ///frame time
     bool needsSorting = false; ///lazy sort
@@ -255,7 +250,7 @@ private:
     void DoItemsActions(const Vector2& mousePos, const Camera2D& camera);
     void DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera);
 
-    void DeactivateItems();
+    void DefocusItems();
 
     bool IsContainer(const std::string& fxID) const;
 
@@ -269,6 +264,11 @@ private:
      *  @param ID ID to be given to the new item. If empty, defaults.
      */
     void CreateItemID(std::unique_ptr<Item>& item, const std::string& ID = "");
+
+    static const std::unordered_set<std::string> FXIDs;
+    /*{"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
+    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "Chart", "PieChart"}*/
+
 };
 
 }

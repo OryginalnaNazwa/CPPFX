@@ -23,25 +23,13 @@ namespace CPPFX {
  */
 class Item {
 public:
-    std::string ID = ""; ///<ID used by the user, variable.
     Colour colour;
 
-    float xAnchor; ///<top left x coordinate
-    float yAnchor; ///<top left y coordinate
-    float height;
-    float width;
-
-    bool active;
-    size_t priority; ///<order of drawing. Set to 3 by default for convenience of moving priority around. The higher the priority, the quicker it gets done - but gets drawn under.
-    bool visible; ///<invisible items are still interactable
-    bool inactive; ///<inactive items are not interactable
-    bool eatsClick; ///<if false, allows the click to continue under it
-    float currentFrameTime;
-
     Item(const std::string& i)
-        : xAnchor(0), yAnchor(0), height(100), width(200), active(false), priority(3), visible(true), inactive(false), eatsClick(true), screenBased(false), fxID(i)  {}
+        : ID(""), xAnchor(0), yAnchor(0), height(100), width(200), focused(false),visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
     Item(const std::string& i, const float& w, const float& h)
-        : xAnchor(0), yAnchor(0), height(h), width(w), active(false), priority(3), visible(true), inactive(false), eatsClick(true), screenBased(false), fxID(i)  {}
+        : ID(""), xAnchor(0), yAnchor(0), height(h), width(w), focused(false),visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
+
 
     virtual void DrawMyself(const float& dt) const;
     virtual void DrawMyself(const float& dt, const Camera2D& camera) const;
@@ -54,33 +42,49 @@ public:
     virtual void DoPassiveAction(const float& dt);
     virtual void DoPassiveAction(const float& dt, const Camera2D& camera);
     /**
-     *  @brief Action done while the item is active.
+     *  @brief Action done while the item is focused.
      *  @param dt Frame time
      */
-    virtual void DoActiveAction(const float& dt) = 0;
-    virtual void DoActiveAction(const float& dt, const Camera2D& camera);
+    virtual void DoFocusAction(const float& dt) = 0;
+    virtual void DoFocusAction(const float& dt, const Camera2D& camera);
     /**
-     *  @brief Action done while the item is active and it depends on mouse click.
+     *  @brief Action done while the item is focused and it depends on mouse click.
      *  @details Defaults to the previous DoActiveAction().
      *  @param dt Frame time
      *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
      */
-    virtual void DoActiveAction(const float& dt, const Vector2& mousePosition);
-    virtual void DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera);
+    virtual void DoFocusAction(const float& dt, const Vector2& mousePosition);
+    virtual void DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera);
     /**
-     *  @brief Sets active to false;
+     *  @brief Sets focused to false;
      */
-    virtual void Deactivate();
+    virtual void Defocus();
+    virtual void Focus();
+    bool IsFocused() const;
+
+    void MakeInactive();
+    void MakeActive();
+    void SetInactive(const bool& flag);
+    bool IsInactive() const;
 
     virtual void SetToWorld();
     virtual void SetToScreen();
     bool IsScreenBased() const;
+
+    void MakeInvisible();
+    void MakeVisible();
+    void SetVisible(const bool& flag);
+    bool IsVisible() const;
 
     /**
      *  @brief Sets both inactive and invisible to true.
      */
     void Hide();
     void Show();
+
+    void ConsumeClicks();
+    void LetClicksThrough();
+    bool DoesEatClicks() const;
 
     /**
      *  @brief Launches on click.
@@ -111,6 +115,7 @@ public:
      *  @throws std::range_error If the value is negative.
      */
     virtual void SetWidth(const float& value);
+    void SetID(const std::string& id);
     /**
      *  @brief Sets the priority in the order of drawing of the item.
      *  @details Sets 0 on negative value.
@@ -154,6 +159,7 @@ public:
      *  @returns number representing priority
      */
     size_t GetPriority() const;
+    std::string GetID() const;
 
     /**
      *  @brief Returns the internal library identificator of the item.
@@ -162,7 +168,21 @@ public:
      */
     std::string GetFxID() const;
 
+    float currentFrameTime;
+
 protected:
+    std::string ID; ///<ID used by the user, variable.
+    float xAnchor; ///<top left x coordinate
+    float yAnchor; ///<top left y coordinate
+    float height;
+    float width;
+
+    bool focused;
+    bool visible; ///<invisible items are still interactable
+    bool inactive; ///<inactive items are not interactable
+    bool eatsClick; ///<if false, allows the click to continue under it
+    size_t priority; ///<order of drawing. Set to 3 by default for convenience of moving priority around. The higher the priority, the quicker it gets done - but gets drawn under.
+
     bool screenBased;
     const std::string fxID; ///ID for the library.
     float timer = 0;
@@ -176,11 +196,10 @@ private:
  */
 class TextItem : public Item {
 public:
-    float textMargin = 10;
     Font font;
 
-    TextItem(const std::string& i) : Item(i), font(height / 4) {}
-    TextItem(const std::string& i, const float& w, const float& h) : Item(i, w, h), font(h / 4) {}
+    TextItem(const std::string& i) : Item(i), font(height / 4), text(i), textMargin(10) {}
+    TextItem(const std::string& i, const float& w, const float& h) : Item(i, w, h), font(h / 4), text(i), textMargin(10) {}
 
     /**
      *  @brief Expands the width and height to accommodate text.
@@ -208,8 +227,18 @@ public:
      */
     std::string GetText() const;
 
+    /**
+     *  @brief Sets the distance between border and text in x axis.
+     *  @param margin new value
+     *  @details Sets 0 at throw.
+     *  @throws std::invalid_argument if margin is negative.
+     */
+    void SetTextMargin(const float& margin);
+    float GetTextMargin() const;
+
 protected:
     std::string text;
+    float textMargin;
 
     /**
      *  @brief Truncates text if needed.
@@ -231,31 +260,31 @@ public:
     Label() : TextItem("Label") {text = "Label";}
 
     void DrawMyself(const float& dt) const override;
-    void DoActiveAction(const float& dt) override;
+    void DoFocusAction(const float& dt) override;
 
 };
 
 /**
  *  @class TextField
  *  @brief Allows user to enter text into the field.
- *  @details Displays the text and allows input when active. Has border.
+ *  @details Displays the text and allows input when focused. Has border.
  */
 class TextField : public TextItem {
 public:
     Border border;
 
-    std::string promptText = ""; /// string displayed when the text is empty
-
-    TextField() : TextItem("TextField") {text = "TextField";}
-    TextField(const std::string& i) : TextItem(i) {}
+    TextField() : TextItem("TextField"), promptText("") {}
+    TextField(const std::string& i) : TextItem(i), promptText("") {}
 
     void DrawMyself(const float& dt) const override;
-    void DoActiveAction(const float& dt) override;
+    void DoFocusAction(const float& dt) override;
 
     void SetPromptText(const std::string& text);
     void ClearPromptText();
     std::string GetPromptText() const;
 
+protected:
+    std::string promptText; /// string displayed when the text is empty
 };
 
 /**
@@ -269,11 +298,11 @@ public:
     Colour pressedColour;
     Colour unPressedColour;
 
-    Button() : TextItem("Button"), pressedColour(GRAY), unPressedColour(LIGHTGRAY) {text = "Button";}
-    Button(const std::string& id) : TextItem(id), pressedColour(GREY), unPressedColour(LIGHTGRAY) {text = "Button";}
+    Button() : TextItem("Button"), pressedColour(GRAY), unPressedColour(LIGHTGRAY) {}
+    Button(const std::string& id) : TextItem(id), pressedColour(GREY), unPressedColour(LIGHTGRAY) {}
 
     void DrawMyself(const float& dt) const override;
-    void DoActiveAction(const float& dt) override;
+    void DoFocusAction(const float& dt) override;
 
 };
 
@@ -289,13 +318,13 @@ public:
     Colour pressedColour;
     Colour unPressedColour;
 
-    bool pressed;
-    bool drawsX = true;
 
-    CheckBox() : TextItem("CheckBox", 50, 50), pressedColour(GRAY), unPressedColour(LIGHTGRAY), pressed(false) {text = "CheckBox"; font.fontSize = height / 2;}
+    bool drawsX = true; //TODO add different shapes
+
+    CheckBox() : TextItem("CheckBox", 50, 50), pressedColour(GRAY), unPressedColour(LIGHTGRAY), pressed(false), labelMargin(10) {font.fontSize = height / 2;}
 
     void DrawMyself(const float& dt) const override;
-    void DoActiveAction(const float& dt) override;
+    void DoFocusAction(const float& dt) override;
 
     float GetTotalWidth() const;
 
@@ -308,8 +337,16 @@ public:
     void SetLabelMargin(const float& value);
     float GetLabelMargin() const;
 
+    void SetPressed(const bool& flag);
+    void Press();
+    void Unpress();
+    void SwitchPress();
+    bool IsPressed() const;
+
 private:
-    float labelMargin = 10; ///<distance between the box and the label text.
+    bool pressed;
+    float labelMargin; ///<distance between the box and the label text.
+
 
 };
 
@@ -334,7 +371,7 @@ public:
         if (border.GetThickness() > 0) {
             border.DrawMyself(xAnchor, yAnchor, width + textMargin, height);
         }
-        if (active) {
+        if (focused) {
             float yCurrent = yAnchor + height;
             DrawLineEx({xAnchor, yCurrent}, {xAnchor + width, yCurrent}, 10, BLACK);
             for (auto& [label, value] : values) { //TODO make insertion and other orders available
@@ -347,7 +384,7 @@ public:
     }
 
     bool WasIClicked(const Vector2& mousePosition) const override {
-        if (active) {
+        if (focused) {
             if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y >= yAnchor && mousePosition.y <= yAnchor + ((values.size() + 1) * height)) {
                 return true;
             }
@@ -356,7 +393,7 @@ public:
     }
 
     bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const override {
-        if (active) {
+        if (focused) {
             if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y >= yAnchor && mousePosition.y <= yAnchor + ((values.size() + 1) * height)) {
                 return true;
             }
@@ -364,7 +401,7 @@ public:
         } else return Item::WasIClicked(mousePosition, camera);
     }
 
-    void DoActiveAction(const float& dt) {
+    void DoFocusAction(const float& dt) {
         return;
     }
 
@@ -374,31 +411,31 @@ public:
         }
     }
 
-    void DoActiveAction(const float& dt, const Vector2& mousePosition) override {
+    void DoFocusAction(const float& dt, const Vector2& mousePosition) override {
         if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
             int index = (mousePosition.y - (yAnchor + height)) / height;
             auto it = std::next(values.begin(), index);
             currentLabel = it->first;
             currentValue = it->second;
-            active = false;
+            focused = false;
             return;
         }
         if (!Item::WasIClicked(mousePosition)) {
-            active = false;
+            Defocus();
         }
     }
 
-    void DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override {
+    void DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override {
         if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
             int index = (mousePosition.y - (yAnchor + height)) / height;
             auto it = std::next(values.begin(), index);
             currentLabel = it->first;
             currentValue = it->second;
-            active = false;
+            focused = false;
             return;
         }
         if (!WasIClicked(mousePosition, camera)) {
-            active = false;
+            Defocus();
         }
     }
 
@@ -589,7 +626,7 @@ public:
     void SetPositionsOfItems() override;
 
     void DrawMyself(const float& dt) const override;
-    void DoActiveAction(const float& dt) override;
+    void DoFocusAction(const float& dt) override;
 };
 
 class AnchorPane : public Container {
@@ -600,7 +637,7 @@ public:
     void SetPositionsOfItems() override;
 
     void DrawMyself(const float& dt) const override;
-    void DoActiveAction(const float& dt) override;
+    void DoFocusAction(const float& dt) override;
 
     void SetX(const float& x) override;
     void SetY(const float& y) override;
@@ -624,7 +661,7 @@ public:
     void SetPadding(const float& value);
 
     void DrawMyself(const float& dt) const override;
-    void DoActiveAction(const float& dt) override;
+    void DoFocusAction(const float& dt) override;
 
 };
 
@@ -649,28 +686,22 @@ public:
     Button incrementButton;
     Button decrementButton;
     Border border;
-    float valueMargin = 10;
     Font font;
-    float value;
-    float stepValue;
-    bool hasMin = false;
-    bool hasMax = false;
-    float minValue;
-    float maxValue;
-    bool allowWrap = false; ///< causes overflow and underflow of values: max + step = min, min - step = max.
 
-    Spinner() : Item("Spinner", 200, 100), font(height / 2), value(0), stepValue(1)  {
+    Spinner()
+        : Item("Spinner", 200, 100), font(height / 2), valueMargin(10), value(0), stepValue(1), hasMin(false), hasMax(false), minValue(0), maxValue(100), allowWrap(false)  {
         Initialise();
     }
-    Spinner(const std::string& i) : Item(i, 200, 100), font(height / 2), value(0), stepValue(1) {
+    Spinner(const std::string& i)
+        : Item(i, 200, 100), font(height / 2), valueMargin(10), value(0), stepValue(1), hasMin(false), hasMax(false), minValue(0), maxValue(100), allowWrap(false) {
         Initialise();
     }
 
     void DrawMyself(const float& dt) const override;
     void DrawMyself(const float& dt, const Camera2D& camera) const override;
-    void DoActiveAction(const float& dt) override;
-    void DoActiveAction(const float& dt, const Vector2& mousePosition) override;
-    void DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override;
+    void DoFocusAction(const float& dt) override;
+    void DoFocusAction(const float& dt, const Vector2& mousePosition) override;
+    void DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override;
     bool WasIClicked(const Vector2& mousePosition) const override;
     bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const override;
 
@@ -678,11 +709,57 @@ public:
     void SetToWorld() override;
 
     virtual void SetValue(const float& value);
-    void SetStep(const float& step);
     float GetValue() const;
+    void SetStep(const float& step);
     float GetStep() const;
-    void SetMax(const float& value);
-    void SetMin(const float& value);
+
+    /**
+     *  @brief Sets max value.
+     *  @param value new value to be set
+     *  @details Does NOT set hasMax. maxValue lesser than minValue is undefined behaviour.
+     */
+    void SetMaxValue(const float& value);
+    /**
+     *  @brief Gives max value.
+     *  @details Does NOT set hasMax.
+     *  @returns maxValue
+     */
+    float GetMaxValue() const;
+    /**
+     *  @brief Sets min value.
+     *  @param value new value to be set
+     *  @details Does NOT set hasMin. minValue greater than maxValue is undefined behaviour.
+     */
+    void SetMinValue(const float& value);
+    /**
+     *  @brief Gives max value.
+     *  @details Does NOT set hasMax.
+     *  @returns minValue
+     */
+    float GetMinValue() const;
+    /**
+     *  @brief Sets a flag to enable/disable upper limit
+     *  @param flag whether to enable or disable (true or false)
+     */
+    void SetMaxLimit(const bool& flag);
+    bool HasMax() const;
+    /**
+     *  @brief Sets a flag to enable/disable lower limit
+     *  @param flag whether to enable or disable (true or false)
+     */
+    void SetMinLimit(const bool& flag);
+    bool HasMin() const;
+
+    /**
+     *  @brief Checks whether the current value is at max.
+     *  @returns False if max limit is not enabled or if value is lower than max
+     */
+    bool IsAtMax() const;
+    /**
+     *  @brief Checks whether the current value is at min.
+     *  @returns False if min limit is not enabled or if value is greater than min
+     */
+    bool IsAtMin() const;
 
     void SetX(const float& x) override;
     void SetY(const float& y) override;
@@ -691,6 +768,16 @@ public:
     void SetButtonsWidth(const float& value);
 
 protected:
+    float valueMargin; ///<distance between value and border
+
+    float value; ///<current value
+    float stepValue; ///<single press increase/decrease
+    bool hasMin;
+    bool hasMax;
+    float minValue;
+    float maxValue;
+    bool allowWrap; ///< causes overflow and underflow of values: max + step = min, min - step = max.
+
     void Initialise();
     void Increment();
     void Decrement();
@@ -714,10 +801,10 @@ public:
 
     void DrawMyself(const float& dt) const override;
     void DrawMyself(const float& dt, const Camera2D& camera) const override;
-    void DoActiveAction(const float& dt) override;
-    void DoActiveAction(const float& dt, const Vector2& mousePosition) override;
-    void DoActiveAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override;
-    void Deactivate() override;
+    void DoFocusAction(const float& dt) override;
+    void DoFocusAction(const float& dt, const Vector2& mousePosition) override;
+    void DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override;
+    void Defocus() override;
 
     void SetToScreen() override;
     void SetToWorld() override;
@@ -732,22 +819,20 @@ public:
 class PasswordField : public TextField {
 public:
 
-    PasswordField() : TextField("PasswordField") {promptText = "Password";}
+    PasswordField() : TextField("PasswordField") {promptText = "Password"; ClearText();}
 
     void DrawMyself(const float& dt) const override;
 };
 
 class ProgressIndicator : public Item {
 public:
-    bool displayValue;
-
     enum Shapes {DOTS, CIRCLE, RING};
 
     Shapes shape;
     Font font;
 
-    ProgressIndicator() : Item("ProgressIndicator"), displayValue(true), value(-1), shape(ProgressIndicator::Shapes::DOTS), font(height / 4) {}
-    ProgressIndicator(const std::string& i) : Item(i), displayValue(true), value(-1), font(height / 4) {}
+    ProgressIndicator() : Item("ProgressIndicator"), shape(ProgressIndicator::Shapes::DOTS), font(height / 4), displayValue(true), value(-1)  {}
+    ProgressIndicator(const std::string& i) : Item(i), font(height / 4), displayValue(true), value(-1) {}
 
     /**
      *  @brief Sets progress value;
@@ -793,10 +878,20 @@ public:
     Shapes GetShape() const;
     std::string GetShapeString() const;
 
+    void DoDisplayValue();
+    void DoNotDisplayValue();
+    /**
+     *  @brief Sets whether the indicatior should display the numerical value (percentage) of progress.
+     *  @param flag true - enable, false - disable.
+     */
+    void SetDisplayValue(const bool& flag);
+    bool IsDisplayingValue() const;
+
     void DrawMyself(const float& dt) const override;
-    void DoActiveAction(const float& dt) override;
+    void DoFocusAction(const float& dt) override;
 
 protected:
+    bool displayValue;
     float value; ///< Raw value of the progress - between 0 and 1, or -1;
 
     Shapes StringToShape(const std::string& shape) const;
@@ -806,10 +901,6 @@ protected:
 class ProgressBar : public ProgressIndicator {
 public:
     Colour barColour;
-    float barMargin; ///< the distance between the top/side of the main bar and the progress bar.
-    bool segmented;
-    int numberOfSegments;
-    float gapBetweenSegments;
 
     ProgressBar() : ProgressIndicator("ProgressBar"), barColour(GREEN), barMargin(5), segmented(false), numberOfSegments(10), gapBetweenSegments(1) {}
 
@@ -849,24 +940,51 @@ public:
      *  @see SetNumberOfSegments
      */
     void SetSegments(const int& number, const float& gap);
+
+    /**
+     *  @brief Segments the bar for display.
+     */
+    void Segmented();
+    /**
+     *  @brief Turns off segmentation.
+     */
+    void Solid();
+    /**
+     *  @brief Sets whether the bar should be segmented or not.
+     *  @param flag true - yes, false - no.
+     */
+    void SetSegemented(const bool& flag);
+    bool IsSegmented() const;
+
+private:
+    float barMargin; ///< the distance between the top/side of the main bar and the progress bar.
+    bool segmented;
+    int numberOfSegments;
+    float gapBetweenSegments;
 };
 
 class PressedButton : public Button {
 public:
 
-    bool pressed;
-    std::string pressedText;
-
-
     PressedButton() : Button("PressedButton"), pressed(false), pressedText("Pressed Button") {}
 
     void DrawMyself(const float& dt) const override;
-    void DoActiveAction(const float& dt) override;
-    void DoActiveAction(const float& dt, const Vector2& mousePosition) override;
+    void DoFocusAction(const float& dt) override;
+    void DoFocusAction(const float& dt, const Vector2& mousePosition) override;
 
     void SetPressedText(const std::string& value);
     void ClearPressedText();
     std::string GetPressedText() const;
+
+    void SetPressed(const bool& flag);
+    void Press();
+    void Unpress();
+    void SwitchPress();
+    bool IsPressed() const;
+
+private:
+    bool pressed;
+    std::string pressedText;
 };
 
 template<typename T>
@@ -983,7 +1101,7 @@ public:
             }
         }
     }
-    void DoActiveAction(const float& dt) override {
+    void DoFocusAction(const float& dt) override {
         return;
     }
 
@@ -1045,18 +1163,28 @@ protected:
 class PieChart : public Chart {
 public:
 
-    bool showLabels;
-    bool showPercentage;
-
     PieChart() : Chart("PieChart"), showLabels(false), showPercentage(false) {
         border.SetDrawingMethod([this](const float& x, const float& y, const float& w, const float& h){
             DrawCircle(x, y, w + border.GetThickness(), border.colour.GetColour());
         });
     }
 
-    void DoActiveAction(const float& dt) override;
+    void DoFocusAction(const float& dt) override;
     void DrawMyself(const float& dt) const override;
 
+    void DoShowLabels();
+    void DoNotShowLabels();
+    void SetShowingLabels(const bool& flag);
+    bool IsShowingLabels() const;
+
+    void DoShowPercentage();
+    void DoNotShowPercentage();
+    void SetShowingPercentage(const bool& flag);
+    bool IsShowingPercentage() const;
+
+private:
+    bool showLabels;
+    bool showPercentage;
 };
 
 }

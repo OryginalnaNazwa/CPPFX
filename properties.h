@@ -16,8 +16,14 @@
 
 /****************************
  * This file contains the properties used in the FX items.
+ * And also some helpers.
  ****************************/
 
+#ifdef NDEBUG
+#define CPPFX_WARN(msg)
+#else
+#define CPPFX_WARN(msg) std::cerr << "[CPPFX Warning] " << msg << "\n"
+#endif
 
 namespace CPPFX {
 
