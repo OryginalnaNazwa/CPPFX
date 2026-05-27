@@ -7,7 +7,8 @@
 namespace CPPFX {
 
 /**
- * @class Primary controller class for GUI elements.
+ * @class GUI
+ * @brief Primary controller class for GUI elements.
  */
 class GUI {
 public:
@@ -54,10 +55,6 @@ public:
     PressedButton* AddPressedButton(const std::string& ID = "");
     PieChart* AddPieChart(const std::string& ID = "");
 
-    /**
-     *  @brief Creates a dropdown.
-     *  @param valueType the type of value the dropdown will be holding.
-     */
     template <typename T>
     DropDown<T>* AddDropDown(const std::string& ID = "") {
         std::unique_ptr<Item> dropdown = std::make_unique<DropDown<T>>();
@@ -78,9 +75,17 @@ public:
     /**
      *  @brief Removes an item.
      *  @details Safe removes from all containers.
+     *  @param ID ID of the item to be removed.
      */
     void RemoveItem(const std::string& ID);
 
+    /**
+     *  @brief Gets an item of the specified type.
+     *  @param ID ID of the item to be returned.
+     *  @returns A pointer to the item.
+     *  @throws std::runtime_error if the type is incorrect for the given item.
+     *  @throws std::out_of_range if no item with given ID exists.
+     */
     template <typename T>
     T* GetItem(const std::string& ID) {
         try {
@@ -174,6 +179,7 @@ public:
      *  @brief Sets the item's priority to highest available.
      *  @details Assumes the Items are sorted.
      *  @param ID the ID of the Item which priority will be changed.
+     *  @throws std::out_of_range if item with the ID doesn't exist.
      */
     void SetHighestPriority(const std::string& ID);
 
@@ -181,6 +187,7 @@ public:
      *  @brief Sets the item's priority to be the highest of all items.
      *  @details Assumes the Items are sorted. If another item has priority of 0 already, this item will have new priority equal to it.
      *  @param ID the ID of the Item which priority will be changed.
+     *  @throws std::out_of_range if item with the ID doesn't exist.
      */
     void SetAboveHighestPriority(const std::string& ID);
 
@@ -223,15 +230,29 @@ public:
      */
     bool IsFxID(const std::string& fxID) const;
 
+    /**
+     *  @brief Grabs IDs of all items currently in GUI.
+     *  @returns a vector of IDs of all items.
+     */
     std::vector<std::string> GetItemsIDs() const;
 
+    /**
+     *  @brief Sets every item coordinate system to Screen based.
+     */
     void SetGlobalScreenBased();
+    /**
+     *  @brief Sets every item coordinate system to World based.
+     */
     void SetGlobalWorldBased();
     /**
      *  @brief Sets whether the items will be screen based or world based.
      *  @param flag true - screen, false - world.
      */
     void SetGlobalCoordinateBase(const bool& flag);
+    /**
+     *  @brief Checks the global coordinate system flag.
+     *  @returns true if screen based, false if world.
+     */
     bool IsGlobalScreenBased() const;
 
 private:

@@ -25,65 +25,168 @@ class Item {
 public:
     Colour colour;
 
+    /**
+     *  @brief Default constructor.
+     *  @param i fxID of the new item.
+     */
     Item(const std::string& i)
-        : ID(""), xAnchor(0), yAnchor(0), height(100), width(200), focused(false),visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
+        : ID(""), xAnchor(0), yAnchor(0), height(100), width(200), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
+    /**
+     *  @brief Constructor for items with different dimensions than the default ones.
+     *  @param i fxID of the new item.
+     *  @param w width
+     *  @param h height
+     */
     Item(const std::string& i, const float& w, const float& h)
-        : ID(""), xAnchor(0), yAnchor(0), height(h), width(w), focused(false),visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
+        : ID(""), xAnchor(0), yAnchor(0), height(h), width(w), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
 
-
+    /**
+     *  @brief Draws the item in world coordinates.
+     *  @param dt frame time
+     */
     virtual void DrawMyself(const float& dt) const;
+    /**
+     *  @brief Draws the item in screen coordinates.
+     *  @param dt frame time
+     */
     virtual void DrawMyself(const float& dt, const Camera2D& camera) const;
+    /**
+     *  @brief Checks whether the item was clicked in screen coordinates.
+     *  @details Checks whether the mouse position is within the area of the item.
+     *  @param mousePosition position of mouse during the click
+     *  @returns true if was clicked.
+     */
     virtual bool WasIClicked(const Vector2& mousePosition) const; //screen
+    /**
+     *  @brief Checks whether the item was clicked in world coordinates.
+     *  @details Checks whether the mouse position is within the area of the item.
+     *  @param mousePosition position of mouse during the click
+     *  @returns true if was clicked.
+     */
     virtual bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const; //world
     /**
-     *  @brief Action done every frame.
+     *  @brief Action done every frame in world coordinates.
      *  @param dt frame time
      */
     virtual void DoPassiveAction(const float& dt);
+    /**
+     *  @brief Action done every frame in screen coordinates.
+     *  @param dt frame time
+     */
     virtual void DoPassiveAction(const float& dt, const Camera2D& camera);
     /**
-     *  @brief Action done while the item is focused.
+     *  @brief Action done while the item is focused in world coordinates.
      *  @param dt Frame time
      */
     virtual void DoFocusAction(const float& dt) = 0;
+    /**
+     *  @brief Action done while the item is focused in screen coordinates.
+     *  @param dt Frame time
+     */
     virtual void DoFocusAction(const float& dt, const Camera2D& camera);
     /**
-     *  @brief Action done while the item is focused and it depends on mouse click.
+     *  @brief Action done while the item is focused and it depends on mouse click in world coordinates.
      *  @details Defaults to the previous DoActiveAction().
      *  @param dt Frame time
      *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
      */
     virtual void DoFocusAction(const float& dt, const Vector2& mousePosition);
+    /**
+     *  @brief Action done while the item is focused and it depends on mouse click in screen coordinates.
+     *  @details Defaults to the previous DoActiveAction().
+     *  @param dt Frame time
+     *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
+     */
     virtual void DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera);
     /**
-     *  @brief Sets focused to false;
+     *  @brief Sets focused to false.
      */
     virtual void Defocus();
+    /**
+     *  @brief Sets focused to true.
+     */
     virtual void Focus();
+    /**
+     *  @brief Checks whether the item is in focus.
+     *  @returns Focus state - true if focused
+     */
     bool IsFocused() const;
 
+    /**
+     *  @brief Makes the item inactive.
+     */
     void MakeInactive();
+    /**
+     *  @brief Makes the item active.
+     */
     void MakeActive();
+    /**
+     *  @brief Sets the item's activity state.
+     *  @param flag true - inactive, false - inactive
+     */
     void SetInactive(const bool& flag);
+    /**
+     *  @brief Checks whether the item is inactive.
+     *  @returns true if inactive
+     */
     bool IsInactive() const;
 
+    /**
+     *  @brief Sets the coordinates' system of the item to World.
+     */
     virtual void SetToWorld();
+    /**
+     *  @brief Sets the coordinates' system of the item to Screen.
+     */
     virtual void SetToScreen();
+    /**
+     *  @brief Checks whether the current coordinates' system of the item is Screen based.
+     *  @returns true if screen based.
+     */
     bool IsScreenBased() const;
 
+    /**
+     *  @brief Makes the item invisible.
+     */
     void MakeInvisible();
+    /**
+     *  @brief Makes the item visible.
+     */
     void MakeVisible();
+    /**
+     *  @brief Sets the item's visibility.
+     *  @param flag true - visible.
+     */
     void SetVisible(const bool& flag);
+    /**
+     *  @brief Checks whether the item is visible.
+     *  @returns true if visible.
+     */
     bool IsVisible() const;
 
     /**
-     *  @brief Sets both inactive and invisible to true.
+     *  @brief Makes the item invisible and not interactable.
+     *  @details Sets both inactive and invisible to true.
      */
     void Hide();
+    /**
+     *  @brief Makes the item visible and interactable.
+     *  @details Sets both inactive and invisible to true.
+     */
     void Show();
 
+    /**
+     *  @brief Makes the item consume clicks.
+     */
     void ConsumeClicks();
+    /**
+     *  @brief Makes the item let clicks through it and propagate.
+     */
     void LetClicksThrough();
+    /**
+     *  @brief Checks whether the item eats clicks.
+     *  @returns true if eats clicks.
+     */
     bool DoesEatClicks() const;
 
     /**
@@ -91,6 +194,10 @@ public:
      *  @details Lambda, put in your own.
      */
     std::function<void()> onClick;
+    /**
+     *  @brief Launches when cursor is over the item.
+     *  @details Lambda, put in your own.
+     */
     std::function<void()> onHover;
 
     /**
@@ -115,6 +222,11 @@ public:
      *  @throws std::range_error If the value is negative.
      */
     virtual void SetWidth(const float& value);
+    /**
+     *  @brief Sets item's ID.
+     *  @param id new ID to be set.
+     *  @throws std::invalid_argument if the id is empty.
+     */
     void SetID(const std::string& id);
     /**
      *  @brief Sets the priority in the order of drawing of the item.
@@ -149,16 +261,32 @@ public:
      */
     virtual float GetHeight() const;
     /**
+     *  @brief Returns total height of the item, if it's different from the standard.
+     *  @details Sometimes items have variable total height at runtime, or the standard height is a dimension of the "main body." For interaction, use GetHeight, for drawing - GetTotalHeight.
+     *  @returns runtime height
+     */
+    virtual float GetTotalHeight() const;
+    /**
      *  @brief Returns width of the item.
      *  @returns width of the item
      */
     virtual float GetWidth() const;
+    /**
+     *  @brief Returns total width of the item, if it's different from the standard.
+     *  @details Sometimes items have variable total width at runtime, or the standard width is a dimension of the "main body." For interaction, use GetWidth, for drawing - GetTotalWidth.
+     *  @returns runtime width
+     */
+    virtual float GetTotalWidth() const;
     /**
      *  @brief Returns priority of the item.
      *  @details Remember that larger number is lesser priority.
      *  @returns number representing priority
      */
     size_t GetPriority() const;
+    /**
+     *  @brief Returns the item's ID.
+     *  @returns ID
+     */
     std::string GetID() const;
 
     /**
@@ -174,20 +302,18 @@ protected:
     std::string ID; ///<ID used by the user, variable.
     float xAnchor; ///<top left x coordinate
     float yAnchor; ///<top left y coordinate
-    float height;
-    float width;
+    float height; ///<vertical length of the item
+    float width; ///<horizontal length of the item
 
-    bool focused;
+    bool focused; ///<whether the item is currently doing something; was it clicked.
     bool visible; ///<invisible items are still interactable
     bool inactive; ///<inactive items are not interactable
     bool eatsClick; ///<if false, allows the click to continue under it
     size_t priority; ///<order of drawing. Set to 3 by default for convenience of moving priority around. The higher the priority, the quicker it gets done - but gets drawn under.
 
-    bool screenBased;
+    bool screenBased; ///<if true, item is drawn based on screen, so follows camera.
     const std::string fxID; ///ID for the library.
     float timer = 0;
-
-private:
 };
 
 /**
@@ -234,11 +360,15 @@ public:
      *  @throws std::invalid_argument if margin is negative.
      */
     void SetTextMargin(const float& margin);
+    /**
+     *  @brief Returns text margin
+     *  @returns text margin
+     */
     float GetTextMargin() const;
 
 protected:
     std::string text;
-    float textMargin;
+    float textMargin; ///<distance from limit to text.
 
     /**
      *  @brief Truncates text if needed.
@@ -326,7 +456,7 @@ public:
     void DrawMyself(const float& dt) const override;
     void DoFocusAction(const float& dt) override;
 
-    float GetTotalWidth() const;
+    float GetTotalWidth() const override;
 
     /**
      *  @brief Sets the distance between the text and the box.
@@ -548,6 +678,14 @@ public:
         return values.contains(label);
     }
 
+    /**
+     *  @brief Height of all the items combined.
+     *  @returns Height when rolled out.
+     */
+    float GetTotalHeight() const override {
+        return height * (values.size() + 1);
+    }
+
 
 private:
     std::map<std::string, T> values;
@@ -671,6 +809,7 @@ public:
     VBox() : Box("VBox", 100, 200) {}
 
     void SetPositionsOfItems() override;
+    float GetTotalHeight() const override;
 };
 
 class HBox : public Box {
@@ -679,6 +818,7 @@ public:
     HBox() : Box("HBox", 200, 100) {}
 
     void SetPositionsOfItems() override;
+    float GetTotalWidth() const override;
 };
 
 class Spinner : public Item {
@@ -766,6 +906,8 @@ public:
     void SetWidth(const float& value) override;
     void SetHeight(const float& value) override;
     void SetButtonsWidth(const float& value);
+
+    float GetTotalWidth() const override;
 
 protected:
     float valueMargin; ///<distance between value and border
@@ -1048,6 +1190,11 @@ public:
         return items.size();
     }
 
+
+    /**
+     * @throws std::runtime_error if display method not set for a type that is not a string nor is able to use to_string.
+     * @see Item::DrawMyself
+     */
     void DrawMyself(const float& dt) const override {
         if (displayMethod) {
             if (vertical) {
@@ -1097,7 +1244,7 @@ public:
                     }
                 }
             } else {
-                static_assert(!sizeof(T), "List: no display method set for a non-standard type.");
+               throw std::runtime_error("List " + this->ID + ": no display method set for a non-standard type.");
             }
         }
     }
@@ -1111,10 +1258,22 @@ public:
     void SetHorizontal() {
         vertical = false;
     }
+    /**
+     *  @brief Sets whether the list should be vertical or horizontal.
+     *  @param flag true - vertical, false - horizontal.
+     */
+    void SetVerticality(const bool& flag) {
+        vertical = flag;
+    }
     bool IsVertical() const {
         return vertical;
     }
 
+    /**
+     *  @brief Sets the distance between items.
+     *  @param padding new padding to be set.
+     *  @throws std::invalid_argument if padding is negative.
+     */
     void SetPadding(const float& padding) {
         if (padding < 0) {
             throw std::invalid_argument("In List " + this->ID + ": negative padding");
@@ -1123,6 +1282,55 @@ public:
     }
     float GetPadding() const {
         return padding;
+    }
+
+    /**
+     *  @brief Returns total width.
+     *  @see Item::GetTotalWidth
+     *  @returns width if vertical, sum of padding and items (in string form) length otherwise.
+     *  @throws std::runtime_error if display method not set for a type that is not a string nor is able to use to_string.
+     */
+    float GetTotalWidth() const override {
+        if (vertical) {
+            return width;
+        }
+        if (displayMethod) {
+            float sum = 0;
+            for (const auto& item : items) {
+                sum += MeasureText(displayMethod(item).c_str(), font.fontSize) + padding;
+            }
+            return sum;
+        }
+        if constexpr (std::is_same_v<T, std::string>) {
+            float sum = 0;
+            for (const auto& item : items) {
+                sum += MeasureText(item.c_str(), font.fontSize) + padding;
+            }
+            return sum;
+        }
+        if constexpr (requires { std::to_string(T{}); }) {
+            float sum = 0;
+            for (const auto& item : items) {
+                sum += MeasureText(std::to_string(item).c_str(), font.fontSize) + padding;
+            }
+            return sum;
+        }
+        throw std::runtime_error("List " + this->ID + ": no display method set for a non-standard type - couldn't calculate width");
+    }
+    /**
+     *  @brief Returns total height.
+     *  @see Item::GetTotalHeight
+     *  @returns height if not vertical, sum of padding and font size times number of items otherwise.
+     */
+    float GetTotalHeight() const override {
+        if (!vertical) {
+            return height;
+        }
+        float sum = 0;
+        for (const auto& item : items) {
+            sum += font.fontSize + padding;
+        }
+        return sum;
     }
 
 private:

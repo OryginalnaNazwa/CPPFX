@@ -10,14 +10,14 @@
 #include <memory>
 #include <functional>
 
-#define GREY GRAY //a hack to make British spelling work with Raylib colours.
-#define DARKGREY DARKGRAY
-#define LIGHTGREY LIGHTGRAY
-
 /****************************
  * This file contains the properties used in the FX items.
  * And also some helpers.
  ****************************/
+
+#define GREY GRAY //a hack to make British spelling work with Raylib colours.
+#define DARKGREY DARKGRAY
+#define LIGHTGREY LIGHTGRAY
 
 #ifdef NDEBUG
 #define CPPFX_WARN(msg)
