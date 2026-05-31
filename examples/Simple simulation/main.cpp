@@ -1,18 +1,16 @@
-#include <iostream>
 #include "CPPFX.h"
-
-using namespace std;
 
 /**************
  * Simple mockup simulation controlled by a simple UI.
+ * A clock-arm like spins around. It's speed is controlled by a Spinner and the simulation can be stopped with a PressedButton.
  *************/
 
 int main()
 {
     //initialisation, common with raylib
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_MAXIMIZED);
-    InitWindow(0, 0, "Simple GUI test");
-    SetTargetFPS(0);
+    InitWindow(0, 0, "Simple simulation - clock");
+    SetTargetFPS(60);
     Camera2D camera;
     camera = {0};
     camera.rotation = 0.0f;
@@ -24,10 +22,10 @@ int main()
     auto speedPicker = gui.AddSpinner("SpeedPicker");
     speedPicker->SetX(100);
     speedPicker->SetY(100);
-    speedPicker->hasMin = true;
-    speedPicker->SetMin(1);
-    speedPicker->hasMax = true;
-    speedPicker->SetMax(10);
+    speedPicker->SetMin();
+    speedPicker->SetMinValue(1);
+    speedPicker->SetMax();
+    speedPicker->SetMaxValue(10);
     speedPicker->SetValue(1);
 
     auto startButton = gui.AddPressedButton("StartButton");
@@ -50,7 +48,7 @@ int main()
         ClearBackground(WHITE);
 
         //calculate line
-        if (startButton->pressed) {
+        if (startButton->IsPressed()) {
             dt += GetFrameTime() * speedPicker->GetValue();
             float angle = fmod(dt * 360.0f, 360.0f);
             endX = Ox + cos(angle * DEG2RAD) * radius;

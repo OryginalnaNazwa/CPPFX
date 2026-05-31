@@ -4,7 +4,8 @@ using namespace std;
 using namespace CPPFX;
 
 /*********************
- * Simple login screen mockup
+ * Simple login screen mockup.
+ * A label with welcome text and two text fields, one masked for password. Clicking a button or pressing enter is a login attempt. Incorrect credentials end with error appearing. Correct ("Login", "Password") end in welcome label changing.
  ********************/
 
 //simple function mimicking simple login behaviour
@@ -13,7 +14,7 @@ void LoginLogic(const TextField* loginField, const PasswordField* passwordField,
         welcomeLabel->SetText("Logged in!"); //dummy logic
         errorLabel->ClearText();
     } else {
-        errorLabel->SetText("Wrong login or password.");
+        errorLabel->SetText("Incorrect login or password.");
         welcomeLabel->SetText("Hello!");
     }
 }
@@ -37,15 +38,15 @@ int main()
 
     auto welcomeLabel = gui.AddLabel("WelcomeLabel");
     welcomeLabel->SetText("Hello!");
-    welcomeLabel->alignment.SetAlignment(_Alignment::CENTRE);
+    welcomeLabel->alignment.SetAlignment(Alignment::CENTRE);
 
     auto errorLabel = gui.AddLabel("ErrorLabel");
-    errorLabel->ClearText(); //makes it invisible
+    errorLabel->ClearText(); //basically makes it invisible
     errorLabel->font.colour.SetColour(RED);
 
     auto loginField = gui.AddTextField("LoginField");
     loginField->SetPromptText("Login");
-    loginField->ClearText(); //makes sure the prompt text will be displayed instead
+    loginField->ClearText(); //makes sure the prompt text will be displayed instead because the text will be empty
 
     auto passwordField = gui.AddPasswordField("PasswordField");
     passwordField->SetPromptText("Password");
@@ -61,7 +62,6 @@ int main()
     fields->AddItem(passwordField);
     fields->AddItem(loginButton);
     fields->AddItem(errorLabel);
-    fields->SetPositionsOfItems(); //actually orders the items around
 
     //main loop
     while (!WindowShouldClose()) {
@@ -76,7 +76,6 @@ int main()
 
         //draw and update ui
         gui.DoUI(camera);
-
 
         EndMode2D();
         EndDrawing();

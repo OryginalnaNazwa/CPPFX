@@ -1,8 +1,6 @@
-#include <iostream>
 #include "CPPFX.h"
 #include <vector>
 #include <cmath>
-using namespace std;
 
 class Node {
 public:
@@ -73,48 +71,40 @@ int main() {
     CPPFX::GUI gui;
 
     auto nodeChoice   = gui.AddSpinner();
-    nodeChoice->hasMin = true;  nodeChoice->SetMin(0);
-    nodeChoice->hasMax = true;
+    nodeChoice->SetMin(); nodeChoice->SetMinValue(0);
+    nodeChoice->SetMax();
 
     auto lengthChoice = gui.AddEditableSpinner();
-    lengthChoice->hasMin = true;  lengthChoice->SetMin(1);
+    lengthChoice->SetMin(); lengthChoice->SetMinValue(1);
 
     auto angleChoice  = gui.AddEditableSpinner();
-    angleChoice->hasMin = true;  angleChoice->SetMin(0);
-    angleChoice->hasMax = true;  angleChoice->SetMax(360);
-    angleChoice->allowWrap = true;
+    angleChoice->SetMin();  angleChoice->SetMinValue(0);
+    angleChoice->SetMax();  angleChoice->SetMaxValue(360);
+    angleChoice->AllowWrap();
 
-    auto nodeLabel   = gui.AddLabel();  nodeLabel->SetText("Active node index"); nodeLabel->ExpandToText();
-    auto lengthLabel = gui.AddLabel();  lengthLabel->SetText("Length of the arm"); lengthLabel->ExpandToText();
-    auto angleLabel  = gui.AddLabel();  angleLabel->SetText("Angle of the arm"); angleLabel->ExpandToText();
+    auto nodeLabel   = gui.AddLabel();  nodeLabel->SetText("Active node index");    nodeLabel->ExpandToText();
+    auto lengthLabel = gui.AddLabel();  lengthLabel->SetText("Length of the arm");  lengthLabel->ExpandToText();
+    auto angleLabel  = gui.AddLabel();  angleLabel->SetText("Angle of the arm");    angleLabel->ExpandToText();
 
     auto nodePick   = gui.AddHBox();
     nodePick->AddItem(nodeLabel);
     nodePick->AddItem(nodeChoice);
-    nodePick->priority = 10; //should be under the buttons; number is random
-    nodePick->SetPadding(10);
 
     auto lengthPick = gui.AddHBox();
     lengthPick->AddItem(lengthLabel);
     lengthPick->AddItem(lengthChoice);
-    lengthPick->priority = 10;
-    lengthPick->SetPadding(10);
 
     auto anglePick = gui.AddHBox();
     anglePick->AddItem(angleLabel);
     anglePick->AddItem(angleChoice);
-    anglePick->priority = 10;
-    anglePick->SetPadding(10);
 
     auto addButton = gui.AddButton();
-    addButton->SetText("Add node to the top");
-    addButton->ExpandToText();
+    addButton->SetText("Add node to the top");  addButton->ExpandToText();
     addButton->onClick = [&nodes]() {AddNode(nodes);};
     addButton->border.SetThickness(5);
 
     auto removeButton = gui.AddButton();
-    removeButton->SetText("Remove the top node");
-    removeButton->ExpandToText();
+    removeButton->SetText("Remove the top node");   removeButton->ExpandToText();
     removeButton->onClick = [&nodes]() {RemoveNode(nodes);};
     removeButton->border.SetThickness(5);
 
@@ -124,39 +114,36 @@ int main() {
     ui->AddItem(anglePick);
     ui->AddItem(addButton);
     ui->AddItem(removeButton);
-    ui->priority = 11; //must go before the previous ones to set them first
-    ui->SetPadding(10);
+    ui->SetPriority(11); //must go before the previous ones to set them first, by default containers have priority of 10.
 
-    gui.SortOrder();
+    int prevIdx = 0;
+    lengthChoice->SetValue(nodes[0].length); //sets the base node display correctly
+    angleChoice->SetValue(nodes[0].angle);
 
-int prevIdx = 0;
-lengthChoice->SetValue(nodes[0].length); //sets the base node display correctly
-angleChoice->SetValue(nodes[0].angle);
+    while (!WindowShouldClose()) {
+        nodeChoice->SetMaxValue((float)nodes.size() - 1);
+        int idx = (int)nodeChoice->GetValue();
 
-while (!WindowShouldClose()) {
-    nodeChoice->SetMax((float)nodes.size() - 1);
-    int idx = (int)nodeChoice->GetValue();
+        if (idx != prevIdx) {
+            // Immediately overwrite spinners AND their committed value
+            lengthChoice->SetValue(nodes[idx].length);
+            angleChoice->SetValue(nodes[idx].angle);
+            prevIdx = idx;
+        }
 
-    if (idx != prevIdx) {
-        // Immediately overwrite spinners AND their committed value
-        lengthChoice->SetValue(nodes[idx].length);
-        angleChoice->SetValue(nodes[idx].angle);
-        prevIdx = idx;
+        nodes[idx].length = lengthChoice->GetValue();
+        nodes[idx].angle  = angleChoice->GetValue();
+        UpdateChain(nodes);
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        BeginMode2D(camera);
+        for (auto& node : nodes)
+            node.DrawMyself();
+        gui.DoUI(camera); //also sorts on the first frame after getting dirty
+        EndMode2D();
+        EndDrawing();
     }
-
-    nodes[idx].length = lengthChoice->GetValue();
-    nodes[idx].angle  = angleChoice->GetValue();
-    UpdateChain(nodes);
-
-    BeginDrawing();
-    ClearBackground(RAYWHITE);
-    BeginMode2D(camera);
-    for (auto& node : nodes)
-        node.DrawMyself();
-    gui.DoUI(camera);
-    EndMode2D();
-    EndDrawing();
-}
 
     CloseWindow();
     return 0;
