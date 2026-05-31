@@ -295,7 +295,22 @@ void GUI::RemoveItem(const std::string& ID) {
         ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&ID](const Item* item) { return item->GetID() == ID; }),ItemsInDrawingOrder.end());
         Items.erase(ID);
     } else {
-        throw std::invalid_argument("Item " + ID + " doesn't exist");
+        throw std::out_of_range("Item " + ID + " doesn't exist, cannot delete");
+    }
+}
+
+void GUI::RemoveItem(Item*& item) {
+    if (item) {
+        if (IsIDTaken(item->GetID())) {
+            if (IsContainer(item->GetFxID())) {
+                GetContainer(item->GetID())->SafeRemoveItem(item);
+            }
+            ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&item](const Item* i) { return i->GetID() == item->GetID(); }),ItemsInDrawingOrder.end());
+            Items.erase(item->GetID());
+            item = nullptr;
+        } else throw std::out_of_range("Cannot delete Item " + item->GetID() + ": doesn't exist in this GUI instance.");
+    } else {
+        throw std::invalid_argument("Cannot delete Item: doesn't exist");
     }
 }
 
@@ -305,7 +320,7 @@ bool GUI::IsIDTaken(const std::string& ID) const {
 
 bool GUI::IsItemContainer(const std::string& ID) const {
     if (!IsIDTaken(ID)) {
-        throw std::out_of_range("No item with " + ID + " found!");
+        throw std::out_of_range("No item with " + ID + " found when trying to check whether it's a container.");
     }
     return IsContainer(Items.at(ID)->GetFxID());
 }
@@ -502,11 +517,15 @@ void GUI::SetHighestPriority(const std::string& ID) {
     try {
         item = Items.at(ID).get();
     } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No item with the ID " + ID + " exists");
+        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to highest");
     }
-    size_t highestPriority = ItemsInDrawingOrder.back()->GetPriority();
-    item->SetPriority(highestPriority);
-    needsSorting = true;
+    if (item->GetPriority() != 0) {
+        size_t highestPriority = ItemsInDrawingOrder.back()->GetPriority();
+        item->SetPriority(highestPriority);
+        needsSorting = true;
+    } else {
+        CPPFX_WARN("Item" + ID + " is already at highest priority.");
+    }
 }
 
 void GUI::SetAboveHighestPriority(const std::string& ID) {
@@ -514,12 +533,18 @@ void GUI::SetAboveHighestPriority(const std::string& ID) {
     try {
         item = Items.at(ID).get();
     } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No item with the ID " + ID + " exists");
+        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to highest + 1");
     }
-    size_t highestPriority = ItemsInDrawingOrder.back()->GetPriority();
-    item->SetPriority(highestPriority);
-    item->MoveUpPriority();
-    needsSorting = true;
+    if (item->GetPriority() != 0) {
+        size_t highestPriority = ItemsInDrawingOrder.back()->GetPriority();
+        item->SetPriority(highestPriority);
+        if (item->GetPriority() != 0) {
+            item->MoveUpPriority();
+        } else CPPFX_WARN("Other items already have the highest possible priority (0), setting item" + ID + " priority to 0.");
+        needsSorting = true;
+    } else {
+        CPPFX_WARN("Item" + ID + " is already at highest priority.");
+    }
 }
 
 size_t GUI::GetTotalItemCount(const std::string& fxID) const {

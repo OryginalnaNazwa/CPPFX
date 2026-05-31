@@ -3,6 +3,10 @@
 
 #include "items.h"
 
+/******************************************************************************
+ *  @file CPPFX
+ *  @brief This file contains the controller class for use in raylib's loop.
+ *****************************************************************************/
 
 namespace CPPFX {
 
@@ -13,9 +17,13 @@ namespace CPPFX {
 class GUI {
 public:
 
+    /**
+     *  @brief Default constructor for GUI.
+     *  @details Screen based starts at false. Sets items counters to 0.
+     */
     GUI() : screenBased(false) {
         for (auto& id : FXIDs) {
-            ItemsCounter.insert({id, 0});
+            ItemsCounter.insert({id, 0}); // sets all the counters to 0
         }
     }
 
@@ -27,34 +35,92 @@ public:
     void DoUI(const Camera2D& camera);
 
     /**
+     *  @brief Adds item of given type.
+     *  @details If the parameter is empty, ID is created automatically.
+     *  @param ID ID of the created item, defaults to empty.
+     *  @returns a pointer to the newly created item.
+     */
+    template <typename T>
+    T* AddItem(const std::string& ID = "") {
+        std::unique_ptr<Item> item = std::make_unique<T>();
+        CreateItemID(item, ID);
+        auto pointer = static_cast<T*>(item.get());
+        CreateItem(item);
+        return pointer;
+    }
+    /**
      *  @brief Adds an item based on the ID.
      *  @details Calls an appropriate function. Creates a default dropdown holding string values.
      *  @param fxID the internal ID of th item to be added.
-     *  @throws std::invalid_argument If the ID doesn't exist.
+     *  @throws std::invalid_argument If the fxID doesn't exist.
+     *  @deprecated template does it much better
      */
     void AddItem(const std::string& fxID, const std::string& ID = "");
     /**
-     *  @fn AddX
-     *  @brief Creates an X
+     *  @brief Creates the item.
      *  @param ID ID of the created item. Defaults to "", the library creates the ID then.
-     *  @returns raw pointer to X
+     *  @returns raw pointer to the created item.
      */
     TextField* AddTextField(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     Label* AddLabel(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     Button* AddButton(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     CheckBox* AddCheckBox(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     AnchorPane* AddAnchorPane(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     VBox* AddVBox(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     HBox* AddHBox(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     Spinner* AddSpinner(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     EditableSpinner* AddEditableSpinner(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     Workspace* AddWorkspace(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     PasswordField* AddPasswordField(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     ProgressIndicator* AddProgressIndicator(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     ProgressBar* AddProgressBar(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     PressedButton* AddPressedButton(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     PieChart* AddPieChart(const std::string& ID = "");
-
+    /**
+     *  @copydoc AddTextField
+     */
     template <typename T>
     DropDown<T>* AddDropDown(const std::string& ID = "") {
         std::unique_ptr<Item> dropdown = std::make_unique<DropDown<T>>();
@@ -63,6 +129,9 @@ public:
         CreateItem(dropdown);
         return pointer;
     }
+    /**
+     *  @copydoc AddTextField
+     */
     template <typename T>
     List<T>* AddList(const std::string& ID = "") {
         std::unique_ptr<Item> alist = std::make_unique<List<T>>();
@@ -76,8 +145,18 @@ public:
      *  @brief Removes an item.
      *  @details Safe removes from all containers.
      *  @param ID ID of the item to be removed.
+     *  @throws std::out_of_range if the item of given ID doesn't exist.
      */
     void RemoveItem(const std::string& ID);
+    /**
+     *  @brief Removes an item.
+     *  @details Deletes the pointer.
+     *  @details Safe removes from all containers.
+     *  @param item pointer to the item to be deleted.
+     *  @throws std::invalid_argument if the item doesn't exist.
+     *  @throws std::out_of_range if the item doesn't exist in this GUI.
+     */
+    void RemoveItem(Item*& item);
 
     /**
      *  @brief Gets an item of the specified type.
@@ -97,43 +176,27 @@ public:
         }
     }
     /**
-     *  @brief Gets an usable Text Field of specified ID
-     *  @param ID ID of the wanted text field
-     *  @return Pointer to the specified text field
+     *  @brief Gets an usable item of the specified ID.
+     *  @param ID ID of the wanted item.
+     *  @return Pointer to the specified item.
      *  @throws std::out_of_range if the item of given ID doesn't exist.
-     *  @throws std::runtime_error if the item isn't a TextField.
+     *  @throws std::runtime_error if the item isn't of the right type.
      */
     TextField* GetTextField(const std::string& ID);
-
     /**
-     *  @brief Gets an usable Label of specified ID
-     *  @param ID ID of the wanted Label
-     *  @return Pointer to the specified Label
-     *  @throws std::out_of_range if the item of given ID doesn't exist.
+     *  @copydoc GetTextField
      */
     Label* GetLabel(const std::string& ID);
-
     /**
-     *  @brief Gets an usable Button of specified ID
-     *  @param ID ID of the wanted button
-     *  @return Pointer to the specified button
-     *  @throws std::out_of_range if the item of given ID doesn't exist.
+     *  @copydoc GetTextField
      */
     Button* GetButton(const std::string& ID);
-
     /**
-     *  @brief Gets an usable CheckBox of specified ID
-     *  @param ID ID of the wanted checkbox
-     *  @return Pointer to the specified checkbox
-     *  @throws std::out_of_range if the item of given ID doesn't exist.
+     *  @copydoc GetTextField
      */
     CheckBox* GetCheckBox(const std::string& ID);
-
     /**
-     *  @brief Gets an usable DropDown of specified ID
-     *  @param ID ID of the wanted DropDown
-     *  @return Pointer to the specified DropDown
-     *  @throws std::out_of_range if the item of given ID doesn't exist.
+     *  @copydoc GetTextField
      */
     template <typename T>
     DropDown<T>* GetDropDown(const std::string& ID) {
@@ -156,23 +219,48 @@ public:
         }
     }
     /**
-     *  @fn Get*
-     *  @brief Gets an Item of specified ID
-     *  @param ID ID of the item to be grabbed
-     *  @returns raw pointer to the item of type *
-     *  @throws std::runtime_error if the ID belongs to an item that is not * type.
-     *  @throws std::out_of_range if there's no item of ID
+     *  @copydoc GetTextField
      */
     AnchorPane* GetAnchorPane(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
     VBox* GetVBox(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
     HBox* GetHBox(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
     Workspace* GetWorkspace(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
     Spinner* GetSpinner(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
     EditableSpinner* GetEditableSpinner(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
     PasswordField* GetPasswordField(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
     ProgressIndicator* GetProgressIndicator(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
     ProgressBar* GetProgressBar(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
     PressedButton* GetPressedButton(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
     PieChart* GetPieChart(const std::string& ID);
 
     /**
@@ -196,15 +284,22 @@ public:
      */
     void SortOrder();
 
+    /**
+     *  @brief Sets primary colour of all items.
+     *  @details Primary is the base colour inherited after Item.
+     *  @param colour colour to be set
+     */
     void SetGlobalPrimaryColour(const Colour& colour);
+    /// @copydoc SetGlobalPrimaryColour
     void SetGlobalPrimaryColour(const Color& colour);
+    /// @copydoc SetGlobalPrimaryColour
     void SetGlobalPrimaryColour(const std::string& colour);
 
     /**
      * @brief Check how many widgets of this type were created in total.
      * @param fxID ID in internal use; Widget default name
      * @return number of widgets created
-     * @throws std::invalid_argument if such fxID doesn't exist
+     * @throws std::out_of_range if such fxID doesn't exist
      */
     size_t GetTotalItemCount(const std::string& fxID) const;
 
@@ -256,27 +351,32 @@ public:
     bool IsGlobalScreenBased() const;
 
 private:
-    bool screenBased;
+    bool screenBased; /// global flag for whether the items are drawn in world or screen coordinates
 
-    std::map<std::string, std::unique_ptr<Item>> Items;
-    std::vector<Item*> ItemsInDrawingOrder;
+    std::map<std::string, std::unique_ptr<Item>> Items; // lookup map by ID
+    std::vector<Item*> ItemsInDrawingOrder; // items in reverse priority order — back is the highest priority. Which is indeed the correct drawing order
 
-    std::map<std::string, size_t> ItemsCounter;
+    std::map<std::string, size_t> ItemsCounter; /// each new created item increments its counter. Used for auto IDs.
 
-    float dt = 0; ///frame time
-    bool needsSorting = false; ///lazy sort
+    float dt = 0; /// frame time
+    bool needsSorting = false; /// lazy sort
 
-    void DrawUI(const Camera2D& camera) const;
-    void onMouseClick(const Vector2& mousePos, const Camera2D& camera);
-    void DoItemsActions(const Vector2& mousePos, const Camera2D& camera);
-    void DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera);
+    void DrawUI(const Camera2D& camera) const; // draws the items
+    void onMouseClick(const Vector2& mousePos, const Camera2D& camera); // defocuses nad does onClick
+    void DoItemsActions(const Vector2& mousePos, const Camera2D& camera); // does focused and passive actions
+    void DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera); // does actions that require mouse input
 
-    void DefocusItems();
+    void DefocusItems(); // defocuses all items after a click.
 
     bool IsContainer(const std::string& fxID) const;
 
     Container* GetContainer(const std::string& ID);
 
+    /**
+     *  @brief Pushes a pointer to the items in order and moves the unique_ptr to the map.
+     *  @details Sets needsSorting to true.
+     *  @param item unique pointer to the item created elsewhere.
+     */
     void CreateItem(std::unique_ptr<Item>& item);
     /**
      *  @brief Creates an ID for a new item.

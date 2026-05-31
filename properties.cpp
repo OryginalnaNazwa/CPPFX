@@ -120,10 +120,12 @@ std::string Property::GetFxID() const {
 
 // --- Border ---
 void Border::DrawMyself(const float& x, const float& y, const float& width, const float& height) const {
-    if (drawMyself) {
-        drawMyself(x, y, width, height);
-    } else {
-        DrawRectangleLinesEx({x - thickness, y - thickness, width + thickness, height + thickness}, thickness, colour.GetColour());
+    if (thickness > 0) {
+        if (drawMyself) {
+            drawMyself(x, y, width, height);
+        } else {
+            DrawRectangleLinesEx({x - thickness, y - thickness, width + thickness, height + thickness}, thickness, colour.GetColour());
+        }
     }
 }
 
@@ -138,7 +140,6 @@ void Border::RemoveDrawingMethod() {
 // --- Setters ---
 void Border::SetThickness(const float& thickness) {
     if (thickness < 0) {
-        this->thickness = 0;
         throw std::range_error("Range error: Negative thickness.");
     } else {
         this->thickness = thickness;
@@ -148,6 +149,20 @@ void Border::SetThickness(const float& thickness) {
 // --- Getters ---
 float Border::GetThickness() const {
     return thickness;
+}
+
+//------Font--------
+
+void CPPFX::Font::SetFontSize(const float& size) {
+    if (size < 0) {
+        throw std::invalid_argument("Negative font size.");
+    } else {
+        fontSize = size;
+    }
+}
+
+float CPPFX::Font::GetFontSize() const {
+    return fontSize;
 }
 
 //--- Alignment ---
@@ -169,24 +184,29 @@ std::string Alignment::GetAlignmentString() const {
     return AlignmentToString(this->alignment);
 }
 
-Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment) const {
-    if (alignment == "TOP_CENTRE") {
+Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment_string) const {
+    std::string normal = "";
+    for (auto& c : alignment_string) {
+        normal += toupper(c); //normalisation
+    }
+
+    if (normal == "TOP_CENTRE") {
         return Alignments::TOP_CENTRE;
-    } else if (alignment == "TOP_LEFT") {
+    } else if (normal == "TOP_LEFT") {
         return Alignments::TOP_LEFT;
-    } else if (alignment == "TOP_RIGHT") {
+    } else if (normal == "TOP_RIGHT") {
         return Alignments::TOP_RIGHT;
-    } else if (alignment == "BOTTOM_LEFT") {
+    } else if (normal == "BOTTOM_LEFT") {
         return Alignments::BOTTOM_LEFT;
-    } else if (alignment == "BOTTOM_RIGHT") {
+    } else if (normal == "BOTTOM_RIGHT") {
         return Alignments::BOTTOM_RIGHT;
-    } else if (alignment == "BOTTOM_CENTRE") {
+    } else if (normal == "BOTTOM_CENTRE") {
         return Alignments::BOTTOM_CENTRE;
-    } else if (alignment == "CENTRE_LEFT") {
+    } else if (normal == "CENTRE_LEFT") {
         return Alignments::CENTRE_LEFT;
-    } else if (alignment == "CENTRE_RIGHT") {
+    } else if (normal == "CENTRE_RIGHT") {
         return Alignments::CENTRE_RIGHT;
-    } else if (alignment == "CENTRE") {
+    } else if (normal == "CENTRE") {
         return Alignments::CENTRE;
     } else {
         throw std::invalid_argument("No alignment of such name found");

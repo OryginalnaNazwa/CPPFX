@@ -11,15 +11,21 @@ void Item::DrawMyself(const float& dt) const {
 
 void Item::DrawMyself(const float& dt, const Camera2D& camera) const {
     float savedX = xAnchor, savedY = yAnchor;
-    const_cast<float&>(xAnchor) = camera.target.x + (xAnchor - camera.offset.x) / camera.zoom;
-    const_cast<float&>(yAnchor) = camera.target.y + (yAnchor - camera.offset.y) / camera.zoom;
+    xAnchor = camera.target.x + (xAnchor - camera.offset.x) / camera.zoom;
+    yAnchor = camera.target.y + (yAnchor - camera.offset.y) / camera.zoom;
     DrawMyself(dt);
-    const_cast<float&>(xAnchor) = savedX;
-    const_cast<float&>(yAnchor) = savedY;
+    xAnchor = savedX;
+    yAnchor = savedY;
 }
 
 bool Item::WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const {
-    return Item::WasIClicked(mousePosition);
+    float height = this->height * camera.zoom;
+    float width = this->width * camera.zoom;
+    int xClick = mousePosition.x, yClick = mousePosition.y;
+    if (xClick >= xAnchor && xClick <= (xAnchor + width) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
+        return true;
+    }
+    return false;
 }
 
 bool Item::WasIClicked(const Vector2& mousePosition) const {
@@ -63,7 +69,7 @@ void Item::SetY(const float& y) {
 
 void Item::SetHeight(const float& value) {
     if (value < 0) {
-        throw std::range_error("Range error: Negative height.");
+        throw std::invalid_argument("In item " + ID + ": Negative height.");
     } else {
         height = value;
     }
@@ -71,7 +77,7 @@ void Item::SetHeight(const float& value) {
 
 void Item::SetWidth(const float& value) {
     if (value < 0) {
-        throw std::range_error("Range error: Negative width.");
+        throw std::invalid_argument("In item " + ID + ": Negative width.");
     } else {
         width = value;
     }
@@ -79,8 +85,7 @@ void Item::SetWidth(const float& value) {
 
 void Item::SetPriority(const int& value) {
     if (value < 0) {
-        priority = 0;
-        throw std::range_error("Range error: Negative priority.");
+        throw std::invalid_argument("In item " + ID + ": Negative priority.");
     } else {
         priority = value;
     }
@@ -97,6 +102,9 @@ void Item::MoveDownPriority() {
 }
 
 void Item::SetID(const std::string& id) {
+    if (id.empty()) {
+        throw std::invalid_argument("In item: " + ID + ": New ID would be empty.");
+    }
     ID = id;
 }
 
@@ -171,7 +179,15 @@ float Item::GetHeight() const {
     return height;
 }
 
+float Item::GetTotalHeight() const {
+    return height;
+}
+
 float Item::GetWidth() const {
+    return width;
+}
+
+float Item::GetTotalWidth() const {
     return width;
 }
 
@@ -210,11 +226,12 @@ bool Item::IsVisible() const {
 //end Item
 
 std::string TextItem::Truncate(const std::string& text) const {
-    if (MeasureText(text.c_str(), font.fontSize) + MeasureText("|", font.fontSize) + textMargin + 2 > width) {//makes sure that the blinker won't get out
+    const static float BLINKER_PAD = 2; //makes sure that the blinker won't get out
+    if (MeasureText((text + "|").c_str(), font.GetFontSize()) + textMargin + BLINKER_PAD > width) {
         std::string truncated = "";
         for (const auto& c : text) {
             const std::string characterString(1,c);
-            if (MeasureText(truncated.c_str(), font.fontSize) + MeasureText("_...|", font.fontSize) + MeasureText(characterString.c_str(), font.fontSize) + 2 > width) {//may have to switch to MeasureTextEx with fonts //'_' - little hack to make sure the blinker will stay inbound
+            if (MeasureText((truncated + characterString + "_...|").c_str(), font.GetFontSize()) + BLINKER_PAD > width) {//may have to switch to MeasureTextEx with fonts //'_' - little hack to make sure the blinker will stay inbound
                 return truncated + "...";
             }
             truncated += c;
@@ -224,24 +241,24 @@ std::string TextItem::Truncate(const std::string& text) const {
 }
 
 void TextItem::ExpandToText() {
-    int textWidth = MeasureText(text.c_str(), font.fontSize);
+    int textWidth = MeasureText(text.c_str(), font.GetFontSize());
     if (textWidth > width) {
         width = textWidth + textMargin;
     }
 
-    if (font.fontSize > height) {
-        height += font.fontSize - height + textMargin;
+    if (font.GetFontSize() > height) {
+        height += font.GetFontSize() - height + textMargin;
     }
 }
 
 void TextItem::FitToText() {
-    int textWidth = MeasureText(text.c_str(), font.fontSize);
+    int textWidth = MeasureText(text.c_str(), font.GetFontSize());
     if (textWidth != width) {
         width = textWidth + textMargin;
     }
 
-    if (font.fontSize != height) {
-        height = font.fontSize + textMargin;
+    if (font.GetFontSize() != height) {
+        height = font.GetFontSize() + textMargin;
     }
 }
 
@@ -274,19 +291,17 @@ void TextField::DrawMyself(const float& dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
-            DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, GREY);
+            DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), GREY);
         }
     } else {
         std::string truncated = Truncate(text);
-        DrawText(truncated.c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
+        DrawText(truncated.c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
         if (focused && fmod(dt, 1.0f) < 0.5f) { //checks whether half a second passed
-            DrawText("|", MeasureText(truncated.c_str(), font.fontSize) + xAnchor + textMargin + 2, yAnchor + (height / 2) - (font.fontSize / 2),
-                      font.fontSize, font.colour.GetColour());
+            DrawText("|", MeasureText(truncated.c_str(), font.GetFontSize()) + xAnchor + textMargin + 2, yAnchor + (height / 2) - (font.GetFontSize() / 2),
+                      font.GetFontSize(), font.colour.GetColour());
         }
     }
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
+    border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
 void TextField::DoFocusAction(const float& dt) {
@@ -323,9 +338,10 @@ std::string TextField::GetPromptText() const {
 
 //--- Label ---
 void Label::DrawMyself(const float& dt) const {
+    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
-        float startX, startY, textOffset = 0, yTextOffSet = 0;
-        float textWidth = MeasureText(text.c_str(), font.fontSize);
+        float startX = xAnchor, startY = yAnchor, textOffset = 0, yTextOffSet = 0;
+        float textWidth = MeasureText(text.c_str(), font.GetFontSize());
         switch (alignment.GetAlignment()) {
             case Alignment::Alignments::TOP_LEFT:
                 startX = xAnchor; startY = yAnchor; textOffset = textMargin; yTextOffSet = textMargin; break;
@@ -334,26 +350,25 @@ void Label::DrawMyself(const float& dt) const {
             case Alignment::Alignments::TOP_RIGHT:
                 startX = xAnchor + width; startY = yAnchor; textOffset = -textMargin - textWidth; yTextOffSet = textMargin; break;
             case Alignment::Alignments::CENTRE_LEFT:
-                startX = xAnchor; startY = yAnchor + (height / 2); textOffset = textMargin; yTextOffSet = -font.fontSize / 2; break;
+                startX = xAnchor; startY = yAnchor + (height / 2); textOffset = textMargin; yTextOffSet = -font.GetFontSize() / 2; break;
             case Alignment::Alignments::CENTRE:
-                startX = xAnchor + (width / 2); startY = yAnchor + (height / 2); textOffset = -(textWidth / 2); yTextOffSet = -font.fontSize / 2; break;
+                startX = xAnchor + (width / 2); startY = yAnchor + (height / 2); textOffset = -(textWidth / 2); yTextOffSet = -font.GetFontSize() / 2; break;
             case Alignment::Alignments::CENTRE_RIGHT:
-                startX = xAnchor + width; startY = yAnchor + (height / 2); textOffset = -textMargin - textWidth; yTextOffSet = -font.fontSize / 2; break;
+                startX = xAnchor + width; startY = yAnchor + (height / 2); textOffset = -textMargin - textWidth; yTextOffSet = -font.GetFontSize() / 2; break;
             case Alignment::Alignments::BOTTOM_LEFT:
-                startX = xAnchor; startY = yAnchor + height; textOffset = textMargin; yTextOffSet = -font.fontSize; break;
+                startX = xAnchor; startY = yAnchor + height; textOffset = textMargin; yTextOffSet = -font.GetFontSize(); break;
             case Alignment::Alignments::BOTTOM_CENTRE:
-                startX = xAnchor + (width / 2); startY = yAnchor + height; textOffset = -(textWidth / 2); yTextOffSet = -font.fontSize; break;
+                startX = xAnchor + (width / 2); startY = yAnchor + height; textOffset = -(textWidth / 2); yTextOffSet = -font.GetFontSize(); break;
             case Alignment::Alignments::BOTTOM_RIGHT:
-                startX = xAnchor + width; startY = yAnchor + height; textOffset = -textMargin - textWidth; yTextOffSet = -font.fontSize; break;
+                startX = xAnchor + width; startY = yAnchor + height; textOffset = -textMargin - textWidth; yTextOffSet = -font.GetFontSize(); break;
         }
-       DrawText(text.c_str(), startX + textOffset, startY + yTextOffSet, font.fontSize, font.colour.GetColour());
+       DrawText(text.c_str(), startX + textOffset, startY + yTextOffSet, font.GetFontSize(), font.colour.GetColour());
     }
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
+    border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
 void Label::DoFocusAction(const float& dt) {
+    Defocus();
     return;
 }
 
@@ -361,11 +376,9 @@ void Label::DoFocusAction(const float& dt) {
 void Button::DrawMyself(const float& dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
-       DrawText(text.c_str(), xAnchor + (width / 2) - (MeasureText(text.c_str(), font.fontSize) / 2), yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
+       DrawText(text.c_str(), xAnchor + (width / 2) - (MeasureText(text.c_str(), font.GetFontSize()) / 2), yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
     }
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
+    border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
 void Button::DoFocusAction(const float& dt) {
@@ -388,11 +401,10 @@ void Button::DoFocusAction(const float& dt) {
 void CheckBox::DrawMyself(const float& dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
-       DrawText(text.c_str(), xAnchor + width + textMargin + labelMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
+       DrawText(text.c_str(), xAnchor + width + textMargin + labelMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
     }
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
-    }
+    border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
+    clickBorder.DrawMyself(xAnchor, yAnchor, width, height);
     if (pressed && drawsX) { //TODO add other shapes options
         DrawLineEx({xAnchor, yAnchor}, {xAnchor + width, yAnchor + height}, width / 10, unPressedColour.GetColour());
         DrawLineEx({xAnchor, yAnchor + height}, {xAnchor + width, yAnchor}, width / 10, unPressedColour.GetColour());
@@ -416,7 +428,6 @@ void CheckBox::SetLabelMargin(const float& value) {
     if (value >= 0) {
         labelMargin = value;
     } else {
-        labelMargin = 0;
         throw std::invalid_argument("In " + this->ID + ": negative value of label margin.");
     }
 }
@@ -426,7 +437,7 @@ float CheckBox::GetLabelMargin() const {
 }
 
 float CheckBox::GetTotalWidth() const {
-    return width + labelMargin + (2 * textMargin) + MeasureText(text.c_str(), font.fontSize);
+    return width + labelMargin + (2 * textMargin) + MeasureText(text.c_str(), font.GetFontSize());
 }
 
 void CheckBox::SetPressed(const bool& flag) {
@@ -469,12 +480,31 @@ void Container::RemoveItem(const std::string& ID) {
     } else {
         throw std::invalid_argument("Item " + ID + " is not in the container " + this->ID + " or doesn't exist");
     }
+    needsOrdering = true;
+}
+
+void Container::RemoveItem(const Item* item) {
+    if (item) {
+        if (IsIDTaken(item->GetID())) {
+            ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&item](const Item* i) { return i->GetID() == item->GetID(); }),ItemsInDrawingOrder.end());
+            Items.erase(item->GetID());
+        } else {
+            throw std::out_of_range("In container " + this->ID + ": cannot delete item " + item->GetID() + " as it's not in the container.");
+        }
+    } else throw std::invalid_argument("In container " + this->ID + ": cannot delete item - doesn't exist.");
 }
 
 void Container::SafeRemoveItem(const std::string& ID) {
     if (IsIDTaken(ID)) {
         ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [&ID](const Item* item) { return item->GetID() == ID; }), ItemsInDrawingOrder.end());
         Items.erase(ID);
+    }
+}
+
+void Container::SafeRemoveItem(const Item* item) {
+    if (item && IsIDTaken(item->GetID())) {
+        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [&item](const Item* i) { return i->GetID() == item->GetID(); }), ItemsInDrawingOrder.end());
+        Items.erase(item->GetID());
     }
 }
 
@@ -495,16 +525,25 @@ void Container::DoPassiveAction(const float& dt) {
     }
     if (needsOrdering) {
         SetPositionsOfItems();
-        needsOrdering = false;
+        needsOrdering = false; // needs to be here, SetPositionsOfItems is fully virtual.
     }
+}
+
+void Container::DrawMyself(const float& dt) const {
+    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+    border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
 void Box::SetPadding(const float& value) {
     if (value < 0) {
-        throw std::out_of_range("Error: Negative padding in " + ID);
+        throw std::invalid_argument("Error: Negative padding in " + ID);
     }
     padding = value;
     needsOrdering = true;
+}
+
+float Box::GetPadding() const {
+    return padding;
 }
 
 void Workspace::SetPositionsOfItems() {
@@ -567,70 +606,45 @@ void AnchorPane::SetPositionsOfItems() {
 
 void AnchorPane::SetX(const float& x) {
     if (!Items.empty()) {
-        previousX = xAnchor;
+        needsOrdering = true;
     }
-
+    previousX = xAnchor;
     xAnchor = x;
 }
 void AnchorPane::SetY(const float& y) {
     if (!Items.empty()) {
-        previousY = yAnchor;
+        needsOrdering = true;
     }
+    previousY = yAnchor;
     yAnchor = y;
 }
 
 void AnchorPane::SetHeight(const float& value) {
     if (value < 0) {
-        throw std::range_error("Range error: Negative height.");
+        throw std::invalid_argument("In item " + ID + ": Negative height.");
     } else {
         if (!Items.empty()) {
-            previousHeight = height;
+            needsOrdering = true;
         }
+        previousHeight = height;
         height = value;
     }
 }
 
 void AnchorPane::SetWidth(const float& value) {
     if (value < 0) {
-        throw std::range_error("Range error: Negative width.");
+        throw std::invalid_argument("In item " + ID + ": Negative height.");
     } else {
         if (!Items.empty()) {
-            previousWidth = width;
+           needsOrdering = true;
         }
+        previousWidth = width;
         width = value;
     }
 }
 
-void AnchorPane::DrawMyself(const float& dt) const {
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
-}
-
-void AnchorPane::DoFocusAction(const float& dt) {
-    return;
-}
-
-void Workspace::DrawMyself(const float& dt) const {
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
-}
-
-void Workspace::DoFocusAction(const float& dt) {
-    return;
-}
-
-void Box::DrawMyself(const float& dt) const {
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
-}
-
-void Box::DoFocusAction(const float& dt) {
+void Container::DoFocusAction(const float& dt) {
+    Defocus();
     return;
 }
 
@@ -641,7 +655,7 @@ void VBox::SetPositionsOfItems() {
         item->SetY(yAnchor + currentPadding);
         currentPadding += padding + item->height;
     }*/
-    float startX, startY;
+    float startX = xAnchor, startY = yAnchor;
     switch (alignment.GetAlignment()) {
         case Alignment::Alignments::TOP_LEFT:
             startX = xAnchor; startY = yAnchor; break;
@@ -688,6 +702,15 @@ void VBox::SetPositionsOfItems() {
     }
 }
 
+float VBox::GetTotalHeight() const {
+    float heightSum = 0;
+    for (auto& child : Items) {
+        heightSum += child.second->GetTotalHeight();
+        heightSum += padding;
+    }
+    return heightSum;
+}
+
 void HBox::SetPositionsOfItems() {
     /*float currentPadding = padding;
     for (auto& item : ItemsInDrawingOrder) {
@@ -695,7 +718,7 @@ void HBox::SetPositionsOfItems() {
         item->SetX(xAnchor + currentPadding);
         currentPadding += padding + item->width;
     }*/
-    float startX, startY;
+    float startX = xAnchor, startY = yAnchor;
     switch (alignment.GetAlignment()) {
         case Alignment::Alignments::TOP_LEFT:
             startX = xAnchor; startY = yAnchor; break;
@@ -728,18 +751,25 @@ void HBox::SetPositionsOfItems() {
     }
 }
 
+float HBox::GetTotalWidth() const {
+    float widthSum = 0;
+    for (auto& child : Items) {
+        widthSum += child.second->GetTotalWidth();
+        widthSum += padding;
+    }
+    return widthSum;
+}
+
 //--- Spinner ---
 
 void Spinner::DrawMyself(const float& dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
+    DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
 
     incrementButton.DrawMyself(dt);
     decrementButton.DrawMyself(dt);
 
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
+    border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
 void Spinner::DrawMyself(const float& dt, const Camera2D& camera) const {
@@ -747,14 +777,23 @@ void Spinner::DrawMyself(const float& dt, const Camera2D& camera) const {
     float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
 
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
+    DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
 
+    //shift the buttons to where they should be
+    const float savedButtonX = incrementButton.GetX();
+    const float savedIncButtonY = incrementButton.GetY(), savedDecButtonY = decrementButton.GetY();
+    incrementButton.SetX(this->xAnchor + width * camera.zoom);
+    decrementButton.SetX(this->xAnchor + width * camera.zoom);
+    incrementButton.SetY(this->yAnchor);
+    decrementButton.SetY(this->yAnchor + (height / 2) * camera.zoom);
     incrementButton.Item::DrawMyself(dt, camera);
     decrementButton.Item::DrawMyself(dt, camera);
+    incrementButton.SetX(savedButtonX);
+    decrementButton.SetX(savedButtonX);
+    incrementButton.SetY(savedIncButtonY);
+    decrementButton.SetY(savedDecButtonY);
 
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
+    border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
 void Spinner::DoFocusAction(const float& dt, const Vector2& mousePosition) {
@@ -770,6 +809,15 @@ void Spinner::DoFocusAction(const float& dt, const Vector2& mousePosition) {
 }
 
 void Spinner::DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
+    //shift the buttons to where they should be, translation happens in WasIClicked
+    const float savedButtonX = incrementButton.GetX(), savedButtonHeight = incrementButton.GetHeight();
+    const float savedDecButtonY = decrementButton.GetY();
+    incrementButton.SetX(this->xAnchor + width * camera.zoom);
+    decrementButton.SetX(this->xAnchor + width * camera.zoom);
+    decrementButton.SetY(this->yAnchor + savedButtonHeight * camera.zoom);
+    incrementButton.SetHeight(savedButtonHeight * camera.zoom);
+    decrementButton.SetHeight(savedButtonHeight * camera.zoom);
+
     if (incrementButton.WasIClicked(mousePosition, camera)) {
         incrementButton.Focus();
         if (incrementButton.onClick) incrementButton.onClick();
@@ -777,6 +825,12 @@ void Spinner::DoFocusAction(const float& dt, const Vector2& mousePosition, const
         decrementButton.Focus();
         if (decrementButton.onClick) decrementButton.onClick();
     }
+    incrementButton.SetX(savedButtonX);
+    decrementButton.SetX(savedButtonX);
+    decrementButton.SetY(savedDecButtonY);
+    incrementButton.SetHeight(savedButtonHeight);
+    decrementButton.SetHeight(savedButtonHeight);
+
     decrementButton.Item::DoFocusAction(dt, camera);
     incrementButton.Item::DoFocusAction(dt, camera);
 }
@@ -795,8 +849,10 @@ bool Spinner::WasIClicked(const Vector2& mousePosition) const {
 }
 
 bool Spinner::WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const {
+    float scaledHeight = height * camera.zoom;
+    float scaledWidth = (width + incrementButton.GetWidth()) * camera.zoom;
     int xClick = mousePosition.x, yClick = mousePosition.y;
-    if (xClick >= xAnchor && xClick <= (xAnchor + width + incrementButton.GetWidth()) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
+    if (xClick >= xAnchor && xClick <= (xAnchor + scaledWidth) && yClick >= yAnchor && yClick <= (yAnchor + scaledHeight)) {
         return true;
     }
     return false;
@@ -826,10 +882,16 @@ void Spinner::Decrement() {
 
 void Spinner::SetValue(const float& value) {
     this->value = value;
+    if ((hasMin && value < minValue) || (hasMax && value > maxValue)) {
+        CPPFX_WARN("In Spinner " + ID + ": value set outside range.");
+    }
 }
 
 void Spinner::SetStep(const float& step) {
     stepValue = step;
+    if (hasMin && hasMax && step > (maxValue - minValue)) {
+        CPPFX_WARN("In Spinner " + ID + ": step is more than the range from min to max.");
+    }
 }
 
 float Spinner::GetValue() const {
@@ -853,16 +915,33 @@ void Spinner::SetY(const float& y) {
 }
 
 void Spinner::SetWidth(const float& value) {
+    if (value < 0) {
+        throw std::invalid_argument("In Spinner " + ID + ": Negative width.");
+    }
     width = value;
     incrementButton.SetX(xAnchor + width);
     decrementButton.SetX(xAnchor + width);
 }
 
 void Spinner::SetHeight(const float& value) {
+    if (value < 0) {
+        throw std::invalid_argument("In Spinner " + ID + ": Negative width.");
+    }
     height = value;
     incrementButton.SetHeight(height / 2);
     decrementButton.SetHeight(height / 2);
     decrementButton.SetY(yAnchor + (height / 2));
+}
+
+void Spinner::SetValueMargin(const float& value) {
+    if (value < 0) {
+        throw std::invalid_argument("In Spinner " + ID + ": Negative value margin.");
+    }
+    valueMargin = value;
+}
+
+float Spinner::GetValueMargin() const {
+    return valueMargin;
 }
 
 void Spinner::Initialise() {
@@ -885,7 +964,7 @@ void Spinner::Initialise() {
 
 void Spinner::SetButtonsWidth(const float& value) {
     if (value < 0) {
-        throw std::range_error("In Spinner " + this->ID + ": negative buttons width.");
+        throw std::invalid_argument("In spinner " + ID + ": Negative width of buttons.");
     }
     incrementButton.SetWidth(value);
     decrementButton.SetWidth(value);
@@ -929,12 +1008,20 @@ void Spinner::SetMaxLimit(const bool& flag) {
     hasMax = flag;
 }
 
+void Spinner::SetMax() {
+    hasMax = true;
+}
+
 bool Spinner::HasMax() const {
     return hasMax;
 }
 
 void Spinner::SetMinLimit(const bool& flag) {
     hasMin = flag;
+}
+
+void Spinner::SetMin() {
+    hasMin = true;
 }
 
 bool Spinner::HasMin() const {
@@ -951,6 +1038,10 @@ bool Spinner::IsAtMin() const {
     return minValue == value;
 }
 
+float Spinner::GetTotalWidth() const {
+    return width + incrementButton.GetTotalWidth();
+}
+
 //--- EditableSpinner ---
 
 void EditableSpinner::SetValue(const float& value) {
@@ -959,36 +1050,35 @@ void EditableSpinner::SetValue(const float& value) {
 }
 
 void EditableSpinner::DrawMyself(const float& dt) const {
-    if (!editArea.IsFocused()) {
-       DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-       DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
-    } else {
-        editArea.DrawMyself(dt);
-    }
+    editArea.DrawMyself(dt);
     incrementButton.DrawMyself(dt);
     decrementButton.DrawMyself(dt);
 
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
+    border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
 }
 
 void EditableSpinner::DrawMyself(const float& dt, const Camera2D& camera) const {
     float xAnchor = camera.target.x + this->xAnchor / camera.zoom;
     float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
 
-    if (!editArea.IsFocused()) {
-       DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-       DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
-    } else {
-        editArea.Item::DrawMyself(dt, camera);
-    }
+    editArea.Item::DrawMyself(dt, camera);
+    //shift the buttons to where they should be
+    const float savedButtonX = incrementButton.GetX();
+    const float savedIncButtonY = incrementButton.GetY(), savedDecButtonY = decrementButton.GetY();
+    incrementButton.SetX(this->xAnchor + width * camera.zoom);
+    decrementButton.SetX(this->xAnchor + width * camera.zoom);
+    incrementButton.SetY(this->yAnchor);
+    decrementButton.SetY(this->yAnchor + (height / 2) * camera.zoom);
+
     incrementButton.Item::DrawMyself(dt, camera);
     decrementButton.Item::DrawMyself(dt, camera);
 
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
+    incrementButton.SetX(savedButtonX);
+    decrementButton.SetX(savedButtonX);
+    incrementButton.SetY(savedIncButtonY);
+    decrementButton.SetY(savedDecButtonY);
+
+    border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
 }
 
 void EditableSpinner::DoFocusAction(const float& dt, const Vector2& mousePosition) {
@@ -1021,6 +1111,15 @@ void EditableSpinner::DoFocusAction(const float& dt, const Vector2& mousePositio
 }
 
 void EditableSpinner::DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
+    //shift the buttons to where they should be, translation happens in WasIClicked
+    const float savedButtonX = incrementButton.GetX(), savedButtonHeight = incrementButton.GetHeight();
+    const float savedDecButtonY = decrementButton.GetY();
+    incrementButton.SetX(this->xAnchor + width * camera.zoom);
+    decrementButton.SetX(this->xAnchor + width * camera.zoom);
+    decrementButton.SetY(this->yAnchor + savedButtonHeight * camera.zoom);
+    incrementButton.SetHeight(savedButtonHeight * camera.zoom);
+    decrementButton.SetHeight(savedButtonHeight * camera.zoom);
+
     if (incrementButton.WasIClicked(mousePosition, camera)) {
         incrementButton.Focus();
         if (incrementButton.onClick) incrementButton.onClick();
@@ -1044,6 +1143,13 @@ void EditableSpinner::DoFocusAction(const float& dt, const Vector2& mousePositio
             editArea.Defocus();
         }
     }
+
+    incrementButton.SetX(savedButtonX);
+    decrementButton.SetX(savedButtonX);
+    decrementButton.SetY(savedDecButtonY);
+    incrementButton.SetHeight(savedButtonHeight);
+    decrementButton.SetHeight(savedButtonHeight);
+
     decrementButton.Item::DoFocusAction(dt, camera);
     incrementButton.Item::DoFocusAction(dt, camera);
     editArea.Item::DoFocusAction(dt, camera);
@@ -1057,32 +1163,34 @@ void EditableSpinner::DoFocusAction(const float& dt) {
 }
 
 void EditableSpinner::SetX(const float& x) {
-    xAnchor = x;
-    incrementButton.SetX(xAnchor + width);
-    decrementButton.SetX(xAnchor + width);
+    Spinner::SetX(x);
     editArea.SetX(xAnchor);
 }
 
 void EditableSpinner::SetY(const float& y) {
-    yAnchor = y;
-    incrementButton.SetY(yAnchor);
-    decrementButton.SetY(yAnchor + (height / 2));
+    Spinner::SetY(y);
     editArea.SetY(yAnchor);
 }
 
 void EditableSpinner::SetWidth(const float& value) {
-    width = value;
-    incrementButton.SetX(xAnchor + width);
-    decrementButton.SetX(xAnchor + width);
+    Spinner::SetWidth(value);
     editArea.SetWidth(width);
 }
 
 void EditableSpinner::SetHeight(const float& value) {
-    height = value;
-    incrementButton.SetHeight(height / 2);
-    decrementButton.SetHeight(height / 2);
-    decrementButton.SetY(yAnchor + (height / 2));
+    Spinner::SetHeight(value);
     editArea.SetHeight(height);
+}
+
+void EditableSpinner::SetValueMargin(const float& value) {
+    if (value < 0) {
+        throw std::invalid_argument("In Spinner " + ID + ": Negative value margin.");
+    }
+    editArea.SetTextMargin(value);
+}
+
+float EditableSpinner::GetValueMargin() const {
+    return editArea.GetTextMargin();
 }
 
 void EditableSpinner::Defocus() {
@@ -1112,20 +1220,26 @@ void PasswordField::DrawMyself(const float& dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
-            DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, GREY);
+            DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), GREY);
         }
     } else {
-        std::string password(text.size(), '*');
+        std::string password(text.size(), mask);
         std::string truncated = Truncate(password);
-        DrawText(Truncate(truncated).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
+        DrawText(Truncate(truncated).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
         if (focused && fmod(dt, 1.0f) < 0.5f) {
-            DrawText("|", MeasureText(truncated.c_str(), font.fontSize) + xAnchor + textMargin + 2, yAnchor + (height / 2) - (font.fontSize / 2),
-                      font.fontSize, font.colour.GetColour());
+            DrawText("|", MeasureText(truncated.c_str(), font.GetFontSize()) + xAnchor + textMargin + 2, yAnchor + (height / 2) - (font.GetFontSize() / 2),
+                      font.GetFontSize(), font.colour.GetColour());
         }
     }
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
+    border.DrawMyself(xAnchor, yAnchor, width, height);
+}
+
+void PasswordField::SetMask(const char character) {
+    mask = character;
+}
+
+char PasswordField::GetMask() const {
+    return mask;
 }
 
 //--- ProgressIndicator ---
@@ -1156,6 +1270,11 @@ void ProgressIndicator::DecreaseProgress(const float& change) {
 
 float ProgressIndicator::GetProgress() const {
     return value;
+}
+
+int ProgressIndicator::GetProgressPercentage() const {
+    if (value == -1) return value;
+    return (int)(value * 100);
 }
 
 void ProgressIndicator::MakeIndefinite() {
@@ -1246,7 +1365,7 @@ void ProgressIndicator::DrawMyself(const float& dt) const {
     if (displayValue && value != -1) {
         std::string valueString = value * 100 == (int)(value * 100) ? TextFormat("%d", (int)(value * 100)) : TextFormat("%.1f", value * 100);
         valueString += "%";
-        DrawText(valueString.c_str(), xAnchor + (width / 2) - (MeasureText(valueString.c_str(), font.fontSize) / 2), yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
+        DrawText(valueString.c_str(), xAnchor + (width / 2) - (MeasureText(valueString.c_str(), font.GetFontSize()) / 2), yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
     }
 }
 
@@ -1269,6 +1388,10 @@ bool ProgressIndicator::IsDisplayingValue() const {
 // ProgressBar
 
 void ProgressBar::DrawMyself(const float& dt) const {
+    if (shape != Shapes::BAR) {
+        ProgressIndicator::DrawMyself(dt);
+        return;
+    }
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (segmented) {
        float segmentWidth = ((width - (2 * barMargin)) - (gapBetweenSegments * (numberOfSegments - 1))) / numberOfSegments;
@@ -1285,14 +1408,14 @@ void ProgressBar::DrawMyself(const float& dt) const {
     if (displayValue && value != -1) {
         std::string valueString = value * 100 == (int)(value * 100) ? TextFormat("%d", (int)(value * 100)) : TextFormat("%.1f", value * 100);
         valueString += "%";
-        DrawText(valueString.c_str(), xAnchor + (width / 2) - (MeasureText(valueString.c_str(), font.fontSize) / 2), yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
+        DrawText(valueString.c_str(), xAnchor + (width / 2) - (MeasureText(valueString.c_str(), font.GetFontSize()) / 2), yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
     }
 }
 
 void ProgressBar::SetBarMargin(const float& value) {
     if (value < 0) {
         barMargin = 0;
-        throw std::out_of_range("Bar margin value in " + this->ID + " is lower than 0.");
+        throw std::invalid_argument("Bar margin value in " + this->ID + " is lower than 0.");
     } else if (value > height / 2) {
         barMargin = height / 2;
         throw std::out_of_range("Bar margin value in " + this->ID + " is too big.");
@@ -1308,7 +1431,7 @@ float ProgressBar::GetBarMargin() const {
 void ProgressBar::SetNumberOfSegments(const int& value) {
     if (value < 0) {
         numberOfSegments = 0;
-        throw std::out_of_range("Number of segments in " + this->ID + " is lower than 0.");
+        throw std::invalid_argument("Number of segments in " + this->ID + " is lower than 0.");
     } else {
         numberOfSegments = value;
     }
@@ -1321,7 +1444,7 @@ int ProgressBar::GetNumberOfSegments() const {
 void ProgressBar::SetGapBetweenSegments(const float& value) {
     if (value < 0) {
         gapBetweenSegments = 0;
-        throw std::out_of_range("Gap between segments in " + this->ID + " is lower than 0.");
+        throw std::invalid_argument("Gap between segments in " + this->ID + " is lower than 0.");
     } else if (((width - (2 * barMargin)) / numberOfSegments) + (value * numberOfSegments) > width - (2 * barMargin)) {
         gapBetweenSegments = (width - (2 * barMargin)) / numberOfSegments;
         throw std::out_of_range("Gap between segments in " + this->ID + " is too big.");
@@ -1368,11 +1491,9 @@ void PressedButton::DrawMyself(const float& dt) const {
     }
 
     if (textToDisplay != "") {
-       DrawText(textToDisplay.c_str(), xAnchor + (width / 2) - (MeasureText(textToDisplay.c_str(), font.fontSize) / 2), yAnchor + (height / 2) - (font.fontSize / 2), font.fontSize, font.colour.GetColour());
+       DrawText(textToDisplay.c_str(), xAnchor + (width / 2) - (MeasureText(textToDisplay.c_str(), font.GetFontSize()) / 2), yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
     }
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
+    border.DrawMyself(xAnchor, yAnchor, width, height);
 };
 
 void PressedButton::DoFocusAction(const float& dt) {
@@ -1493,9 +1614,7 @@ void PieChart::DrawMyself(const float& dt) const {
     double sum = std::accumulate(values.begin(), values.end(), 0.0);
     std::vector<Color> colours = {BLUE, RED, GREEN, PINK, BROWN, DARKGREEN, PURPLE}; //TODO Add user colours
 
-    if (border.GetThickness() > 0) {
-        border.DrawMyself(xAnchor, yAnchor, width, height);
-    }
+    border.DrawMyself(xAnchor, yAnchor, width, height);
 
     float currentAngle = 0;
     size_t index = 0;
@@ -1515,31 +1634,31 @@ void PieChart::DrawMyself(const float& dt) const {
             valueString += "%";
 
             if (textAngle < 90) {
-                xShift = MeasureText(valueString.c_str(), font.fontSize);
+                xShift = MeasureText(valueString.c_str(), font.GetFontSize());
             }
 
-            DrawText(valueString.c_str(), xAnchor + ((width / 2) * cos(textAngle * DEG2RAD)) - (MeasureText(valueString.c_str(), font.fontSize) / 2) + xShift, yAnchor + ((width / 2) * sin(textAngle * DEG2RAD)), font.fontSize, font.colour.GetColour());
+            DrawText(valueString.c_str(), xAnchor + ((width / 2) * cos(textAngle * DEG2RAD)) - (MeasureText(valueString.c_str(), font.GetFontSize()) / 2) + xShift, yAnchor + ((width / 2) * sin(textAngle * DEG2RAD)), font.GetFontSize(), font.colour.GetColour());
         }
         if (showLabels) {
             float xShift = 0, yShift = 0;
             float textAngle = currentAngle + (180 * percent); //average of start and end angle, simplified
 
             if (textAngle > 180) {
-                yShift = -font.fontSize;
+                yShift = -font.GetFontSize();
             }
 
             if (values.size() == labels.size()) {
                 std::string label = labels[index];
                 if (textAngle > 90 && textAngle < 270) {
-                    xShift = -MeasureText(label.c_str(), font.fontSize);
+                    xShift = -MeasureText(label.c_str(), font.GetFontSize());
                 } else if (textAngle < 90) {
-                    xShift = MeasureText(label.c_str(), font.fontSize);
+                    xShift = MeasureText(label.c_str(), font.GetFontSize());
                 }
 
-                DrawText(label.c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(label.c_str(), font.fontSize) / 2) + xShift, yAnchor + (width * sin(textAngle * DEG2RAD)) + yShift, font.fontSize, font.colour.GetColour());
+                DrawText(label.c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(label.c_str(), font.GetFontSize()) / 2) + xShift, yAnchor + (width * sin(textAngle * DEG2RAD)) + yShift, font.GetFontSize(), font.colour.GetColour());
             } else {
                 std::string elementText = std::to_string(element);
-                DrawText(elementText.c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(elementText.c_str(), font.fontSize) / 2) + xShift, yAnchor + (width * sin(textAngle * DEG2RAD)) + yShift, font.fontSize, font.colour.GetColour());
+                DrawText(elementText.c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(elementText.c_str(), font.GetFontSize()) / 2) + xShift, yAnchor + (width * sin(textAngle * DEG2RAD)) + yShift, font.GetFontSize(), font.colour.GetColour());
             }
         }
         currentAngle += 360 * percent;

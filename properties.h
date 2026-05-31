@@ -10,10 +10,11 @@
 #include <memory>
 #include <functional>
 
-/****************************
- * This file contains the properties used in the FX items.
- * And also some helpers.
- ****************************/
+/******************************************************************
+ *  @file properties
+ *  @brief This file contains the properties used in the FX items.
+ *  @details And also some helpers.
+ ******************************************************************/
 
 #define GREY GRAY //a hack to make British spelling work with Raylib colours.
 #define DARKGREY DARKGRAY
@@ -27,12 +28,30 @@
 
 namespace CPPFX {
 
+/**
+ *  @class Colour
+ *  @brief Wrapper over raylib colours.
+ *  @details Used in every widget and property.
+ */
 class Colour {
 public:
 
-
+    /**
+     *  @brief Default constructor.
+     *  @details Sets colour as light grey.
+     */
     Colour() : name("LIGHTGREY"), value(LIGHTGREY) {}
+    /**
+     *  @brief Constructor for setting the colour by name.
+     *  @param colour name of the colour.
+     *  @details Normalises the name before commencing. Sets the value too.
+     */
     Colour(const std::string& colour) : name(colour), value(StringToColour(Normalise(colour))) {}
+    /**
+     *  @brief Constructor for setting colour by value.
+     *  @param colour value of the colour.
+     *  @details Sets the name too.
+     */
     Colour(const Color& colour) : name(ColourToString(colour)), value(colour) {}
 
     /**
@@ -51,6 +70,7 @@ public:
 
     /**
      *  @brief Gets colour name.
+     *  @details Despite the hack, the only returned names are the raylib one's.
      *  @return A string that's the colour's name.
      */
     std::string GetColourString() const;
@@ -80,6 +100,11 @@ private:
     static std::string Normalise(const std::string& str);
 };
 
+/**
+ *  @class Property
+ *  @brief Base for other properties
+ *  @note Is it even needed?
+ */
 class Property {
 public:
     Colour colour;
@@ -88,6 +113,10 @@ public:
     Property(const std::string& i, const Color& colour) : colour(colour), fxID(i)  {}
     Property(const std::string& i, const std::string& colour) : colour(colour), fxID(i) {}
 
+    /**
+     *  @brief Returns name of the property.
+     *  @returns Name of the property.
+     */
     std::string GetFxID() const;
 
 protected:
@@ -95,22 +124,52 @@ protected:
 
 };
 
+/**
+ *  @class Border
+ *  @brief The outline around an item.
+ *  @details Draws outside the item, thickness radiating outwards, rather than into the item by default. Allows to override default behaviour by a lambda.
+ */
 class Border : public Property {
 public:
 
-    Border() : Property("Border", BLACK), thickness(0) {}
+    /**
+     *  @brief Default constructor.
+     *  @details Sets colour to black and thickness to 0, turning off border by default in all items.
+     */
+    Border() : Property("Border", BLACK), thickness(0), drawMyself(nullptr) {}
 
     /**
-     * @details Sets the thickness value.
+     * @brief Sets the thickness value.
      * @param thickness new thickness value.
      * @throw std::range_error If thickness is negative.
      */
     void SetThickness(const float& thickness);
+    /**
+     *  @brief Gets thickness.
+     *  @returns thickness value.
+     */
     float GetThickness() const;
 
+    /**
+     *  @brief Sets drawing method to one specified.
+     *  @param drawMyself how the border should draw itself around an item. Takes in item's basic dimensions as parameters.
+     */
     void SetDrawingMethod(const std::function<void(const float& x, const float& y, const float& width, const float& height)>& drawMyself);
+    /**
+     *  @brief Sets custom drawing method to null.
+     *  @details Goes back to default drawing method.
+     *  @see Border::DrawMyself for default drawing method.
+     */
     void RemoveDrawingMethod();
 
+    /**
+     *  @brief Draws border around an item.
+     *  @details Default border draws around and outwards an item, i.e. x - thickness is the end point of border. Draws only when thickness is greater than 0.
+     *  @param x item's x coordinate
+     *  @param y item's y coordinate
+     *  @param width item's width
+     *  @param height item's height
+     */
     void DrawMyself(const float& x, const float& y, const float& width, const float& height) const;
 
 private:
@@ -118,17 +177,46 @@ private:
     std::function<void(const float& x, const float& y, const float& width, const float& height)> drawMyself;
 };
 
+/**
+ *  @class Font
+ *  @brief Wrapper over raylib's fonts.
+ */
 class Font : public Property {
 public:
-    float fontSize;
-    std::string name;
 
+    /**
+     *  @brief Default constructor.
+     *  @details Sets fontSize to 20 and colour to black.
+     */
     Font() : Property("Font", BLACK), fontSize(20) {}
+    /**
+     *  @brief Constructor for custom size.
+     *  @details Sets colour to black.
+     *  @param fS size of the font to be set.
+     */
     Font(const float& fS) : Property("Font", BLACK), fontSize(fS) {}
+
+    /**
+     *  @brief Sets font size.
+     *  @param size size to be set.
+     *  @throws std::invalid_argument if the size is negative.
+     *  @warning throws a warning if size is 0.
+     */
+    void SetFontSize(const float& size);
+    /**
+     *  @brief Gets font size.
+     *  @returns Size of the font.
+     */
+    float GetFontSize() const;
+
+private:
+    float fontSize;
+    std::string name; //TODO ///< name of the font to be used for loading custom ones
 };
 
 /**
  *  @class Alignment
+ *  @brief 3 x 3 alignment grid for text display or containers arrangement.
  */
 class Alignment : public Property {
 public:
@@ -142,13 +230,25 @@ public:
 
     /**
      *  @brief Sets the alignment based on a string.
-     *  @details Accepts the same names as in the Alignments enum only.
+     *  @details Normalises by toupper only.
      *  @param alignment string of the alignment
      *  @throws std::invalid_argument if the parameter is not in the Alignments enum
      */
     void SetAlignment(const std::string& alignment);
+    /**
+     *  @brief Sets the alignment based on the value.
+     *  @param alignment value to be set
+     */
     void SetAlignment(const Alignments& alignment);
+    /**
+     *  @brief Gets the current alignment as a value
+     *  @returns An enum value corresponding to the current alignment.
+     */
     Alignments GetAlignment() const;
+    /**
+     *  @brief Gets the current alignment as a string.
+     *  @returns A string corresponding to the current alignment.
+     */
     std::string GetAlignmentString() const;
 
     /**
@@ -179,7 +279,7 @@ public:
 
 private:
     std::string AlignmentToString(const Alignments& alignment) const;
-    Alignments StringToAlignment(const std::string& alignment) const;
+    Alignments StringToAlignment(const std::string& alignment) const; ///< normalisesby toupper
 
     Alignments alignment;
 };
