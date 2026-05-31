@@ -42,19 +42,19 @@ public:
      *  @param w width
      *  @param h height
      */
-    Item(const std::string& i, const float& w, const float& h)
+    Item(const std::string& i, float w, float h)
         : ID(""), xAnchor(0), yAnchor(0), height(h), width(w), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
 
     /**
      *  @brief Draws the item in world coordinates.
      *  @param dt frame time
      */
-    virtual void DrawMyself(const float& dt) const;
+    virtual void DrawMyself(float dt) const;
     /**
      *  @brief Draws the item in screen coordinates.
      *  @param dt frame time
      */
-    virtual void DrawMyself(const float& dt, const Camera2D& camera) const;
+    virtual void DrawMyself(float dt, const Camera2D& camera) const;
     /**
      *  @brief Checks whether the item was clicked in screen coordinates.
      *  @details Checks whether the mouse position is within the area of the item.
@@ -73,36 +73,36 @@ public:
      *  @brief Action done every frame in world coordinates.
      *  @param dt frame time
      */
-    virtual void DoPassiveAction(const float& dt);
+    virtual void DoPassiveAction(float dt);
     /**
      *  @brief Action done every frame in screen coordinates.
      *  @param dt frame time
      */
-    virtual void DoPassiveAction(const float& dt, const Camera2D& camera);
+    virtual void DoPassiveAction(float dt, const Camera2D& camera);
     /**
      *  @brief Action done while the item is focused in world coordinates.
      *  @param dt Frame time
      */
-    virtual void DoFocusAction(const float& dt) = 0;
+    virtual void DoFocusAction(float dt) = 0;
     /**
      *  @brief Action done while the item is focused in screen coordinates.
      *  @param dt Frame time
      */
-    virtual void DoFocusAction(const float& dt, const Camera2D& camera);
+    virtual void DoFocusAction(float dt, const Camera2D& camera);
     /**
      *  @brief Action done while the item is focused and it depends on mouse click in world coordinates.
      *  @details Defaults to the previous DoActiveAction().
      *  @param dt Frame time
      *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
      */
-    virtual void DoFocusAction(const float& dt, const Vector2& mousePosition);
+    virtual void DoFocusAction(float dt, const Vector2& mousePosition);
     /**
      *  @brief Action done while the item is focused and it depends on mouse click in screen coordinates.
      *  @details Defaults to the previous DoActiveAction().
      *  @param dt Frame time
      *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
      */
-    virtual void DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera);
+    virtual void DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera);
     /**
      *  @brief Sets focused to false.
      */
@@ -209,24 +209,24 @@ public:
      *  @brief Sets the x coordinate of the item.
      *  @param x new value to be set
      */
-    virtual void SetX(const float& x);
+    virtual void SetX(float x);
     /**
      *  @brief Sets the y coordinate of the item.
      *  @param y new value to be set
      */
-    virtual void SetY(const float& y);
+    virtual void SetY(float y);
     /**
      *  @brief Sets the height of the item.
      *  @param value The new height.
      *  @throws std::invalid_argument If the value is negative.
      */
-    virtual void SetHeight(const float& value);
+    virtual void SetHeight(float value);
     /**
      *  @brief Sets the width of the item.
      *  @param value The new width.
      *  @throws std::invalid_argument If the value is negative.
      */
-    virtual void SetWidth(const float& value);
+    virtual void SetWidth(float value);
     /**
      *  @brief Sets item's ID.
      *  @param id new ID to be set.
@@ -238,7 +238,7 @@ public:
      *  @param value The new priority.
      *  @throws std::invalid_argument If the value is negative.
      */
-    void SetPriority(const int& value);
+    void SetPriority(int value);
     /**
      *  @brief Increases order by one, decreasing the priority by one.
      *  @details If priority is 0, does nothing.
@@ -329,7 +329,7 @@ public:
     Font font;
 
     TextItem(const std::string& i) : Item(i), font(height / 4), text(i), textMargin(10) {}
-    TextItem(const std::string& i, const float& w, const float& h) : Item(i, w, h), font(h / 4), text(i), textMargin(10) {}
+    TextItem(const std::string& i, float w, float h) : Item(i, w, h), font(h / 4), text(i), textMargin(10) {}
 
     /**
      *  @brief Expands the width and height to accommodate text.
@@ -363,7 +363,7 @@ public:
      *  @details Sets 0 at throw.
      *  @throws std::invalid_argument if margin is negative.
      */
-    void SetTextMargin(const float& margin);
+    void SetTextMargin(float margin);
     /**
      *  @brief Returns text margin
      *  @returns text margin
@@ -393,8 +393,8 @@ public:
 
     Label() : TextItem("Label") {colour.SetColour(BLANK); text = "Label";}
 
-    void DrawMyself(const float& dt) const override;
-    void DoFocusAction(const float& dt) override;
+    void DrawMyself(float dt) const override;
+    void DoFocusAction(float dt) override;
 
 };
 
@@ -410,8 +410,8 @@ public:
     TextField() : TextItem("TextField"), promptText("") {}
     TextField(const std::string& i) : TextItem(i), promptText("") {}
 
-    void DrawMyself(const float& dt) const override;
-    void DoFocusAction(const float& dt) override;
+    void DrawMyself(float dt) const override;
+    void DoFocusAction(float dt) override;
 
     void SetPromptText(const std::string& text);
     void ClearPromptText();
@@ -435,8 +435,8 @@ public:
     Button() : TextItem("Button"), pressedColour(GREY), unPressedColour(LIGHTGREY) {}
     Button(const std::string& id) : TextItem(id), pressedColour(GREY), unPressedColour(LIGHTGREY) {}
 
-    void DrawMyself(const float& dt) const override;
-    void DoFocusAction(const float& dt) override;
+    void DrawMyself(float dt) const override;
+    void DoFocusAction(float dt) override;
 
 };
 
@@ -458,8 +458,8 @@ public:
 
     CheckBox() : TextItem("CheckBox", 50, 50), pressedColour(GRAY), unPressedColour(LIGHTGRAY), pressed(false), labelMargin(10) {font.SetFontSize(height / 2);}
 
-    void DrawMyself(const float& dt) const override;
-    void DoFocusAction(const float& dt) override;
+    void DrawMyself(float dt) const override;
+    void DoFocusAction(float dt) override;
 
     float GetTotalWidth() const override;
 
@@ -468,7 +468,7 @@ public:
      *  @param value new value to be set to
      *  @throws std::invalid_argument if the new value is negative.
      */
-    void SetLabelMargin(const float& value);
+    void SetLabelMargin(float value);
     float GetLabelMargin() const;
 
     void SetPressed(const bool& flag);
@@ -497,7 +497,7 @@ public:
 
     DropDown() : TextItem("DropDown"), currentLabel("") {}
 
-    void DrawMyself(const float& dt) const override {
+    void DrawMyself(float dt) const override {
         DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
         if (currentLabel != "") {
             DrawText(Truncate(currentLabel).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
@@ -543,17 +543,17 @@ public:
         }
     }
 
-    void DoFocusAction(const float& dt) {
+    void DoFocusAction(float dt) {
         return;
     }
 
-    void DoPassiveAction(const float& dt) override {
+    void DoPassiveAction(float dt) override {
         if (currentLabel == "" && !values.empty()) {
             SetCurrent(values.begin()->first);
         }
     }
 
-    void DoFocusAction(const float& dt, const Vector2& mousePosition) override {
+    void DoFocusAction(float dt, const Vector2& mousePosition) override {
         if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
             int index = (mousePosition.y - (yAnchor + height)) / height;
             auto it = std::next(values.begin(), index);
@@ -567,7 +567,7 @@ public:
         }
     }
 
-    void DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override {
+    void DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) override {
         float height = this->height * camera.zoom;
 
         if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + (width * camera.zoom) && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
@@ -755,7 +755,7 @@ public:
     Border border;
 
     Container(const std::string& i) : Item(i) {colour.SetColour(BLANK); priority = 10;}
-    Container(const std::string& i, const float& w, const float& h) : Item(i, w, h) {colour.SetColour(BLANK); priority = 10;}
+    Container(const std::string& i, float w, float h) : Item(i, w, h) {colour.SetColour(BLANK); priority = 10;}
 
     void AddItem(Item* item);
 
@@ -790,9 +790,9 @@ public:
      */
     virtual void SetPositionsOfItems() = 0;
 
-    virtual void DoPassiveAction(const float& dt) override; ///< dirty sort and arrangement
-    virtual void DrawMyself(const float& dt) const override; ///< just the border drawing and background drawing.
-    virtual void DoFocusAction(const float& dt) override; ///< nothing, defocuses itself.
+    virtual void DoPassiveAction(float dt) override; ///< dirty sort and arrangement
+    virtual void DrawMyself(float dt) const override; ///< just the border drawing and background drawing.
+    virtual void DoFocusAction(float dt) override; ///< nothing, defocuses itself.
 
     /**
      *  @brief Sorts the drawing order by priority.
@@ -843,22 +843,22 @@ public:
      *  @see Item::SetX
      *  @details Saves previous x
      */
-    void SetX(const float& x) override;
+    void SetX(float x) override;
     /**
      *  @see Item::SetY
      *  @details Saves previous y
      */
-    void SetY(const float& y) override;
+    void SetY(float y) override;
     /**
      *  @see Item::SetWidth
      *  @details Saves previous width
      */
-    void SetWidth(const float& value) override;
+    void SetWidth(float value) override;
     /**
      *  @see Item::SetHeight
      *  @details Saves previous height
      */
-    void SetHeight(const float& value) override;
+    void SetHeight(float value) override;
 
 private:
     // used for recalculating positions of children when pane moves or reshapes.
@@ -877,7 +877,7 @@ class Box : public Container {
 public:
 
     Box(const std::string& i) : Container(i), padding(10) {}
-    Box(const std::string& i, const float& w, const float& h) : Container(i, w, h), padding(10) {}
+    Box(const std::string& i, float w, float h) : Container(i, w, h), padding(10) {}
 
     /**
      *  @brief Sets padding.
@@ -885,7 +885,7 @@ public:
      *  @param value new padding value
      *  @throws std::invalid_argument if the padding is negative
      */
-    void SetPadding(const float& value);
+    void SetPadding(float value);
     float GetPadding() const;
 
 protected:
@@ -949,28 +949,32 @@ public:
         Initialise();
     }
 
-    void DrawMyself(const float& dt) const override;
-    void DrawMyself(const float& dt, const Camera2D& camera) const override;
-    void DoFocusAction(const float& dt) override;
-    void DoFocusAction(const float& dt, const Vector2& mousePosition) override;
-    void DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override;
+    void DrawMyself(float dt) const override;
+    void DrawMyself(float dt, const Camera2D& camera) const override;
+    void DoFocusAction(float dt) override;
+    void DoFocusAction(float dt, const Vector2& mousePosition) override;
+    void DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) override;
     bool WasIClicked(const Vector2& mousePosition) const override;
     bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const override;
 
     void SetToScreen() override;
     void SetToWorld() override;
 
-    virtual void SetValue(const float& value);
+    virtual void SetValue(float value);
     float GetValue() const;
-    void SetStep(const float& step);
+    void SetStep(float step);
     float GetStep() const;
+    void AllowWrap();
+    void StopWrapping();
+    void SetWrap(const bool flag);
+    bool IsWrapAllowed() const;
 
     /**
      *  @brief Sets max value.
      *  @param value new value to be set
      *  @details Does NOT set hasMax. maxValue lesser than minValue is undefined behaviour.
      */
-    void SetMaxValue(const float& value);
+    void SetMaxValue(float value);
     /**
      *  @brief Gives max value.
      *  @details Does NOT set hasMax.
@@ -982,7 +986,7 @@ public:
      *  @param value new value to be set
      *  @details Does NOT set hasMin. minValue greater than maxValue is undefined behaviour.
      */
-    void SetMinValue(const float& value);
+    void SetMinValue(float value);
     /**
      *  @brief Gives min value.
      *  @details Does NOT set hasMin.
@@ -1026,36 +1030,36 @@ public:
      *  @param margin the new value
      *  @throws std::invalid_argument if the margin is negative
      */
-    virtual void SetValueMargin(const float& margin);
+    virtual void SetValueMargin(float margin);
     virtual float GetValueMargin() const;
 
     /**
      *  @see Item::SetX
      *  @details Updates buttons
      */
-    void SetX(const float& x) override;
+    void SetX(float x) override;
     /**
      *  @see Item::SetY
      *  @details Updates buttons
      */
-    void SetY(const float& y) override;
+    void SetY(float y) override;
     /**
      *  @see Item::SetWidth
      *  @details Moves buttons away.
      */
-    void SetWidth(const float& value) override;
+    void SetWidth(float value) override;
     /**
      *  @see Item::SetHeight
      *  @details Updates buttons height - each gets half.
      */
-    void SetHeight(const float& value) override;
+    void SetHeight(float value) override;
 
     /**
      *  @brief Sets the width of the buttons.
      *  @param value new width of the buttons
      *  @throws std::invalid_argument if value is negative.
      */
-    void SetButtonsWidth(const float& value);
+    void SetButtonsWidth(float value);
 
     /**
      *  @see Item::GetTotalWidth
@@ -1100,11 +1104,11 @@ public:
         editArea.font.SetFontSize(font.GetFontSize());
     }
 
-    void DrawMyself(const float& dt) const override;
-    void DrawMyself(const float& dt, const Camera2D& camera) const override;
-    void DoFocusAction(const float& dt) override;
-    void DoFocusAction(const float& dt, const Vector2& mousePosition) override;
-    void DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) override;
+    void DrawMyself(float dt) const override;
+    void DrawMyself(float dt, const Camera2D& camera) const override;
+    void DoFocusAction(float dt) override;
+    void DoFocusAction(float dt, const Vector2& mousePosition) override;
+    void DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) override;
     void Defocus() override;
 
     void SetToScreen() override;
@@ -1114,33 +1118,33 @@ public:
      *  @see Spinner::SetX
      *  @details Moves editArea.
      */
-    void SetX(const float& x) override;
+    void SetX(float x) override;
     /**
      *  @see Spinner::SetY
      *  @details Moves editArea.
      */
-    void SetY(const float& y) override;
+    void SetY(float y) override;
     /**
      *  @see Spinner::SetWidth
      *  @details Changes the width of the text field.
      */
-    void SetWidth(const float& value) override;
+    void SetWidth(float value) override;
     /**
      *  @see Spinner::SetHeight
      *  @details Changes the height of the text field.
      */
-    void SetHeight(const float& value) override;
+    void SetHeight(float value) override;
     /**
      *  @see Spinner::SetValue
      *  @details Puts the value into the text field
      */
-    void SetValue(const float& value) override;
+    void SetValue(float value) override;
 
     /**
      *  @see Spinner::SetValueMargin
      *  @details Interface for text field.
      */
-    void SetValueMargin(const float& margin) override;
+    void SetValueMargin(float margin) override;
     /**
      *  @see Spinner::SetValueMargin
      *  @details Interface for text field.
@@ -1158,7 +1162,7 @@ public:
 
     PasswordField() : TextField("PasswordField"), mask('*') {promptText = "Password"; ClearText();}
 
-    void DrawMyself(const float& dt) const override;
+    void DrawMyself(float dt) const override;
 
     void SetMask(const char character);
     char GetMask() const;
@@ -1186,19 +1190,19 @@ public:
      *  @param value 0 - 1, -1 is indefinite progress
      *  @throws std::out_of_range if parameter is beyond the range.
      */
-    void SetProgress(const float& value);
+    void SetProgress(float value);
     /**
      *  @brief Increases the progress value;
      *  @details Accounts for overflow.
      *  @param value how much it will increase
      */
-    void IncreaseProgress(const float& change);
+    void IncreaseProgress(float change);
     /**
      *  @brief Decreases the progress value;
      *  @details Accounts for underflow.
      *  @param value how much it will decrease
      */
-    void DecreaseProgress(const float& change);
+    void DecreaseProgress(float change);
     /**
      *  @brief Stops showing the percentage completed.
      *  @details Sets the value to -1.
@@ -1251,8 +1255,8 @@ public:
     void SetDisplayValue(const bool& flag);
     bool IsDisplayingValue() const;
 
-    void DrawMyself(const float& dt) const override;
-    void DoFocusAction(const float& dt) override;
+    void DrawMyself(float dt) const override;
+    void DoFocusAction(float dt) override;
 
 protected:
     Shapes shape;
@@ -1270,7 +1274,7 @@ public:
 
     ProgressBar() : ProgressIndicator("ProgressBar"), barColour(GREEN), barMargin(5), segmented(false), numberOfSegments(10), gapBetweenSegments(1) {shape = ProgressIndicator::Shapes::BAR;}
 
-    void DrawMyself(const float& dt) const override;
+    void DrawMyself(float dt) const override;
 
     /**
      *  @brief Sets bar margin.
@@ -1279,7 +1283,7 @@ public:
      *  @throws std::out_of_range if value is greater than half of the height
      *  @throws std::invalid_argument if value is lower than 0
      */
-    void SetBarMargin(const float& value);
+    void SetBarMargin(float value);
     float GetBarMargin() const;
     /**
      *  @brief Sets number of segments.
@@ -1287,7 +1291,7 @@ public:
      *  @param value new number of segments
      *  @throws std::invalid_argument if value is lower than 0
      */
-    void SetNumberOfSegments(const int& value);
+    void SetNumberOfSegments(int value);
     int GetNumberOfSegments() const;
     /**
      *  @brief Sets length of the gap between segments.
@@ -1296,7 +1300,7 @@ public:
      *  @throws std::out_of_range if value is greater than the available maximum gap based on width and the number of segments
      *  @throws std::invalid_argument if value is lower than 0
      */
-    void SetGapBetweenSegments(const float& value);
+    void SetGapBetweenSegments(float value);
     float GetGapBetweenSegments() const;
     /**
      *  @brief Sets the number of segments and the gap between them.
@@ -1308,7 +1312,7 @@ public:
      *  @see ProgressBar::SetGapBetweenSegments
      *  @see ProgressBar::SetNumberOfSegments
      */
-    void SetSegments(const int& number, const float& gap);
+    void SetSegments(int number, float gap);
 
     /**
      *  @brief Segments the bar for display.
@@ -1337,9 +1341,9 @@ public:
 
     PressedButton() : Button("PressedButton"), pressed(false), pressedText("Pressed Button") {}
 
-    void DrawMyself(const float& dt) const override;
-    void DoFocusAction(const float& dt) override;
-    void DoFocusAction(const float& dt, const Vector2& mousePosition) override;
+    void DrawMyself(float dt) const override;
+    void DoFocusAction(float dt) override;
+    void DoFocusAction(float dt, const Vector2& mousePosition) override;
 
     void SetPressedText(const std::string& value);
     void ClearPressedText();
@@ -1367,20 +1371,20 @@ public:
     void AddItem(const T& item) {
         items.push_back(item);
     }
-    void RemoveItem(const int& index) {
+    void RemoveItem(int index) {
         if (index < 0 || index >= items.size()) {
             throw std::out_of_range("In List " + this->ID + ": index beyond range at removal.");
         }
         items.erase(items.begin() + index);
     }
-    void ReplaceItem(const int& index, const T& item) {
+    void ReplaceItem(int index, const T& item) {
         if (index < 0 || index >= items.size()) {
             throw std::out_of_range("In List " + this->ID + ": index beyond range at replacing.");
         }
         items[index] = item;
     }
 
-    const T& GetItem(const int& index) const {
+    const T& GetItem(int index) const {
         if (index < 0 || index >= items.size()) {
             throw std::out_of_range("In List " + this->ID + ": index beyond range at getting.");
         }
@@ -1422,7 +1426,7 @@ public:
      * @throws std::runtime_error if display method not set for a type that is not a string nor is able to use to_string.
      * @see Item::DrawMyself
      */
-    void DrawMyself(const float& dt) const override {
+    void DrawMyself(float dt) const override {
         if (displayMethod) {
             if (vertical) {
                 float nextY = 0;
@@ -1475,7 +1479,7 @@ public:
             }
         }
     }
-    void DoFocusAction(const float& dt) override {
+    void DoFocusAction(float dt) override {
         return;
     }
 
@@ -1501,7 +1505,7 @@ public:
      *  @param padding new padding to be set.
      *  @throws std::invalid_argument if padding is negative.
      */
-    void SetPadding(const float& padding) {
+    void SetPadding(float padding) {
         if (padding < 0) {
             throw std::invalid_argument("In List " + this->ID + ": negative padding");
         }
@@ -1571,17 +1575,17 @@ public:
 
     Chart (const std::string& i) : Item(i), font(height / 4) {}
 
-    void AddElement(const std::string& label, const double& value);
-    void AddElement(const double& value);
+    void AddElement(const std::string& label, double value);
+    void AddElement(double value);
 
     double GetElement(const std::string& label) const;
-    double GetElement(const int& index) const;
+    double GetElement(int index) const;
 
-    void SetElement(const std::string& label, const double& newValue);
-    void SetElement(const int& index, const double& newValue);
+    void SetElement(const std::string& label, double newValue);
+    void SetElement(int index, double newValue);
 
     void RemoveElement(const std::string& label);
-    void RemoveElement(const int& index);
+    void RemoveElement(int index);
 
     size_t GetLabelsSize() const;
     size_t GetValuesSize() const;
@@ -1595,13 +1599,13 @@ class PieChart : public Chart {
 public:
 
     PieChart() : Chart("PieChart"), showLabels(false), showPercentage(false) {
-        border.SetDrawingMethod([this](const float& x, const float& y, const float& w, const float& h){
+        border.SetDrawingMethod([this](float x, float y, float w, float h){
             DrawCircle(x, y, w + border.GetThickness(), border.colour.GetColour());
         });
     }
 
-    void DoFocusAction(const float& dt) override;
-    void DrawMyself(const float& dt) const override;
+    void DoFocusAction(float dt) override;
+    void DrawMyself(float dt) const override;
 
     void DoShowLabels();
     void DoNotShowLabels();

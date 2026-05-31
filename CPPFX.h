@@ -270,7 +270,6 @@ public:
      *  @throws std::out_of_range if item with the ID doesn't exist.
      */
     void SetHighestPriority(const std::string& ID);
-
     /**
      *  @brief Sets the item's priority to be the highest of all items.
      *  @details Assumes the Items are sorted. If another item has priority of 0 already, this item will have new priority equal to it.
@@ -278,6 +277,20 @@ public:
      *  @throws std::out_of_range if item with the ID doesn't exist.
      */
     void SetAboveHighestPriority(const std::string& ID);
+    /**
+     *  @brief Sets the item's priority to as low as other items get.
+     *  @details Assumes the Items are sorted.
+     *  @param ID the ID of the Item which priority will be changed.
+     *  @throws std::out_of_range if item with the ID doesn't exist.
+     */
+    void SetLowestPriority(const std::string& ID);
+    /**
+     *  @brief Sets the item's priority to be the lowest of all items.
+     *  @details Assumes the Items are sorted.
+     *  @param ID the ID of the Item which priority will be changed.
+     *  @throws std::out_of_range if item with the ID doesn't exist.
+     */
+    void SetMoreLowestPriority(const std::string& ID);
 
     /**
      *  @brief Sorts the drawing order by priority. Sorting is done automatically on first frame after adding an item.

@@ -119,7 +119,7 @@ std::string Property::GetFxID() const {
 }
 
 // --- Border ---
-void Border::DrawMyself(const float& x, const float& y, const float& width, const float& height) const {
+void Border::DrawMyself(float x, float y, float width, float height) const {
     if (thickness > 0) {
         if (drawMyself) {
             drawMyself(x, y, width, height);
@@ -129,7 +129,7 @@ void Border::DrawMyself(const float& x, const float& y, const float& width, cons
     }
 }
 
-void Border::SetDrawingMethod(const std::function<void(const float& x, const float& y, const float& width, const float& height)>& drawMyself) {
+void Border::SetDrawingMethod(const std::function<void(float x, float y, float width, float height)>& drawMyself) {
     this->drawMyself = drawMyself;
 }
 
@@ -138,7 +138,7 @@ void Border::RemoveDrawingMethod() {
 }
 
 // --- Setters ---
-void Border::SetThickness(const float& thickness) {
+void Border::SetThickness(float thickness) {
     if (thickness < 0) {
         throw std::range_error("Range error: Negative thickness.");
     } else {
@@ -153,7 +153,7 @@ float Border::GetThickness() const {
 
 //------Font--------
 
-void CPPFX::Font::SetFontSize(const float& size) {
+void CPPFX::Font::SetFontSize(float size) {
     if (size < 0) {
         throw std::invalid_argument("Negative font size.");
     } else {

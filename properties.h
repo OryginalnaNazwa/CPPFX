@@ -143,7 +143,7 @@ public:
      * @param thickness new thickness value.
      * @throw std::range_error If thickness is negative.
      */
-    void SetThickness(const float& thickness);
+    void SetThickness(float thickness);
     /**
      *  @brief Gets thickness.
      *  @returns thickness value.
@@ -154,7 +154,7 @@ public:
      *  @brief Sets drawing method to one specified.
      *  @param drawMyself how the border should draw itself around an item. Takes in item's basic dimensions as parameters.
      */
-    void SetDrawingMethod(const std::function<void(const float& x, const float& y, const float& width, const float& height)>& drawMyself);
+    void SetDrawingMethod(const std::function<void(const float x, const float y, const float width, const float height)>& drawMyself);
     /**
      *  @brief Sets custom drawing method to null.
      *  @details Goes back to default drawing method.
@@ -170,11 +170,11 @@ public:
      *  @param width item's width
      *  @param height item's height
      */
-    void DrawMyself(const float& x, const float& y, const float& width, const float& height) const;
+    void DrawMyself(float x, float y, float width, float height) const;
 
 private:
     float thickness;
-    std::function<void(const float& x, const float& y, const float& width, const float& height)> drawMyself;
+    std::function<void(const float x, const float y, const float width, const float height)> drawMyself;
 };
 
 /**
@@ -194,7 +194,7 @@ public:
      *  @details Sets colour to black.
      *  @param fS size of the font to be set.
      */
-    Font(const float& fS) : Property("Font", BLACK), fontSize(fS) {}
+    Font(float fS) : Property("Font", BLACK), fontSize(fS) {}
 
     /**
      *  @brief Sets font size.
@@ -202,7 +202,7 @@ public:
      *  @throws std::invalid_argument if the size is negative.
      *  @warning throws a warning if size is 0.
      */
-    void SetFontSize(const float& size);
+    void SetFontSize(float size);
     /**
      *  @brief Gets font size.
      *  @returns Size of the font.

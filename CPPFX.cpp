@@ -547,6 +547,31 @@ void GUI::SetAboveHighestPriority(const std::string& ID) {
     }
 }
 
+void GUI::SetLowestPriority(const std::string& ID) {
+    Item* item = nullptr;
+    try {
+        item = Items.at(ID).get();
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to highest + 1");
+    }
+    size_t lowestPriority = ItemsInDrawingOrder.front()->GetPriority();
+    item->SetPriority(lowestPriority);
+    needsSorting = true;
+}
+
+void GUI::SetMoreLowestPriority(const std::string& ID) {
+    Item* item = nullptr;
+    try {
+        item = Items.at(ID).get();
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to highest + 1");
+    }
+    size_t lowestPriority = ItemsInDrawingOrder.front()->GetPriority();
+    item->SetPriority(lowestPriority);
+    item->MoveDownPriority();
+    needsSorting = true;
+}
+
 size_t GUI::GetTotalItemCount(const std::string& fxID) const {
     if (IsFxID(fxID)) {
         return ItemsCounter.at(fxID);

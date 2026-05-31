@@ -5,11 +5,11 @@ using namespace CPPFX;
 // --- Items ---
 // --- Item ---
 
-void Item::DrawMyself(const float& dt) const {
+void Item::DrawMyself(float dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
 }
 
-void Item::DrawMyself(const float& dt, const Camera2D& camera) const {
+void Item::DrawMyself(float dt, const Camera2D& camera) const {
     float savedX = xAnchor, savedY = yAnchor;
     xAnchor = camera.target.x + (xAnchor - camera.offset.x) / camera.zoom;
     yAnchor = camera.target.y + (yAnchor - camera.offset.y) / camera.zoom;
@@ -36,23 +36,23 @@ bool Item::WasIClicked(const Vector2& mousePosition) const {
     return false;
 }
 
-void Item::DoFocusAction(const float& dt, const Vector2& mousePosition) {
+void Item::DoFocusAction(float dt, const Vector2& mousePosition) {
     return DoFocusAction(dt);
 }
 
-void Item::DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
+void Item::DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) {
     return DoFocusAction(dt, mousePosition);
 }
 
-void Item::DoFocusAction(const float& dt, const Camera2D& camera) {
+void Item::DoFocusAction(float dt, const Camera2D& camera) {
     return DoFocusAction(dt);
 }
 
-void Item::DoPassiveAction(const float& dt) {
+void Item::DoPassiveAction(float dt) {
     return;
 }
 
-void Item::DoPassiveAction(const float& dt, const Camera2D& camera) {
+void Item::DoPassiveAction(float dt, const Camera2D& camera) {
     return DoPassiveAction(dt);
 }
 
@@ -60,14 +60,14 @@ void Item::DoPassiveAction(const float& dt, const Camera2D& camera) {
 
 
 // --- Setters ---
-void Item::SetX(const float& x) {
+void Item::SetX(float x) {
     xAnchor = x;
 }
-void Item::SetY(const float& y) {
+void Item::SetY(float y) {
     yAnchor = y;
 }
 
-void Item::SetHeight(const float& value) {
+void Item::SetHeight(float value) {
     if (value < 0) {
         throw std::invalid_argument("In item " + ID + ": Negative height.");
     } else {
@@ -75,7 +75,7 @@ void Item::SetHeight(const float& value) {
     }
 }
 
-void Item::SetWidth(const float& value) {
+void Item::SetWidth(float value) {
     if (value < 0) {
         throw std::invalid_argument("In item " + ID + ": Negative width.");
     } else {
@@ -83,7 +83,7 @@ void Item::SetWidth(const float& value) {
     }
 }
 
-void Item::SetPriority(const int& value) {
+void Item::SetPriority(int value) {
     if (value < 0) {
         throw std::invalid_argument("In item " + ID + ": Negative priority.");
     } else {
@@ -274,7 +274,7 @@ std::string TextItem::GetText() const {
     return text;
 }
 
-void TextItem::SetTextMargin(const float& margin) {
+void TextItem::SetTextMargin(float margin) {
     if (margin < 0) {
         textMargin = 0;
         throw std::invalid_argument("Negative text margin value in " + ID + " type " + fxID);
@@ -287,7 +287,7 @@ float TextItem::GetTextMargin() const {
 
 //--- Text Field ---
 
-void TextField::DrawMyself(const float& dt) const {
+void TextField::DrawMyself(float dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
@@ -304,7 +304,7 @@ void TextField::DrawMyself(const float& dt) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void TextField::DoFocusAction(const float& dt) {
+void TextField::DoFocusAction(float dt) {
     if (focused) {
         if (IsKeyPressed(KEY_BACKSPACE)) {
             if (text != "") {
@@ -337,7 +337,7 @@ std::string TextField::GetPromptText() const {
 }
 
 //--- Label ---
-void Label::DrawMyself(const float& dt) const {
+void Label::DrawMyself(float dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
         float startX = xAnchor, startY = yAnchor, textOffset = 0, yTextOffSet = 0;
@@ -367,13 +367,13 @@ void Label::DrawMyself(const float& dt) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Label::DoFocusAction(const float& dt) {
+void Label::DoFocusAction(float dt) {
     Defocus();
     return;
 }
 
 //--- Button ---
-void Button::DrawMyself(const float& dt) const {
+void Button::DrawMyself(float dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
        DrawText(text.c_str(), xAnchor + (width / 2) - (MeasureText(text.c_str(), font.GetFontSize()) / 2), yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
@@ -381,7 +381,7 @@ void Button::DrawMyself(const float& dt) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Button::DoFocusAction(const float& dt) {
+void Button::DoFocusAction(float dt) {
     if (focused) {
         if (timer > 0) {
             if (dt > timer) {
@@ -398,7 +398,7 @@ void Button::DoFocusAction(const float& dt) {
     }
 }
 
-void CheckBox::DrawMyself(const float& dt) const {
+void CheckBox::DrawMyself(float dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
        DrawText(text.c_str(), xAnchor + width + textMargin + labelMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
@@ -411,7 +411,7 @@ void CheckBox::DrawMyself(const float& dt) const {
     }
 }
 
-void CheckBox::DoFocusAction(const float& dt) {
+void CheckBox::DoFocusAction(float dt) {
    if (focused) {
         if (pressed) {
             colour.SetColour(unPressedColour.GetColour());
@@ -424,7 +424,7 @@ void CheckBox::DoFocusAction(const float& dt) {
    }
 }
 
-void CheckBox::SetLabelMargin(const float& value) {
+void CheckBox::SetLabelMargin(float value) {
     if (value >= 0) {
         labelMargin = value;
     } else {
@@ -519,7 +519,7 @@ void Container::SortOrder() {
     needsSorting = false;
 }
 
-void Container::DoPassiveAction(const float& dt) {
+void Container::DoPassiveAction(float dt) {
     if (needsSorting) {
         SortOrder();
     }
@@ -529,12 +529,12 @@ void Container::DoPassiveAction(const float& dt) {
     }
 }
 
-void Container::DrawMyself(const float& dt) const {
+void Container::DrawMyself(float dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Box::SetPadding(const float& value) {
+void Box::SetPadding(float value) {
     if (value < 0) {
         throw std::invalid_argument("Error: Negative padding in " + ID);
     }
@@ -604,14 +604,14 @@ void AnchorPane::SetPositionsOfItems() {
     }
 }
 
-void AnchorPane::SetX(const float& x) {
+void AnchorPane::SetX(float x) {
     if (!Items.empty()) {
         needsOrdering = true;
     }
     previousX = xAnchor;
     xAnchor = x;
 }
-void AnchorPane::SetY(const float& y) {
+void AnchorPane::SetY(float y) {
     if (!Items.empty()) {
         needsOrdering = true;
     }
@@ -619,7 +619,7 @@ void AnchorPane::SetY(const float& y) {
     yAnchor = y;
 }
 
-void AnchorPane::SetHeight(const float& value) {
+void AnchorPane::SetHeight(float value) {
     if (value < 0) {
         throw std::invalid_argument("In item " + ID + ": Negative height.");
     } else {
@@ -631,7 +631,7 @@ void AnchorPane::SetHeight(const float& value) {
     }
 }
 
-void AnchorPane::SetWidth(const float& value) {
+void AnchorPane::SetWidth(float value) {
     if (value < 0) {
         throw std::invalid_argument("In item " + ID + ": Negative height.");
     } else {
@@ -643,7 +643,7 @@ void AnchorPane::SetWidth(const float& value) {
     }
 }
 
-void Container::DoFocusAction(const float& dt) {
+void Container::DoFocusAction(float dt) {
     Defocus();
     return;
 }
@@ -762,7 +762,7 @@ float HBox::GetTotalWidth() const {
 
 //--- Spinner ---
 
-void Spinner::DrawMyself(const float& dt) const {
+void Spinner::DrawMyself(float dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
 
@@ -772,7 +772,7 @@ void Spinner::DrawMyself(const float& dt) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Spinner::DrawMyself(const float& dt, const Camera2D& camera) const {
+void Spinner::DrawMyself(float dt, const Camera2D& camera) const {
     float xAnchor = camera.target.x + this->xAnchor / camera.zoom;
     float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
 
@@ -796,7 +796,7 @@ void Spinner::DrawMyself(const float& dt, const Camera2D& camera) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Spinner::DoFocusAction(const float& dt, const Vector2& mousePosition) {
+void Spinner::DoFocusAction(float dt, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.Focus();
         if (incrementButton.onClick) incrementButton.onClick();
@@ -808,7 +808,7 @@ void Spinner::DoFocusAction(const float& dt, const Vector2& mousePosition) {
     incrementButton.DoFocusAction(dt);
 }
 
-void Spinner::DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
+void Spinner::DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) {
     //shift the buttons to where they should be, translation happens in WasIClicked
     const float savedButtonX = incrementButton.GetX(), savedButtonHeight = incrementButton.GetHeight();
     const float savedDecButtonY = decrementButton.GetY();
@@ -835,7 +835,7 @@ void Spinner::DoFocusAction(const float& dt, const Vector2& mousePosition, const
     incrementButton.Item::DoFocusAction(dt, camera);
 }
 
-void Spinner::DoFocusAction(const float& dt) {
+void Spinner::DoFocusAction(float dt) {
     incrementButton.DoFocusAction(dt);
     decrementButton.DoFocusAction(dt);
 }
@@ -880,14 +880,14 @@ void Spinner::Decrement() {
     }
 }
 
-void Spinner::SetValue(const float& value) {
+void Spinner::SetValue(float value) {
     this->value = value;
     if ((hasMin && value < minValue) || (hasMax && value > maxValue)) {
         CPPFX_WARN("In Spinner " + ID + ": value set outside range.");
     }
 }
 
-void Spinner::SetStep(const float& step) {
+void Spinner::SetStep(float step) {
     stepValue = step;
     if (hasMin && hasMax && step > (maxValue - minValue)) {
         CPPFX_WARN("In Spinner " + ID + ": step is more than the range from min to max.");
@@ -902,19 +902,19 @@ float Spinner::GetStep() const {
     return stepValue;
 }
 
-void Spinner::SetX(const float& x) {
+void Spinner::SetX(float x) {
     xAnchor = x;
     incrementButton.SetX(xAnchor + width);
     decrementButton.SetX(xAnchor + width);
 }
 
-void Spinner::SetY(const float& y) {
+void Spinner::SetY(float y) {
     yAnchor = y;
     incrementButton.SetY(yAnchor);
     decrementButton.SetY(yAnchor + (height / 2));
 }
 
-void Spinner::SetWidth(const float& value) {
+void Spinner::SetWidth(float value) {
     if (value < 0) {
         throw std::invalid_argument("In Spinner " + ID + ": Negative width.");
     }
@@ -923,7 +923,7 @@ void Spinner::SetWidth(const float& value) {
     decrementButton.SetX(xAnchor + width);
 }
 
-void Spinner::SetHeight(const float& value) {
+void Spinner::SetHeight(float value) {
     if (value < 0) {
         throw std::invalid_argument("In Spinner " + ID + ": Negative width.");
     }
@@ -933,7 +933,7 @@ void Spinner::SetHeight(const float& value) {
     decrementButton.SetY(yAnchor + (height / 2));
 }
 
-void Spinner::SetValueMargin(const float& value) {
+void Spinner::SetValueMargin(float value) {
     if (value < 0) {
         throw std::invalid_argument("In Spinner " + ID + ": Negative value margin.");
     }
@@ -942,6 +942,22 @@ void Spinner::SetValueMargin(const float& value) {
 
 float Spinner::GetValueMargin() const {
     return valueMargin;
+}
+
+void Spinner::AllowWrap() {
+    allowWrap = true;
+}
+
+void Spinner::StopWrapping() {
+    allowWrap = false;
+}
+
+void Spinner::SetWrap(const bool flag) {
+    allowWrap = flag;
+}
+
+bool Spinner::IsWrapAllowed() const {
+    return allowWrap;
 }
 
 void Spinner::Initialise() {
@@ -962,7 +978,7 @@ void Spinner::Initialise() {
     border.SetThickness(2);
 }
 
-void Spinner::SetButtonsWidth(const float& value) {
+void Spinner::SetButtonsWidth(float value) {
     if (value < 0) {
         throw std::invalid_argument("In spinner " + ID + ": Negative width of buttons.");
     }
@@ -970,14 +986,14 @@ void Spinner::SetButtonsWidth(const float& value) {
     decrementButton.SetWidth(value);
 }
 
-void Spinner::SetMaxValue(const float& value) {
+void Spinner::SetMaxValue(float value) {
     maxValue = value;
     if (minValue > maxValue) {
         CPPFX_WARN("minValue greater than maxValue in Spinner " + ID);
     }
 }
 
-void Spinner::SetMinValue(const float& value) {
+void Spinner::SetMinValue(float value) {
     minValue = value;
     if (minValue > maxValue) {
         CPPFX_WARN("minValue greater than maxValue in Spinner " + ID);
@@ -1044,12 +1060,12 @@ float Spinner::GetTotalWidth() const {
 
 //--- EditableSpinner ---
 
-void EditableSpinner::SetValue(const float& value) {
+void EditableSpinner::SetValue(float value) {
     this->value = value;
     editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
 }
 
-void EditableSpinner::DrawMyself(const float& dt) const {
+void EditableSpinner::DrawMyself(float dt) const {
     editArea.DrawMyself(dt);
     incrementButton.DrawMyself(dt);
     decrementButton.DrawMyself(dt);
@@ -1057,7 +1073,7 @@ void EditableSpinner::DrawMyself(const float& dt) const {
     border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
 }
 
-void EditableSpinner::DrawMyself(const float& dt, const Camera2D& camera) const {
+void EditableSpinner::DrawMyself(float dt, const Camera2D& camera) const {
     float xAnchor = camera.target.x + this->xAnchor / camera.zoom;
     float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
 
@@ -1081,7 +1097,7 @@ void EditableSpinner::DrawMyself(const float& dt, const Camera2D& camera) const 
     border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
 }
 
-void EditableSpinner::DoFocusAction(const float& dt, const Vector2& mousePosition) {
+void EditableSpinner::DoFocusAction(float dt, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.Focus();
         if (incrementButton.onClick) incrementButton.onClick();
@@ -1110,7 +1126,7 @@ void EditableSpinner::DoFocusAction(const float& dt, const Vector2& mousePositio
     editArea.DoFocusAction(dt);
 }
 
-void EditableSpinner::DoFocusAction(const float& dt, const Vector2& mousePosition, const Camera2D& camera) {
+void EditableSpinner::DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) {
     //shift the buttons to where they should be, translation happens in WasIClicked
     const float savedButtonX = incrementButton.GetX(), savedButtonHeight = incrementButton.GetHeight();
     const float savedDecButtonY = decrementButton.GetY();
@@ -1155,34 +1171,34 @@ void EditableSpinner::DoFocusAction(const float& dt, const Vector2& mousePositio
     editArea.Item::DoFocusAction(dt, camera);
 }
 
-void EditableSpinner::DoFocusAction(const float& dt) {
+void EditableSpinner::DoFocusAction(float dt) {
     if (!IsFocused()) editArea.Defocus();
     incrementButton.DoFocusAction(dt);
     decrementButton.DoFocusAction(dt);
     editArea.DoFocusAction(dt);
 }
 
-void EditableSpinner::SetX(const float& x) {
+void EditableSpinner::SetX(float x) {
     Spinner::SetX(x);
     editArea.SetX(xAnchor);
 }
 
-void EditableSpinner::SetY(const float& y) {
+void EditableSpinner::SetY(float y) {
     Spinner::SetY(y);
     editArea.SetY(yAnchor);
 }
 
-void EditableSpinner::SetWidth(const float& value) {
+void EditableSpinner::SetWidth(float value) {
     Spinner::SetWidth(value);
     editArea.SetWidth(width);
 }
 
-void EditableSpinner::SetHeight(const float& value) {
+void EditableSpinner::SetHeight(float value) {
     Spinner::SetHeight(value);
     editArea.SetHeight(height);
 }
 
-void EditableSpinner::SetValueMargin(const float& value) {
+void EditableSpinner::SetValueMargin(float value) {
     if (value < 0) {
         throw std::invalid_argument("In Spinner " + ID + ": Negative value margin.");
     }
@@ -1216,7 +1232,7 @@ void EditableSpinner::SetToScreen() {
 
 //--- PasswordField ---
 
-void PasswordField::DrawMyself(const float& dt) const {
+void PasswordField::DrawMyself(float dt) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
@@ -1244,7 +1260,7 @@ char PasswordField::GetMask() const {
 
 //--- ProgressIndicator ---
 
-void ProgressIndicator::SetProgress(const float& value) {
+void ProgressIndicator::SetProgress(float value) {
     if ((value > 1 || value < 0) && value != -1) {
         throw std::out_of_range("Progress in ProgressIndicator " + ID + " beyond the valid range - " + std::to_string(value));
     } else {
@@ -1252,7 +1268,7 @@ void ProgressIndicator::SetProgress(const float& value) {
     }
 }
 
-void ProgressIndicator::IncreaseProgress(const float& change) {
+void ProgressIndicator::IncreaseProgress(float change) {
     value += change;
     if (value > 1) {
         value = 1;
@@ -1261,7 +1277,7 @@ void ProgressIndicator::IncreaseProgress(const float& change) {
     }
 }
 
-void ProgressIndicator::DecreaseProgress(const float& change) {
+void ProgressIndicator::DecreaseProgress(float change) {
     value -= change;
     if (value < 0) {
         value = 0;
@@ -1288,7 +1304,7 @@ bool ProgressIndicator::IsComplete() const {
     return false;
 }
 
-void ProgressIndicator::DoFocusAction(const float& dt) {
+void ProgressIndicator::DoFocusAction(float dt) {
     return;
 }
 
@@ -1331,7 +1347,7 @@ std::string ProgressIndicator::GetShapeString() const {
     return ShapeToString(shape);
 }
 
-void ProgressIndicator::DrawMyself(const float& dt) const {
+void ProgressIndicator::DrawMyself(float dt) const {
     if (value == -1 || shape == Shapes::DOTS) {
         int dotCount = 8;
         float radius = width / 2;
@@ -1387,7 +1403,7 @@ bool ProgressIndicator::IsDisplayingValue() const {
 
 // ProgressBar
 
-void ProgressBar::DrawMyself(const float& dt) const {
+void ProgressBar::DrawMyself(float dt) const {
     if (shape != Shapes::BAR) {
         ProgressIndicator::DrawMyself(dt);
         return;
@@ -1412,7 +1428,7 @@ void ProgressBar::DrawMyself(const float& dt) const {
     }
 }
 
-void ProgressBar::SetBarMargin(const float& value) {
+void ProgressBar::SetBarMargin(float value) {
     if (value < 0) {
         barMargin = 0;
         throw std::invalid_argument("Bar margin value in " + this->ID + " is lower than 0.");
@@ -1428,7 +1444,7 @@ float ProgressBar::GetBarMargin() const {
     return barMargin;
 }
 
-void ProgressBar::SetNumberOfSegments(const int& value) {
+void ProgressBar::SetNumberOfSegments(int value) {
     if (value < 0) {
         numberOfSegments = 0;
         throw std::invalid_argument("Number of segments in " + this->ID + " is lower than 0.");
@@ -1441,7 +1457,7 @@ int ProgressBar::GetNumberOfSegments() const {
     return numberOfSegments;
 }
 
-void ProgressBar::SetGapBetweenSegments(const float& value) {
+void ProgressBar::SetGapBetweenSegments(float value) {
     if (value < 0) {
         gapBetweenSegments = 0;
         throw std::invalid_argument("Gap between segments in " + this->ID + " is lower than 0.");
@@ -1457,7 +1473,7 @@ float ProgressBar::GetGapBetweenSegments() const {
     return gapBetweenSegments;
 }
 
-void ProgressBar::SetSegments(const int& number, const float& gap) {
+void ProgressBar::SetSegments(int number, float gap) {
     SetNumberOfSegments(number);
     SetGapBetweenSegments(gap);
 }
@@ -1480,7 +1496,7 @@ bool ProgressBar::IsSegmented() const {
 
 // Pressed button
 
-void PressedButton::DrawMyself(const float& dt) const {
+void PressedButton::DrawMyself(float dt) const {
     std::string textToDisplay;
     if (pressed) {
         DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour());
@@ -1496,11 +1512,11 @@ void PressedButton::DrawMyself(const float& dt) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 };
 
-void PressedButton::DoFocusAction(const float& dt) {
+void PressedButton::DoFocusAction(float dt) {
     return;
 }
 
-void PressedButton::DoFocusAction(const float& dt, const Vector2& mousePosition) {
+void PressedButton::DoFocusAction(float dt, const Vector2& mousePosition) {
     pressed = !pressed;
 }
 
@@ -1538,12 +1554,12 @@ bool PressedButton::IsPressed() const {
 
 // ------- Chart ---------
 
-void Chart::AddElement(const std::string& label, const double& value) {
+void Chart::AddElement(const std::string& label, double value) {
     labels.push_back(label);
     values.push_back(value);
 }
 
-void Chart::AddElement(const double& value) {
+void Chart::AddElement(double value) {
     values.push_back(value);
 }
 
@@ -1555,13 +1571,13 @@ double Chart::GetElement(const std::string& label) const {
     } else throw std::out_of_range("Chart " + this->ID + " at element getting: does not contain a label " + label);
 }
 
-double Chart::GetElement(const int& index) const {
+double Chart::GetElement(int index) const {
     if (index < 0 || size_t(index) > values.size()) {
         throw std::out_of_range("Chart " + this->ID + ": invalid index at getting");
     } else return values[index];
 }
 
-void Chart::SetElement(const std::string& label, const double& newValue) {
+void Chart::SetElement(const std::string& label, double newValue) {
     auto it = std::find(labels.begin(), labels.end(), label);
     if (it != labels.end()) {
         size_t index = std::distance(labels.begin(), it);
@@ -1569,7 +1585,7 @@ void Chart::SetElement(const std::string& label, const double& newValue) {
     } else throw std::out_of_range("Chart " + this->ID + " in element setting: does not contain a label " + label);
 }
 
-void Chart::SetElement(const int& index, const double& newValue) {
+void Chart::SetElement(int index, double newValue) {
     if (index < 0 || size_t(index) > values.size()) {
         throw std::out_of_range("Chart " + this->ID + ": invalid index at setting element");
     } else values[index] = newValue;
@@ -1584,7 +1600,7 @@ void Chart::RemoveElement(const std::string& label) {
     } else throw std::out_of_range("Chart " + this->ID + " at element removal: does not contain a label " + label);
 }
 
-void Chart::RemoveElement(const int& index) {
+void Chart::RemoveElement(int index) {
     if (index < 0 || size_t(index) > values.size()) {
         throw std::out_of_range("Chart " + this->ID + ": invalid index at removal");
     } else {
@@ -1606,11 +1622,11 @@ size_t Chart::GetValuesSize() const {
 
 // ---------- Pie chart -----------
 
-void PieChart::DoFocusAction(const float& dt) {
+void PieChart::DoFocusAction(float dt) {
     return;
 }
 
-void PieChart::DrawMyself(const float& dt) const {
+void PieChart::DrawMyself(float dt) const {
     double sum = std::accumulate(values.begin(), values.end(), 0.0);
     std::vector<Color> colours = {BLUE, RED, GREEN, PINK, BROWN, DARKGREEN, PURPLE}; //TODO Add user colours
 
