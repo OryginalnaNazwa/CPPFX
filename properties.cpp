@@ -140,7 +140,7 @@ void Border::RemoveDrawingMethod() {
 // --- Setters ---
 void Border::SetThickness(float thickness) {
     if (thickness < 0) {
-        throw std::range_error("Range error: Negative thickness.");
+        throw std::invalid_argument("Range error: Negative thickness.");
     } else {
         this->thickness = thickness;
     }

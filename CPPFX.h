@@ -49,14 +49,6 @@ public:
         return pointer;
     }
     /**
-     *  @brief Adds an item based on the ID.
-     *  @details Calls an appropriate function. Creates a default dropdown holding string values.
-     *  @param fxID the internal ID of th item to be added.
-     *  @throws std::invalid_argument If the fxID doesn't exist.
-     *  @deprecated template does it much better
-     */
-    void AddItem(const std::string& fxID, const std::string& ID = "");
-    /**
      *  @brief Creates the item.
      *  @param ID ID of the created item. Defaults to "", the library creates the ID then.
      *  @returns raw pointer to the created item.
@@ -265,32 +257,32 @@ public:
 
     /**
      *  @brief Sets the item's priority to highest available.
-     *  @details Assumes the Items are sorted.
+     *  @details Sorts the items before setting, if needed.
      *  @param ID the ID of the Item which priority will be changed.
      *  @throws std::out_of_range if item with the ID doesn't exist.
      */
     void SetHighestPriority(const std::string& ID);
     /**
      *  @brief Sets the item's priority to be the highest of all items.
-     *  @details Assumes the Items are sorted. If another item has priority of 0 already, this item will have new priority equal to it.
+     *  @details Sorts the items before setting, if needed. If another item has priority of 0 already, this item will have new priority equal to it.
      *  @param ID the ID of the Item which priority will be changed.
      *  @throws std::out_of_range if item with the ID doesn't exist.
      */
     void SetAboveHighestPriority(const std::string& ID);
     /**
      *  @brief Sets the item's priority to as low as other items get.
-     *  @details Assumes the Items are sorted.
+     *  @details Sorts the items before setting, if needed.
      *  @param ID the ID of the Item which priority will be changed.
      *  @throws std::out_of_range if item with the ID doesn't exist.
      */
     void SetLowestPriority(const std::string& ID);
     /**
      *  @brief Sets the item's priority to be the lowest of all items.
-     *  @details Assumes the Items are sorted.
+     *  @details Sorts the items before setting, if needed.
      *  @param ID the ID of the Item which priority will be changed.
      *  @throws std::out_of_range if item with the ID doesn't exist.
      */
-    void SetMoreLowestPriority(const std::string& ID);
+    void SetBelowLowestPriority(const std::string& ID);
 
     /**
      *  @brief Sorts the drawing order by priority. Sorting is done automatically on first frame after adding an item.

@@ -107,46 +107,6 @@ void GUI::DefocusItems() {
 
 //--- Adders ---
 
-void GUI::AddItem(const std::string& fxID, const std::string& ID) {
-    if (fxID == "TextField") {
-        AddTextField(ID);
-    } else if (fxID == "Label") {
-        AddLabel(ID);
-    } else if (fxID == "Button") {
-        AddButton(ID);
-    } else if (fxID == "CheckBox") {
-        AddCheckBox(ID);
-    } else if (fxID == "DropDown") {
-        AddDropDown<std::string>(ID);
-    } else if (fxID == "AnchorPane") {
-        AddAnchorPane(ID);
-    } else if (fxID == "VBox") {
-        AddVBox(ID);
-    } else if (fxID == "HBox") {
-        AddHBox(ID);
-    } else if (fxID == "Workspace") {
-        AddWorkspace(ID);
-    } else if (fxID == "Spinner") {
-        AddSpinner(ID);
-    } else if (fxID == "EditableSpinner") {
-        AddEditableSpinner(ID);
-    } else if (fxID == "PasswordField") {
-        AddPasswordField(ID);
-    } else if (fxID == "ProgressIndicator") {
-        AddProgressIndicator(ID);
-    } else if (fxID == "ProgressBar") {
-        AddProgressBar(ID);
-    } else if (fxID == "PressedButton") {
-        AddPressedButton(ID);
-    } else if (fxID == "List") {
-        AddList<std::string>(ID);
-    } else if (fxID == "PieChart") {
-        AddPieChart(ID);
-    } else {
-        throw std::invalid_argument("Invalid ID: " + fxID);
-    }
-}
-
 void GUI::CreateItem(std::unique_ptr<Item>& item) {
     ItemsInDrawingOrder.push_back(item.get());
     Items.insert({item->GetID(), std::move(item)});
@@ -520,6 +480,9 @@ void GUI::SetHighestPriority(const std::string& ID) {
         throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to highest");
     }
     if (item->GetPriority() != 0) {
+        if (needsSorting) {
+            SortOrder();
+        }
         size_t highestPriority = ItemsInDrawingOrder.back()->GetPriority();
         item->SetPriority(highestPriority);
         needsSorting = true;
@@ -533,9 +496,12 @@ void GUI::SetAboveHighestPriority(const std::string& ID) {
     try {
         item = Items.at(ID).get();
     } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to highest + 1");
+        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to highest - 1");
     }
     if (item->GetPriority() != 0) {
+        if (needsSorting) {
+            SortOrder();
+        }
         size_t highestPriority = ItemsInDrawingOrder.back()->GetPriority();
         item->SetPriority(highestPriority);
         if (item->GetPriority() != 0) {
@@ -552,19 +518,25 @@ void GUI::SetLowestPriority(const std::string& ID) {
     try {
         item = Items.at(ID).get();
     } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to highest + 1");
+        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to lowest");
+    }
+    if (needsSorting) {
+        SortOrder();
     }
     size_t lowestPriority = ItemsInDrawingOrder.front()->GetPriority();
     item->SetPriority(lowestPriority);
     needsSorting = true;
 }
 
-void GUI::SetMoreLowestPriority(const std::string& ID) {
+void GUI::SetBelowLowestPriority(const std::string& ID) {
     Item* item = nullptr;
     try {
         item = Items.at(ID).get();
     } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to highest + 1");
+        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to lowest + 1");
+    }
+    if (needsSorting) {
+        SortOrder();
     }
     size_t lowestPriority = ItemsInDrawingOrder.front()->GetPriority();
     item->SetPriority(lowestPriority);

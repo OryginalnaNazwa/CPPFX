@@ -141,7 +141,7 @@ public:
     /**
      * @brief Sets the thickness value.
      * @param thickness new thickness value.
-     * @throw std::range_error If thickness is negative.
+     * @throw std::invalid_argument If thickness is negative.
      */
     void SetThickness(float thickness);
     /**
@@ -154,7 +154,7 @@ public:
      *  @brief Sets drawing method to one specified.
      *  @param drawMyself how the border should draw itself around an item. Takes in item's basic dimensions as parameters.
      */
-    void SetDrawingMethod(const std::function<void(const float x, const float y, const float width, const float height)>& drawMyself);
+    void SetDrawingMethod(const std::function<void(float x, float y, float width, float height)>& drawMyself);
     /**
      *  @brief Sets custom drawing method to null.
      *  @details Goes back to default drawing method.
@@ -174,7 +174,7 @@ public:
 
 private:
     float thickness;
-    std::function<void(const float x, const float y, const float width, const float height)> drawMyself;
+    std::function<void(float x, float y, float width, float height)> drawMyself;
 };
 
 /**
