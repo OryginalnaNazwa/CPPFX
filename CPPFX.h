@@ -363,7 +363,7 @@ private:
 
     std::map<std::string, size_t> ItemsCounter; /// each new created item increments its counter. Used for auto IDs.
 
-    float dt = 0; /// frame time
+    float elapsedTime = 0; /// total elapsed time of all frames
     bool needsSorting = false; /// lazy sort
 
     void DrawUI(const Camera2D& camera) const; // draws the items

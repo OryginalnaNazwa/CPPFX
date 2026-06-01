@@ -4,6 +4,8 @@ using namespace CPPFX;
 
 // --- Properties ---
 
+// --- Colour ---
+
 std::string Colour::Normalise(const std::string& str) {
     std::string out = str;
     std::transform(out.begin(), out.end(), out.begin(), ::toupper);
@@ -96,15 +98,9 @@ void Colour::SetColour(const std::string& col) {
 }
 
 void Colour::SetColour(Color col) {
-    value     = col;
-    name = ColourToString(col); // resolves to name or hex fallback
+    value   = col;
+    name    = ColourToString(col); // resolves to name or hex fallback
 }
-
-// --- Setters ---
-
-
-
-// --- Getters ---
 
 std::string Colour::GetColourString() const {
     return name;
@@ -137,7 +133,6 @@ void Border::RemoveDrawingMethod() {
     this->drawMyself = nullptr;
 }
 
-// --- Setters ---
 void Border::SetThickness(float thickness) {
     if (thickness < 0) {
         throw std::invalid_argument("Range error: Negative thickness.");
@@ -146,7 +141,6 @@ void Border::SetThickness(float thickness) {
     }
 }
 
-// --- Getters ---
 float Border::GetThickness() const {
     return thickness;
 }
@@ -185,10 +179,8 @@ std::string Alignment::GetAlignmentString() const {
 }
 
 Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment_string) const {
-    std::string normal = "";
-    for (auto& c : alignment_string) {
-        normal += toupper(c); //normalisation
-    }
+    std::string normal = alignment_string;
+    std::transform(normal.begin(), normal.end(), normal.begin(), ::toupper); //normalisation
 
     if (normal == "TOP_CENTRE") {
         return Alignments::TOP_CENTRE;

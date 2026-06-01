@@ -8,7 +8,7 @@ const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextFiel
 //--- Main loop ---
 
 void GUI::DoUI(const Camera2D& camera) {
-    dt += GetFrameTime();
+    elapsedTime += GetFrameTime();
     if (needsSorting) {
         SortOrder();
         needsSorting = false;
@@ -47,25 +47,24 @@ void GUI::DrawUI(const Camera2D& camera) const {
     for (auto& item : ItemsInDrawingOrder) {
         if (item->IsVisible()) {
             if (screenBased || item->IsScreenBased()) {
-                item->DrawMyself(dt, camera);
-            } else item->DrawMyself(dt);
+                item->DrawMyself(elapsedTime, camera);
+            } else item->DrawMyself(elapsedTime);
         }
     }
 }
 
 void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
     for (auto& item : ItemsInDrawingOrder) {
-        item->currentFrameTime = dt;
         if (!item->IsInactive()) {
             if (screenBased || item->IsScreenBased()) {
-                item->DoPassiveAction(dt, camera);
+                item->DoPassiveAction(elapsedTime, camera);
                 if (item->WasIClicked(mousePos, camera)) {
                     if (item->onHover) {
                         item->onHover();
                     }
                 }
             } else {
-                item->DoPassiveAction(dt);
+                item->DoPassiveAction(elapsedTime);
                 if (item->WasIClicked(GetScreenToWorld2D(mousePos, camera))) {
                     if (item->onHover) {
                         item->onHover();
@@ -74,8 +73,8 @@ void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
             }
             if (item->IsFocused()) {
                 if (screenBased || item->IsScreenBased()) {
-                    item->DoFocusAction(dt, camera);
-                } else item->DoFocusAction(dt);
+                    item->DoFocusAction(elapsedTime, camera);
+                } else item->DoFocusAction(elapsedTime);
             }
         }
     }
@@ -83,17 +82,16 @@ void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
 
 void GUI::DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera) {
     for (auto& item : ItemsInDrawingOrder) {
-        item->currentFrameTime = dt;
         if (!item->IsInactive()) {
             if (screenBased || item->IsScreenBased()) {
-                item->DoPassiveAction(dt, camera);
+                item->DoPassiveAction(elapsedTime, camera);
             } else {
-                item->DoPassiveAction(dt);
+                item->DoPassiveAction(elapsedTime);
             }
             if (item->IsFocused()) {
                 if (screenBased || item->IsScreenBased()) {
-                    item->DoFocusAction(dt, mousePos, camera);
-                } else item->DoFocusAction(dt, GetScreenToWorld2D(mousePos, camera));
+                    item->DoFocusAction(elapsedTime, mousePos, camera);
+                } else item->DoFocusAction(elapsedTime, GetScreenToWorld2D(mousePos, camera));
             }
         }
     }

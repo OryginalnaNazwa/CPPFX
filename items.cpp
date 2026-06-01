@@ -5,15 +5,15 @@ using namespace CPPFX;
 // --- Items ---
 // --- Item ---
 
-void Item::DrawMyself(float dt) const {
+void Item::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
 }
 
-void Item::DrawMyself(float dt, const Camera2D& camera) const {
+void Item::DrawMyself(float elapsedTime, const Camera2D& camera) const {
     float savedX = xAnchor, savedY = yAnchor;
     xAnchor = camera.target.x + (xAnchor - camera.offset.x) / camera.zoom;
     yAnchor = camera.target.y + (yAnchor - camera.offset.y) / camera.zoom;
-    DrawMyself(dt);
+    DrawMyself(elapsedTime);
     xAnchor = savedX;
     yAnchor = savedY;
 }
@@ -36,24 +36,24 @@ bool Item::WasIClicked(const Vector2& mousePosition) const {
     return false;
 }
 
-void Item::DoFocusAction(float dt, const Vector2& mousePosition) {
-    return DoFocusAction(dt);
+void Item::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
+    return DoFocusAction(elapsedTime);
 }
 
-void Item::DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) {
-    return DoFocusAction(dt, mousePosition);
+void Item::DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) {
+    return DoFocusAction(elapsedTime, mousePosition);
 }
 
-void Item::DoFocusAction(float dt, const Camera2D& camera) {
-    return DoFocusAction(dt);
+void Item::DoFocusAction(float elapsedTime, const Camera2D& camera) {
+    return DoFocusAction(elapsedTime);
 }
 
-void Item::DoPassiveAction(float dt) {
+void Item::DoPassiveAction(float elapsedTime) {
     return;
 }
 
-void Item::DoPassiveAction(float dt, const Camera2D& camera) {
-    return DoPassiveAction(dt);
+void Item::DoPassiveAction(float elapsedTime, const Camera2D& camera) {
+    return DoPassiveAction(elapsedTime);
 }
 
 // --- Helpers ---
@@ -287,7 +287,7 @@ float TextItem::GetTextMargin() const {
 
 //--- Text Field ---
 
-void TextField::DrawMyself(float dt) const {
+void TextField::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
@@ -296,7 +296,7 @@ void TextField::DrawMyself(float dt) const {
     } else {
         std::string truncated = Truncate(text);
         DrawText(truncated.c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
-        if (focused && fmod(dt, 1.0f) < 0.5f) { //checks whether half a second passed
+        if (focused && fmod(elapsedTime, 1.0f) < 0.5f) { //checks whether half a second passed
             DrawText("|", MeasureText(truncated.c_str(), font.GetFontSize()) + xAnchor + textMargin + 2, yAnchor + (height / 2) - (font.GetFontSize() / 2),
                       font.GetFontSize(), font.colour.GetColour());
         }
@@ -304,7 +304,7 @@ void TextField::DrawMyself(float dt) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void TextField::DoFocusAction(float dt) {
+void TextField::DoFocusAction(float elapsedTime) {
     if (focused) {
         if (IsKeyPressed(KEY_BACKSPACE)) {
             if (text != "") {
@@ -312,7 +312,7 @@ void TextField::DoFocusAction(float dt) {
             }
         } else if (IsKeyDown(KEY_BACKSPACE)) {
             if (text != "") {
-                if (fmod(dt, 0.1f) < GetFrameTime()) {
+                if (fmod(elapsedTime, 0.1f) < GetFrameTime()) {
                     text.erase(text.size() - 1);
                 }
             }
@@ -337,7 +337,7 @@ std::string TextField::GetPromptText() const {
 }
 
 //--- Label ---
-void Label::DrawMyself(float dt) const {
+void Label::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
         float startX = xAnchor, startY = yAnchor, textOffset = 0, yTextOffSet = 0;
@@ -367,13 +367,13 @@ void Label::DrawMyself(float dt) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Label::DoFocusAction(float dt) {
+void Label::DoFocusAction(float elapsedTime) {
     Defocus();
     return;
 }
 
 //--- Button ---
-void Button::DrawMyself(float dt) const {
+void Button::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
        DrawText(text.c_str(), xAnchor + (width / 2) - (MeasureText(text.c_str(), font.GetFontSize()) / 2), yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
@@ -381,16 +381,16 @@ void Button::DrawMyself(float dt) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Button::DoFocusAction(float dt) {
+void Button::DoFocusAction(float elapsedTime) {
     if (focused) {
         if (timer > 0) {
-            if (dt > timer) {
+            if (elapsedTime > timer) {
                 colour.SetColour(unPressedColour.GetColour());
                 timer = 0;
                 focused = false;
             }
         } else {
-            timer = dt + 0.1f;
+            timer = elapsedTime + 0.1f;
             colour.SetColour(pressedColour.GetColour());
         }
     } else {
@@ -398,7 +398,7 @@ void Button::DoFocusAction(float dt) {
     }
 }
 
-void CheckBox::DrawMyself(float dt) const {
+void CheckBox::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
        DrawText(text.c_str(), xAnchor + width + textMargin + labelMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
@@ -411,7 +411,7 @@ void CheckBox::DrawMyself(float dt) const {
     }
 }
 
-void CheckBox::DoFocusAction(float dt) {
+void CheckBox::DoFocusAction(float elapsedTime) {
    if (focused) {
         if (pressed) {
             colour.SetColour(unPressedColour.GetColour());
@@ -519,7 +519,7 @@ void Container::SortOrder() {
     needsSorting = false;
 }
 
-void Container::DoPassiveAction(float dt) {
+void Container::DoPassiveAction(float elapsedTime) {
     if (needsSorting) {
         SortOrder();
     }
@@ -529,7 +529,7 @@ void Container::DoPassiveAction(float dt) {
     }
 }
 
-void Container::DrawMyself(float dt) const {
+void Container::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
@@ -643,7 +643,7 @@ void AnchorPane::SetWidth(float value) {
     }
 }
 
-void Container::DoFocusAction(float dt) {
+void Container::DoFocusAction(float elapsedTime) {
     Defocus();
     return;
 }
@@ -762,17 +762,17 @@ float HBox::GetTotalWidth() const {
 
 //--- Spinner ---
 
-void Spinner::DrawMyself(float dt) const {
+void Spinner::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
 
-    incrementButton.DrawMyself(dt);
-    decrementButton.DrawMyself(dt);
+    incrementButton.DrawMyself(elapsedTime);
+    decrementButton.DrawMyself(elapsedTime);
 
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Spinner::DrawMyself(float dt, const Camera2D& camera) const {
+void Spinner::DrawMyself(float elapsedTime, const Camera2D& camera) const {
     float xAnchor = camera.target.x + this->xAnchor / camera.zoom;
     float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
 
@@ -786,8 +786,8 @@ void Spinner::DrawMyself(float dt, const Camera2D& camera) const {
     decrementButton.SetX(this->xAnchor + width * camera.zoom);
     incrementButton.SetY(this->yAnchor);
     decrementButton.SetY(this->yAnchor + (height / 2) * camera.zoom);
-    incrementButton.Item::DrawMyself(dt, camera);
-    decrementButton.Item::DrawMyself(dt, camera);
+    incrementButton.Item::DrawMyself(elapsedTime, camera);
+    decrementButton.Item::DrawMyself(elapsedTime, camera);
     incrementButton.SetX(savedButtonX);
     decrementButton.SetX(savedButtonX);
     incrementButton.SetY(savedIncButtonY);
@@ -796,7 +796,7 @@ void Spinner::DrawMyself(float dt, const Camera2D& camera) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Spinner::DoFocusAction(float dt, const Vector2& mousePosition) {
+void Spinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.Focus();
         if (incrementButton.onClick) incrementButton.onClick();
@@ -804,11 +804,11 @@ void Spinner::DoFocusAction(float dt, const Vector2& mousePosition) {
         decrementButton.Focus();
         if (decrementButton.onClick) decrementButton.onClick();
     }
-    decrementButton.DoFocusAction(dt);
-    incrementButton.DoFocusAction(dt);
+    decrementButton.DoFocusAction(elapsedTime);
+    incrementButton.DoFocusAction(elapsedTime);
 }
 
-void Spinner::DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) {
+void Spinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) {
     //shift the buttons to where they should be, translation happens in WasIClicked
     const float savedButtonX = incrementButton.GetX(), savedButtonHeight = incrementButton.GetHeight();
     const float savedDecButtonY = decrementButton.GetY();
@@ -831,13 +831,13 @@ void Spinner::DoFocusAction(float dt, const Vector2& mousePosition, const Camera
     incrementButton.SetHeight(savedButtonHeight);
     decrementButton.SetHeight(savedButtonHeight);
 
-    decrementButton.Item::DoFocusAction(dt, camera);
-    incrementButton.Item::DoFocusAction(dt, camera);
+    decrementButton.Item::DoFocusAction(elapsedTime, camera);
+    incrementButton.Item::DoFocusAction(elapsedTime, camera);
 }
 
-void Spinner::DoFocusAction(float dt) {
-    incrementButton.DoFocusAction(dt);
-    decrementButton.DoFocusAction(dt);
+void Spinner::DoFocusAction(float elapsedTime) {
+    incrementButton.DoFocusAction(elapsedTime);
+    decrementButton.DoFocusAction(elapsedTime);
 }
 
 bool Spinner::WasIClicked(const Vector2& mousePosition) const {
@@ -1065,19 +1065,19 @@ void EditableSpinner::SetValue(float value) {
     editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
 }
 
-void EditableSpinner::DrawMyself(float dt) const {
-    editArea.DrawMyself(dt);
-    incrementButton.DrawMyself(dt);
-    decrementButton.DrawMyself(dt);
+void EditableSpinner::DrawMyself(float elapsedTime) const {
+    editArea.DrawMyself(elapsedTime);
+    incrementButton.DrawMyself(elapsedTime);
+    decrementButton.DrawMyself(elapsedTime);
 
     border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
 }
 
-void EditableSpinner::DrawMyself(float dt, const Camera2D& camera) const {
+void EditableSpinner::DrawMyself(float elapsedTime, const Camera2D& camera) const {
     float xAnchor = camera.target.x + this->xAnchor / camera.zoom;
     float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
 
-    editArea.Item::DrawMyself(dt, camera);
+    editArea.Item::DrawMyself(elapsedTime, camera);
     //shift the buttons to where they should be
     const float savedButtonX = incrementButton.GetX();
     const float savedIncButtonY = incrementButton.GetY(), savedDecButtonY = decrementButton.GetY();
@@ -1086,8 +1086,8 @@ void EditableSpinner::DrawMyself(float dt, const Camera2D& camera) const {
     incrementButton.SetY(this->yAnchor);
     decrementButton.SetY(this->yAnchor + (height / 2) * camera.zoom);
 
-    incrementButton.Item::DrawMyself(dt, camera);
-    decrementButton.Item::DrawMyself(dt, camera);
+    incrementButton.Item::DrawMyself(elapsedTime, camera);
+    decrementButton.Item::DrawMyself(elapsedTime, camera);
 
     incrementButton.SetX(savedButtonX);
     decrementButton.SetX(savedButtonX);
@@ -1097,7 +1097,7 @@ void EditableSpinner::DrawMyself(float dt, const Camera2D& camera) const {
     border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
 }
 
-void EditableSpinner::DoFocusAction(float dt, const Vector2& mousePosition) {
+void EditableSpinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.Focus();
         if (incrementButton.onClick) incrementButton.onClick();
@@ -1121,12 +1121,12 @@ void EditableSpinner::DoFocusAction(float dt, const Vector2& mousePosition) {
             editArea.Defocus();
         }
     }
-    decrementButton.DoFocusAction(dt);
-    incrementButton.DoFocusAction(dt);
-    editArea.DoFocusAction(dt);
+    decrementButton.DoFocusAction(elapsedTime);
+    incrementButton.DoFocusAction(elapsedTime);
+    editArea.DoFocusAction(elapsedTime);
 }
 
-void EditableSpinner::DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) {
+void EditableSpinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) {
     //shift the buttons to where they should be, translation happens in WasIClicked
     const float savedButtonX = incrementButton.GetX(), savedButtonHeight = incrementButton.GetHeight();
     const float savedDecButtonY = decrementButton.GetY();
@@ -1166,16 +1166,16 @@ void EditableSpinner::DoFocusAction(float dt, const Vector2& mousePosition, cons
     incrementButton.SetHeight(savedButtonHeight);
     decrementButton.SetHeight(savedButtonHeight);
 
-    decrementButton.Item::DoFocusAction(dt, camera);
-    incrementButton.Item::DoFocusAction(dt, camera);
-    editArea.Item::DoFocusAction(dt, camera);
+    decrementButton.Item::DoFocusAction(elapsedTime, camera);
+    incrementButton.Item::DoFocusAction(elapsedTime, camera);
+    editArea.Item::DoFocusAction(elapsedTime, camera);
 }
 
-void EditableSpinner::DoFocusAction(float dt) {
+void EditableSpinner::DoFocusAction(float elapsedTime) {
     if (!IsFocused()) editArea.Defocus();
-    incrementButton.DoFocusAction(dt);
-    decrementButton.DoFocusAction(dt);
-    editArea.DoFocusAction(dt);
+    incrementButton.DoFocusAction(elapsedTime);
+    decrementButton.DoFocusAction(elapsedTime);
+    editArea.DoFocusAction(elapsedTime);
 }
 
 void EditableSpinner::SetX(float x) {
@@ -1232,7 +1232,7 @@ void EditableSpinner::SetToScreen() {
 
 //--- PasswordField ---
 
-void PasswordField::DrawMyself(float dt) const {
+void PasswordField::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
@@ -1242,7 +1242,7 @@ void PasswordField::DrawMyself(float dt) const {
         std::string password(text.size(), mask);
         std::string truncated = Truncate(password);
         DrawText(Truncate(truncated).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
-        if (focused && fmod(dt, 1.0f) < 0.5f) {
+        if (focused && fmod(elapsedTime, 1.0f) < 0.5f) {
             DrawText("|", MeasureText(truncated.c_str(), font.GetFontSize()) + xAnchor + textMargin + 2, yAnchor + (height / 2) - (font.GetFontSize() / 2),
                       font.GetFontSize(), font.colour.GetColour());
         }
@@ -1304,7 +1304,7 @@ bool ProgressIndicator::IsComplete() const {
     return false;
 }
 
-void ProgressIndicator::DoFocusAction(float dt) {
+void ProgressIndicator::DoFocusAction(float elapsedTime) {
     return;
 }
 
@@ -1347,12 +1347,12 @@ std::string ProgressIndicator::GetShapeString() const {
     return ShapeToString(shape);
 }
 
-void ProgressIndicator::DrawMyself(float dt) const {
+void ProgressIndicator::DrawMyself(float elapsedTime) const {
     if (value == -1 || shape == Shapes::DOTS) {
         int dotCount = 8;
         float radius = width / 2;
         float dotRadius = radius / 6; //TODO make stuff customisable
-        float angle = fmod(dt * 180.0f, 360.0f); // rotation speed
+        float angle = fmod(elapsedTime * 180.0f, 360.0f); // rotation speed
         for (int i = 0; i < dotCount; i++) {
             float dotAngle = angle + (360.0f / dotCount) * i;
             float x = xAnchor + width / 2 + cos(dotAngle * DEG2RAD) * radius;
@@ -1403,9 +1403,9 @@ bool ProgressIndicator::IsDisplayingValue() const {
 
 // ProgressBar
 
-void ProgressBar::DrawMyself(float dt) const {
+void ProgressBar::DrawMyself(float elapsedTime) const {
     if (shape != Shapes::BAR) {
-        ProgressIndicator::DrawMyself(dt);
+        ProgressIndicator::DrawMyself(elapsedTime);
         return;
     }
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
@@ -1496,7 +1496,7 @@ bool ProgressBar::IsSegmented() const {
 
 // Pressed button
 
-void PressedButton::DrawMyself(float dt) const {
+void PressedButton::DrawMyself(float elapsedTime) const {
     std::string textToDisplay;
     if (pressed) {
         DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour());
@@ -1512,11 +1512,11 @@ void PressedButton::DrawMyself(float dt) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 };
 
-void PressedButton::DoFocusAction(float dt) {
+void PressedButton::DoFocusAction(float elapsedTime) {
     return;
 }
 
-void PressedButton::DoFocusAction(float dt, const Vector2& mousePosition) {
+void PressedButton::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
     pressed = !pressed;
 }
 
@@ -1622,11 +1622,11 @@ size_t Chart::GetValuesSize() const {
 
 // ---------- Pie chart -----------
 
-void PieChart::DoFocusAction(float dt) {
+void PieChart::DoFocusAction(float elapsedTime) {
     return;
 }
 
-void PieChart::DrawMyself(float dt) const {
+void PieChart::DrawMyself(float elapsedTime) const {
     double sum = std::accumulate(values.begin(), values.end(), 0.0);
     std::vector<Color> colours = {BLUE, RED, GREEN, PINK, BROWN, DARKGREEN, PURPLE}; //TODO Add user colours
 

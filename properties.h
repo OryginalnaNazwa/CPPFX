@@ -279,7 +279,7 @@ public:
 
 private:
     std::string AlignmentToString(const Alignments& alignment) const;
-    Alignments StringToAlignment(const std::string& alignment) const; ///< normalisesby toupper
+    Alignments StringToAlignment(const std::string& alignment) const; ///< normalises
 
     Alignments alignment;
 };

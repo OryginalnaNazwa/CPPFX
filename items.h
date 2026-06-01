@@ -47,14 +47,14 @@ public:
 
     /**
      *  @brief Draws the item in world coordinates.
-     *  @param dt frame time
+     *  @param elapsedTime total elapsed time of all frames
      */
-    virtual void DrawMyself(float dt) const;
+    virtual void DrawMyself(float elapsedTime) const;
     /**
      *  @brief Draws the item in screen coordinates.
-     *  @param dt frame time
+     *  @param elapsedTime total elapsed time of all frames
      */
-    virtual void DrawMyself(float dt, const Camera2D& camera) const;
+    virtual void DrawMyself(float elapsedTime, const Camera2D& camera) const;
     /**
      *  @brief Checks whether the item was clicked in screen coordinates.
      *  @details Checks whether the mouse position is within the area of the item.
@@ -71,38 +71,38 @@ public:
     virtual bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const; //world
     /**
      *  @brief Action done every frame in world coordinates.
-     *  @param dt frame time
+     *  @param elapsedTime total elapsed time of all frames
      */
-    virtual void DoPassiveAction(float dt);
+    virtual void DoPassiveAction(float elapsedTime);
     /**
      *  @brief Action done every frame in screen coordinates.
-     *  @param dt frame time
+     *  @param elapsedTime total elapsed time of all frames
      */
-    virtual void DoPassiveAction(float dt, const Camera2D& camera);
+    virtual void DoPassiveAction(float elapsedTime, const Camera2D& camera);
     /**
      *  @brief Action done while the item is focused in world coordinates.
-     *  @param dt Frame time
+     *  @param elapsedTime Frame time
      */
-    virtual void DoFocusAction(float dt) = 0;
+    virtual void DoFocusAction(float elapsedTime) = 0;
     /**
      *  @brief Action done while the item is focused in screen coordinates.
-     *  @param dt Frame time
+     *  @param elapsedTime Frame time
      */
-    virtual void DoFocusAction(float dt, const Camera2D& camera);
+    virtual void DoFocusAction(float elapsedTime, const Camera2D& camera);
     /**
      *  @brief Action done while the item is focused and it depends on mouse click in world coordinates.
      *  @details Defaults to the previous DoActiveAction().
-     *  @param dt Frame time
+     *  @param elapsedTime Frame time
      *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
      */
-    virtual void DoFocusAction(float dt, const Vector2& mousePosition);
+    virtual void DoFocusAction(float elapsedTime, const Vector2& mousePosition);
     /**
      *  @brief Action done while the item is focused and it depends on mouse click in screen coordinates.
      *  @details Defaults to the previous DoActiveAction().
-     *  @param dt Frame time
+     *  @param elapsedTime Frame time
      *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
      */
-    virtual void DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera);
+    virtual void DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera);
     /**
      *  @brief Sets focused to false.
      */
@@ -300,8 +300,6 @@ public:
      */
     std::string GetFxID() const;
 
-    float currentFrameTime;
-
 protected:
     std::string ID; ///<ID used by the user, variable.
     mutable float xAnchor; ///<top left x coordinate
@@ -317,7 +315,7 @@ protected:
 
     bool screenBased; ///<if true, item is drawn based on screen, so follows camera.
     const std::string fxID; ///ID for the library.
-    float timer = 0;
+    float timer = 0; ///< in case a widget needs to measure out time. Fully internal.
 };
 
 /**
@@ -393,8 +391,8 @@ public:
 
     Label() : TextItem("Label") {colour.SetColour(BLANK); text = "Label";}
 
-    void DrawMyself(float dt) const override;
-    void DoFocusAction(float dt) override;
+    void DrawMyself(float elapsedTime) const override;
+    void DoFocusAction(float elapsedTime) override;
 
 };
 
@@ -410,8 +408,8 @@ public:
     TextField() : TextItem("TextField"), promptText("") {}
     TextField(const std::string& i) : TextItem(i), promptText("") {}
 
-    void DrawMyself(float dt) const override;
-    void DoFocusAction(float dt) override;
+    void DrawMyself(float elapsedTime) const override;
+    void DoFocusAction(float elapsedTime) override;
 
     void SetPromptText(const std::string& text);
     void ClearPromptText();
@@ -435,8 +433,8 @@ public:
     Button() : TextItem("Button"), pressedColour(GREY), unPressedColour(LIGHTGREY) {}
     Button(const std::string& id) : TextItem(id), pressedColour(GREY), unPressedColour(LIGHTGREY) {}
 
-    void DrawMyself(float dt) const override;
-    void DoFocusAction(float dt) override;
+    void DrawMyself(float elapsedTime) const override;
+    void DoFocusAction(float elapsedTime) override;
 
 };
 
@@ -458,8 +456,8 @@ public:
 
     CheckBox() : TextItem("CheckBox", 50, 50), pressedColour(GRAY), unPressedColour(LIGHTGRAY), pressed(false), labelMargin(10) {font.SetFontSize(height / 2);}
 
-    void DrawMyself(float dt) const override;
-    void DoFocusAction(float dt) override;
+    void DrawMyself(float elapsedTime) const override;
+    void DoFocusAction(float elapsedTime) override;
 
     float GetTotalWidth() const override;
 
@@ -497,7 +495,7 @@ public:
 
     DropDown() : TextItem("DropDown"), currentLabel("") {}
 
-    void DrawMyself(float dt) const override {
+    void DrawMyself(float elapsedTime) const override {
         DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
         if (currentLabel != "") {
             DrawText(Truncate(currentLabel).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
@@ -543,17 +541,17 @@ public:
         }
     }
 
-    void DoFocusAction(float dt) {
+    void DoFocusAction(float elapsedTime) {
         return;
     }
 
-    void DoPassiveAction(float dt) override {
+    void DoPassiveAction(float elapsedTime) override {
         if (currentLabel == "" && !values.empty()) {
             SetCurrent(values.begin()->first);
         }
     }
 
-    void DoFocusAction(float dt, const Vector2& mousePosition) override {
+    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override {
         if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
             int index = (mousePosition.y - (yAnchor + height)) / height;
             auto it = std::next(values.begin(), index);
@@ -567,7 +565,7 @@ public:
         }
     }
 
-    void DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) override {
+    void DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) override {
         float height = this->height * camera.zoom;
 
         if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + (width * camera.zoom) && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
@@ -790,9 +788,9 @@ public:
      */
     virtual void SetPositionsOfItems() = 0;
 
-    virtual void DoPassiveAction(float dt) override; ///< dirty sort and arrangement
-    virtual void DrawMyself(float dt) const override; ///< just the border drawing and background drawing.
-    virtual void DoFocusAction(float dt) override; ///< nothing, defocuses itself.
+    virtual void DoPassiveAction(float elapsedTime) override; ///< dirty sort and arrangement
+    virtual void DrawMyself(float elapsedTime) const override; ///< just the border drawing and background drawing.
+    virtual void DoFocusAction(float elapsedTime) override; ///< nothing, defocuses itself.
 
     /**
      *  @brief Sorts the drawing order by priority.
@@ -949,11 +947,11 @@ public:
         Initialise();
     }
 
-    void DrawMyself(float dt) const override;
-    void DrawMyself(float dt, const Camera2D& camera) const override;
-    void DoFocusAction(float dt) override;
-    void DoFocusAction(float dt, const Vector2& mousePosition) override;
-    void DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) override;
+    void DrawMyself(float elapsedTime) const override;
+    void DrawMyself(float elapsedTime, const Camera2D& camera) const override;
+    void DoFocusAction(float elapsedTime) override;
+    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+    void DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) override;
     bool WasIClicked(const Vector2& mousePosition) const override;
     bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const override;
 
@@ -1104,11 +1102,11 @@ public:
         editArea.font.SetFontSize(font.GetFontSize());
     }
 
-    void DrawMyself(float dt) const override;
-    void DrawMyself(float dt, const Camera2D& camera) const override;
-    void DoFocusAction(float dt) override;
-    void DoFocusAction(float dt, const Vector2& mousePosition) override;
-    void DoFocusAction(float dt, const Vector2& mousePosition, const Camera2D& camera) override;
+    void DrawMyself(float elapsedTime) const override;
+    void DrawMyself(float elapsedTime, const Camera2D& camera) const override;
+    void DoFocusAction(float elapsedTime) override;
+    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+    void DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) override;
     void Defocus() override;
 
     void SetToScreen() override;
@@ -1162,7 +1160,7 @@ public:
 
     PasswordField() : TextField("PasswordField"), mask('*') {promptText = "Password"; ClearText();}
 
-    void DrawMyself(float dt) const override;
+    void DrawMyself(float elapsedTime) const override;
 
     void SetMask(const char character);
     char GetMask() const;
@@ -1255,8 +1253,8 @@ public:
     void SetDisplayValue(const bool& flag);
     bool IsDisplayingValue() const;
 
-    void DrawMyself(float dt) const override;
-    void DoFocusAction(float dt) override;
+    void DrawMyself(float elapsedTime) const override;
+    void DoFocusAction(float elapsedTime) override;
 
 protected:
     Shapes shape;
@@ -1274,7 +1272,7 @@ public:
 
     ProgressBar() : ProgressIndicator("ProgressBar"), barColour(GREEN), barMargin(5), segmented(false), numberOfSegments(10), gapBetweenSegments(1) {shape = ProgressIndicator::Shapes::BAR;}
 
-    void DrawMyself(float dt) const override;
+    void DrawMyself(float elapsedTime) const override;
 
     /**
      *  @brief Sets bar margin.
@@ -1341,9 +1339,9 @@ public:
 
     PressedButton() : Button("PressedButton"), pressed(false), pressedText("Pressed Button") {}
 
-    void DrawMyself(float dt) const override;
-    void DoFocusAction(float dt) override;
-    void DoFocusAction(float dt, const Vector2& mousePosition) override;
+    void DrawMyself(float elapsedTime) const override;
+    void DoFocusAction(float elapsedTime) override;
+    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
 
     void SetPressedText(const std::string& value);
     void ClearPressedText();
@@ -1426,7 +1424,7 @@ public:
      * @throws std::runtime_error if display method not set for a type that is not a string nor is able to use to_string.
      * @see Item::DrawMyself
      */
-    void DrawMyself(float dt) const override {
+    void DrawMyself(float elapsedTime) const override {
         if (displayMethod) {
             if (vertical) {
                 float nextY = 0;
@@ -1479,7 +1477,7 @@ public:
             }
         }
     }
-    void DoFocusAction(float dt) override {
+    void DoFocusAction(float elapsedTime) override {
         return;
     }
 
@@ -1604,8 +1602,8 @@ public:
         });
     }
 
-    void DoFocusAction(float dt) override;
-    void DrawMyself(float dt) const override;
+    void DoFocusAction(float elapsedTime) override;
+    void DrawMyself(float elapsedTime) const override;
 
     void DoShowLabels();
     void DoNotShowLabels();
