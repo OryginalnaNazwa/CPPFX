@@ -2,382 +2,17 @@
 #define ITEMS_H
 
 #include "raylib.h"
-#include "properties.h"
-#include <string>
-#include <unordered_set>
-#include <stdexcept>
-#include <algorithm>
-#include <map>
-#include <memory>
-#include <cmath>
-#include <functional>
-#include <iostream>
-#include <vector>
-#include <numeric>
+#include "mixins.h"
+#include "bases.h"
 
 /*********************************************************************************
  *  @file items
- *  @brief This file contains the widgets and virtual classes they inherit from.
+ *  @brief This file contains the widgets.
  ********************************************************************************/
 
 namespace CPPFX {
 
-/**
- *  @class Item
- *  @brief Virtual widget class.
- */
-class Item {
-public:
-    Colour colour;
-
-    /**
-     *  @brief Default constructor.
-     *  @param i fxID of the new item.
-     */
-    Item(const std::string& i)
-        : ID(""), xAnchor(0), yAnchor(0), height(100), width(200), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
-    /**
-     *  @brief Constructor for items with different dimensions than the default ones.
-     *  @param i fxID of the new item.
-     *  @param w width
-     *  @param h height
-     */
-    Item(const std::string& i, float w, float h)
-        : ID(""), xAnchor(0), yAnchor(0), height(h), width(w), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
-
-    /**
-     *  @brief Draws the item in world coordinates.
-     *  @param elapsedTime total elapsed time of all frames
-     */
-    virtual void DrawMyself(float elapsedTime) const;
-    /**
-     *  @brief Draws the item in screen coordinates.
-     *  @param elapsedTime total elapsed time of all frames
-     */
-    virtual void DrawMyself(float elapsedTime, const Camera2D& camera) const;
-    /**
-     *  @brief Checks whether the item was clicked in screen coordinates.
-     *  @details Checks whether the mouse position is within the area of the item.
-     *  @param mousePosition position of mouse during the click
-     *  @returns true if was clicked.
-     */
-    virtual bool WasIClicked(const Vector2& mousePosition) const; //screen
-    /**
-     *  @brief Checks whether the item was clicked in world coordinates.
-     *  @details Checks whether the mouse position is within the area of the item.
-     *  @param mousePosition position of mouse during the click
-     *  @returns true if was clicked.
-     */
-    virtual bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const; //world
-    /**
-     *  @brief Action done every frame in world coordinates.
-     *  @param elapsedTime total elapsed time of all frames
-     */
-    virtual void DoPassiveAction(float elapsedTime);
-    /**
-     *  @brief Action done every frame in screen coordinates.
-     *  @param elapsedTime total elapsed time of all frames
-     */
-    virtual void DoPassiveAction(float elapsedTime, const Camera2D& camera);
-    /**
-     *  @brief Action done while the item is focused in world coordinates.
-     *  @param elapsedTime Frame time
-     */
-    virtual void DoFocusAction(float elapsedTime) = 0;
-    /**
-     *  @brief Action done while the item is focused in screen coordinates.
-     *  @param elapsedTime Frame time
-     */
-    virtual void DoFocusAction(float elapsedTime, const Camera2D& camera);
-    /**
-     *  @brief Action done while the item is focused and it depends on mouse click in world coordinates.
-     *  @details Defaults to the previous DoActiveAction().
-     *  @param elapsedTime Frame time
-     *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
-     */
-    virtual void DoFocusAction(float elapsedTime, const Vector2& mousePosition);
-    /**
-     *  @brief Action done while the item is focused and it depends on mouse click in screen coordinates.
-     *  @details Defaults to the previous DoActiveAction().
-     *  @param elapsedTime Frame time
-     *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
-     */
-    virtual void DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera);
-    /**
-     *  @brief Sets focused to false.
-     */
-    virtual void Defocus();
-    /**
-     *  @brief Sets focused to true.
-     */
-    virtual void Focus();
-    /**
-     *  @brief Checks whether the item is in focus.
-     *  @returns Focus state - true if focused
-     */
-    bool IsFocused() const;
-
-    /**
-     *  @brief Makes the item inactive.
-     */
-    void MakeInactive();
-    /**
-     *  @brief Makes the item active.
-     */
-    void MakeActive();
-    /**
-     *  @brief Sets the item's activity state.
-     *  @param flag true - inactive, false - active
-     */
-    void SetInactive(const bool& flag);
-    /**
-     *  @brief Checks whether the item is inactive.
-     *  @returns true if inactive
-     */
-    bool IsInactive() const;
-
-    /**
-     *  @brief Sets the coordinates' system of the item to World.
-     */
-    virtual void SetToWorld();
-    /**
-     *  @brief Sets the coordinates' system of the item to Screen.
-     */
-    virtual void SetToScreen();
-    /**
-     *  @brief Checks whether the current coordinates' system of the item is Screen based.
-     *  @returns true if screen based.
-     */
-    bool IsScreenBased() const;
-
-    /**
-     *  @brief Makes the item invisible.
-     */
-    void MakeInvisible();
-    /**
-     *  @brief Makes the item visible.
-     */
-    void MakeVisible();
-    /**
-     *  @brief Sets the item's visibility.
-     *  @param flag true - visible.
-     */
-    void SetVisible(const bool& flag);
-    /**
-     *  @brief Checks whether the item is visible.
-     *  @returns true if visible.
-     */
-    bool IsVisible() const;
-
-    /**
-     *  @brief Makes the item invisible and not interactable.
-     *  @details Sets both inactive and invisible to true.
-     */
-    void Hide();
-    /**
-     *  @brief Makes the item visible and interactable.
-     *  @details Sets both inactive and invisible to true.
-     */
-    void Show();
-
-    /**
-     *  @brief Makes the item consume clicks.
-     */
-    void ConsumeClicks();
-    /**
-     *  @brief Makes the item let clicks through it and propagate.
-     */
-    void LetClicksThrough();
-    /**
-     *  @brief Checks whether the item eats clicks.
-     *  @returns true if eats clicks.
-     */
-    bool DoesEatClicks() const;
-
-    /**
-     *  @brief Launches on click.
-     *  @details Lambda, put in your own.
-     */
-    std::function<void()> onClick;
-    /**
-     *  @brief Launches when cursor is over the item.
-     *  @details Lambda, put in your own.
-     */
-    std::function<void()> onHover;
-
-    /**
-     *  @brief Sets the x coordinate of the item.
-     *  @param x new value to be set
-     */
-    virtual void SetX(float x);
-    /**
-     *  @brief Sets the y coordinate of the item.
-     *  @param y new value to be set
-     */
-    virtual void SetY(float y);
-    /**
-     *  @brief Sets the height of the item.
-     *  @param value The new height.
-     *  @throws std::invalid_argument If the value is negative.
-     */
-    virtual void SetHeight(float value);
-    /**
-     *  @brief Sets the width of the item.
-     *  @param value The new width.
-     *  @throws std::invalid_argument If the value is negative.
-     */
-    virtual void SetWidth(float value);
-    /**
-     *  @brief Sets item's ID.
-     *  @param id new ID to be set.
-     *  @throws std::invalid_argument if the id is empty.
-     */
-    void SetID(const std::string& id);
-    /**
-     *  @brief Sets the priority in the order of drawing of the item.
-     *  @param value The new priority.
-     *  @throws std::invalid_argument If the value is negative.
-     */
-    void SetPriority(int value);
-    /**
-     *  @brief Increases order by one, decreasing the priority by one.
-     *  @details If priority is 0, does nothing.
-     */
-    void MoveUpPriority();
-    /**
-     *  @brief Decreases order by one, increasing the priority by one.
-     */
-    void MoveDownPriority();
-
-    /**
-     *  @brief Returns x coordinate of the item.
-     *  @returns x coordinate
-     */
-    float GetX() const;
-    /**
-     *  @brief Returns y coordinate of the item.
-     *  @returns y coordinate
-     */
-    float GetY() const;
-    /**
-     *  @brief Returns height of the item.
-     *  @returns height of the item
-     */
-    virtual float GetHeight() const;
-    /**
-     *  @brief Returns total height of the item, if it's different from the standard.
-     *  @details Sometimes items have variable total height at runtime, or the standard height is a dimension of the "main body." For interaction, use GetHeight, for drawing - GetTotalHeight.
-     *  @returns runtime height
-     */
-    virtual float GetTotalHeight() const;
-    /**
-     *  @brief Returns width of the item.
-     *  @returns width of the item
-     */
-    virtual float GetWidth() const;
-    /**
-     *  @brief Returns total width of the item, if it's different from the standard.
-     *  @details Sometimes items have variable total width at runtime, or the standard width is a dimension of the "main body." For interaction, use GetWidth, for drawing - GetTotalWidth.
-     *  @returns runtime width
-     */
-    virtual float GetTotalWidth() const;
-    /**
-     *  @brief Returns priority of the item.
-     *  @details Remember that larger number is lesser priority.
-     *  @returns number representing priority
-     */
-    size_t GetPriority() const;
-    /**
-     *  @brief Returns the item's ID.
-     *  @returns ID
-     */
-    std::string GetID() const;
-
-    /**
-     *  @brief Returns the internal library identificator of the item.
-     *  @details Roughly the name of the class.
-     *  @returns Internal ID
-     */
-    std::string GetFxID() const;
-
-protected:
-    std::string ID; ///<ID used by the user, variable.
-    mutable float xAnchor; ///<top left x coordinate
-    mutable float yAnchor; ///<top left y coordinate
-    float height; ///<vertical length of the item
-    float width; ///<horizontal length of the item
-
-    bool focused; ///<whether the item is currently doing something; was it clicked.
-    bool visible; ///<invisible items are still interactable
-    bool inactive; ///<inactive items are not interactable
-    bool eatsClick; ///<if false, allows the click to continue under it
-    size_t priority; ///<order of drawing. Set to 3 by default for convenience of moving priority around. The higher the priority, the quicker it gets done - but gets drawn under.
-
-    bool screenBased; ///<if true, item is drawn based on screen, so follows camera.
-    const std::string fxID; ///ID for the library.
-    float timer = 0; ///< in case a widget needs to measure out time. Fully internal.
-};
-
-/**
- *  @class TextItem
- *  @brief A virtual Item subclass focused on a variable text.
- */
-class TextItem : public Item {
-public:
-    Font font;
-
-    TextItem(const std::string& i) : Item(i), font(height / 4), text(i), textMargin(10) {}
-    TextItem(const std::string& i, float w, float h) : Item(i, w, h), font(h / 4), text(i), textMargin(10) {}
-
-    /**
-     *  @brief Expands the width and height to accommodate text.
-     */
-    virtual void ExpandToText();
-
-    /**
-     *  @brief Expands or shrinks width and height to the text dimensions.
-     */
-    virtual void FitToText();
-
-    /**
-     *  @brief Sets text
-     *  @param text new text to be set
-     */
-    void SetText(const std::string& text);
-    /**
-     *  @brief Clears text.
-     *  @details Sets text to an empty std::string.
-     */
-    void ClearText();
-    /**
-     *  @brief Returns text.
-     *  @returns text
-     */
-    std::string GetText() const;
-
-    /**
-     *  @brief Sets the distance between border and text in x axis.
-     *  @param margin new value
-     *  @details Sets 0 at throw.
-     *  @throws std::invalid_argument if margin is negative.
-     */
-    void SetTextMargin(float margin);
-    /**
-     *  @brief Returns text margin
-     *  @returns text margin
-     */
-    float GetTextMargin() const;
-
-protected:
-    std::string text;
-    float textMargin; ///<distance from limit to text.
-
-    /**
-     *  @brief Truncates text if needed.
-     *  @return truncated string
-     */
-    virtual std::string Truncate(const std::string& text) const;
-};
+// --- Text Items ---
 
 /**
  *  @class Label
@@ -386,10 +21,10 @@ protected:
  */
 class Label : public TextItem {
 public:
-    Border border;
+
     Alignment alignment;
 
-    Label() : TextItem("Label") {colour.SetColour(BLANK); text = "Label";}
+    Label() : Item("Label"), TextItem("Label") {colour.SetColour(BLANK); text = "Label";}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -403,10 +38,10 @@ public:
  */
 class TextField : public TextItem {
 public:
-    Border border;
 
-    TextField() : TextItem("TextField"), promptText("") {}
-    TextField(const std::string& i) : TextItem(i), promptText("") {}
+
+    TextField() : Item("TextField"), TextItem("TextField"), promptText("") {}
+    TextField(const std::string& i) : Item("TextField"), TextItem(i), promptText("") {}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -426,11 +61,11 @@ protected:
  */
 class Button : public TextItem {
 public:
-    Border border;
+
     Colour pressedColour;
     Colour unPressedColour;
 
-    Button() : TextItem("Button"), pressedColour(GREY), unPressedColour(LIGHTGREY) {}
+    Button() : Item("Button"), TextItem("Button"), pressedColour(GREY), unPressedColour(LIGHTGREY) {}
     Button(const std::string& id) : TextItem(id), pressedColour(GREY), unPressedColour(LIGHTGREY) {}
 
     void DrawMyself(float elapsedTime) const override;
@@ -443,18 +78,17 @@ public:
  * @brief A turn on - turn off button.
  * @details Width is the length of the box, not the total one. Total length is width + MeasureText(text) + textMargin + labelMargin. Has border. Has colour for pressed state and unpressed.
  */
-class CheckBox : public TextItem {
+class CheckBox : public TextItem, public virtual PersistentState {
 public:
-    Border border; ///<automatically stretches to accommodate text.
+     ///<automatically stretches to accommodate text.
     Border clickBorder; ///< border solely around clickable area.
 
     Colour pressedColour;
     Colour unPressedColour;
 
-
     bool drawsX = true; //TODO add different shapes
 
-    CheckBox() : TextItem("CheckBox", 50, 50), pressedColour(GRAY), unPressedColour(LIGHTGRAY), pressed(false), labelMargin(10) {font.SetFontSize(height / 2);}
+    CheckBox() : Item("CheckBox", 50, 50), TextItem("CheckBox", 50, 50), PersistentState(), pressedColour(GRAY), unPressedColour(LIGHTGRAY), labelMargin(10) {font.SetFontSize(height / 2);}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -469,17 +103,8 @@ public:
     void SetLabelMargin(float value);
     float GetLabelMargin() const;
 
-    void SetPressed(const bool& flag);
-    void Press();
-    void Unpress();
-    void SwitchPress();
-    bool IsPressed() const;
-
 private:
-    bool pressed;
     float labelMargin; ///<distance between the box and the label text.
-
-
 };
 
 /**
@@ -491,9 +116,8 @@ private:
 template <typename T>
 class DropDown : public TextItem {
 public:
-    Border border;
 
-    DropDown() : TextItem("DropDown"), currentLabel("") {}
+    DropDown() : Item("DropDown"), TextItem("DropDown"), currentLabel("") {}
 
     void DrawMyself(float elapsedTime) const override {
         DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
@@ -741,77 +365,7 @@ private:
     }
 };
 
-/**
- * @class Container
- * @brief A virtual layout organiser base.
- * @details Has border. Has alignement. Has colour - blank by default. Containers have default priority of 10 (makes sure they're under most items so they don't interfere).
- * @note Containers mostly just set X and Ys of their children.
- */
-class Container : public Item {
-public:
-    Alignment alignment;
-    Border border;
-
-    Container(const std::string& i) : Item(i) {colour.SetColour(BLANK); priority = 10;}
-    Container(const std::string& i, float w, float h) : Item(i, w, h) {colour.SetColour(BLANK); priority = 10;}
-
-    void AddItem(Item* item);
-
-    /**
-     *  @brief Removes an item from the container.
-     *  @param ID ID of the item to be removed
-     *  @throws std::invalid_argument if the ID is not in the container
-     */
-    void RemoveItem(const std::string& ID);
-    /**
-     *  @brief Removes an item from the container.
-     *  @param item pointer to the item to be removed
-     *  @throws std::invalid_argument if the item doesn't exist
-     *  @throws std::out_of_range if the item is not in the container.
-     */
-    void RemoveItem(const Item* item);
-
-    /**
-     *  @brief Removes an item from the container without throwing an error.
-     *  @param ID ID of the item to be removed
-     */
-    void SafeRemoveItem(const std::string& ID);
-    /**
-     *  @brief Removes an item from the container without throwing an error.
-     *  @param item pointer to the item to be removed
-     */
-    void SafeRemoveItem(const Item* item);
-
-    /**
-     *  @brief Arranges the items.
-     *  @details Called automatically on the first frame after getting dirty.
-     */
-    virtual void SetPositionsOfItems() = 0;
-
-    virtual void DoPassiveAction(float elapsedTime) override; ///< dirty sort and arrangement
-    virtual void DrawMyself(float elapsedTime) const override; ///< just the border drawing and background drawing.
-    virtual void DoFocusAction(float elapsedTime) override; ///< nothing, defocuses itself.
-
-    /**
-     *  @brief Sorts the drawing order by priority.
-     *  @details Called automatically on the first frame after getting dirty.
-     */
-    void SortOrder();
-
-    /**
-     *  @brief Checks whether the item of this ID is already a child of the container.
-     *  @param ID ID of the item to be checked.
-     *  @returns true if the item already is in the container.
-     */
-    bool IsIDTaken(const std::string& ID) const;
-
-protected:
-    std::map<std::string, Item*> Items;
-    std::vector<Item*> ItemsInDrawingOrder;
-
-    bool needsSorting = false; ///< dirty sord of z-order
-    bool needsOrdering = false; ///< dirty arrangement of children
-};
+// --- Containers ---
 
 /**
  *  @class Workspace
@@ -821,7 +375,7 @@ protected:
 class Workspace : public Container {
 public:
 
-    Workspace() : Container("Workspace", 500, 500) {}
+    Workspace() : Item("Workspace"), Container("Workspace", 500, 500) {}
 
     void SetPositionsOfItems() override;
 };
@@ -833,7 +387,7 @@ public:
 class AnchorPane : public Container {
 public:
 
-    AnchorPane() : Container("AnchorPane", 500, 500), previousX(500), previousY(500), previousWidth(200), previousHeight(200) {}
+    AnchorPane() : Item("AnchorPane"), Container("AnchorPane", 500, 500), previousX(500), previousY(500), previousWidth(200), previousHeight(200) {}
 
     void SetPositionsOfItems() override;
 
@@ -867,30 +421,6 @@ private:
 };
 
 /**
- *  @class Box
- *  @brief A virtual class for later boxes.
- *  @details Adds padding and sets display.
- */
-class Box : public Container {
-public:
-
-    Box(const std::string& i) : Container(i), padding(10) {}
-    Box(const std::string& i, float w, float h) : Container(i, w, h), padding(10) {}
-
-    /**
-     *  @brief Sets padding.
-     *  @details Flags for rearrangement.
-     *  @param value new padding value
-     *  @throws std::invalid_argument if the padding is negative
-     */
-    void SetPadding(float value);
-    float GetPadding() const;
-
-protected:
-    float padding; ///< distance between children
-};
-
-/**
  *  @class VBox
  *  @brief A container for displaying the items in a vertical column.
  *  @details Height automatically increases with items.
@@ -898,7 +428,7 @@ protected:
 class VBox : public Box {
 public:
 
-    VBox() : Box("VBox", 100, 200) {}
+    VBox() : Item("VBox"), Box("VBox", 100, 200) {}
 
     void SetPositionsOfItems() override;
     /**
@@ -916,7 +446,7 @@ public:
 class HBox : public Box {
 public:
 
-    HBox() : Box("HBox", 200, 100) {}
+    HBox() : Item("HBox"), Box("HBox", 200, 100) {}
 
     void SetPositionsOfItems() override;
     /**
@@ -935,7 +465,7 @@ class Spinner : public Item {
 public:
     mutable Button incrementButton;
     mutable Button decrementButton;
-    Border border;
+
     Font font;
 
     Spinner()
@@ -1091,7 +621,7 @@ private:
  */
 class EditableSpinner : public Spinner {
 public:
-    TextField editArea;
+    mutable TextField editArea;
 
     EditableSpinner() : Spinner("EditableSpinner") {
         editArea.SetX(xAnchor);
@@ -1158,7 +688,7 @@ public:
 class PasswordField : public TextField {
 public:
 
-    PasswordField() : TextField("PasswordField"), mask('*') {promptText = "Password"; ClearText();}
+    PasswordField() : Item("PasswordField"), TextField("PasswordField"), mask('*') {promptText = "Password"; ClearText();}
 
     void DrawMyself(float elapsedTime) const override;
 
@@ -1270,7 +800,8 @@ class ProgressBar : public ProgressIndicator {
 public:
     Colour barColour;
 
-    ProgressBar() : ProgressIndicator("ProgressBar"), barColour(GREEN), barMargin(5), segmented(false), numberOfSegments(10), gapBetweenSegments(1) {shape = ProgressIndicator::Shapes::BAR;}
+    ProgressBar() : ProgressIndicator("ProgressBar"),
+                    barColour(GREEN), barMargin(5), segmented(false), numberOfSegments(10), gapBetweenSegments(1) {shape = ProgressIndicator::Shapes::BAR;}
 
     void DrawMyself(float elapsedTime) const override;
 
@@ -1334,10 +865,10 @@ private:
     float gapBetweenSegments;
 };
 
-class PressedButton : public Button {
+class PressedButton : public Button, public virtual PersistentState {
 public:
 
-    PressedButton() : Button("PressedButton"), pressed(false), pressedText("Pressed Button") {}
+    PressedButton() : Item("PressedButton"), Button("PressedButton"), pressedText("Pressed Button") {}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -1347,24 +878,17 @@ public:
     void ClearPressedText();
     std::string GetPressedText() const;
 
-    void SetPressed(const bool& flag);
-    void Press();
-    void Unpress();
-    void SwitchPress();
-    bool IsPressed() const;
-
 private:
-    bool pressed;
     std::string pressedText;
 };
 
 template<typename T>
-class List : public Item {
+class List : public virtual Item, public virtual Padded {
 public:
     Font font;
-    Border border;
 
-    List() : Item("List"), font(height / 4), vertical(true), padding(10) {}
+
+    List() : Item("List"), Padded(), font(height / 4), vertical(true) {}
 
     void AddItem(const T& item) {
         items.push_back(item);
@@ -1499,21 +1023,6 @@ public:
     }
 
     /**
-     *  @brief Sets the distance between items.
-     *  @param padding new padding to be set.
-     *  @throws std::invalid_argument if padding is negative.
-     */
-    void SetPadding(float padding) {
-        if (padding < 0) {
-            throw std::invalid_argument("In List " + this->ID + ": negative padding");
-        }
-        this->padding = padding;
-    }
-    float GetPadding() const {
-        return padding;
-    }
-
-    /**
      *  @brief Returns total width.
      *  @see Item::GetTotalWidth
      *  @returns width if vertical, sum of padding and items (in string form) length otherwise.
@@ -1563,44 +1072,12 @@ private:
     std::function<std::string(const T&)> displayMethod;
 
     bool vertical;
-    float padding;
 };
 
-class Chart : public Item {
-public:
-    Font font;
-    Border border;
-
-    Chart (const std::string& i) : Item(i), font(height / 4) {}
-
-    void AddElement(const std::string& label, double value);
-    void AddElement(double value);
-
-    double GetElement(const std::string& label) const;
-    double GetElement(int index) const;
-
-    void SetElement(const std::string& label, double newValue);
-    void SetElement(int index, double newValue);
-
-    void RemoveElement(const std::string& label);
-    void RemoveElement(int index);
-
-    size_t GetLabelsSize() const;
-    size_t GetValuesSize() const;
-
-protected:
-    std::vector<std::string> labels;
-    std::vector<double> values;
-};
-
-class PieChart : public Chart {
+class PieChart : public Chart, virtual public Circular {
 public:
 
-    PieChart() : Chart("PieChart"), showLabels(false), showPercentage(false) {
-        border.SetDrawingMethod([this](float x, float y, float w, float h){
-            DrawCircle(x, y, w + border.GetThickness(), border.colour.GetColour());
-        });
-    }
+    PieChart() : Item("PieChart"), Chart("PieChart"), Circular(), showLabels(false), showPercentage(false) {}
 
     void DoFocusAction(float elapsedTime) override;
     void DrawMyself(float elapsedTime) const override;
@@ -1618,6 +1095,122 @@ public:
 private:
     bool showLabels;
     bool showPercentage;
+};
+
+/**
+ *  @class Line
+ *  @brief Straight line.
+ *  @details Has two modes of drawing: by end point or by angle and length. Doesn't use border.
+ */
+class Line : public Shape {
+public:
+
+    Line() : Item("Line"), Shape("Line"), pointToPoint(true), thickness(10), angle(0), xEnd(xAnchor + width), yEnd(yAnchor) {}
+
+    /**
+     *  @brief Returns length of the line.
+     */
+    float CalculateMyArea() const override;
+
+    void DrawMyself(float elapsedTime) const override;
+
+    /**
+     *  @brief Sets length of the line.
+     *  @details Used only when drawing by length and angle.
+     *  @param length new value of length
+     *  @throws std::invalid_argument if the length is negative
+     *  @note Uses width internally.
+     */
+    void SetLength(float length);
+    float GetLength() const;
+    void SetWidth(float value) override; /// overrides into Length.
+    void SetHeight(float value) override; /// overrides into Length.
+    float GetWidth() const override; /// overrides into Length.
+    float GetHeight() const override; /// overrides into Length.
+    float GetTotalHeight() const override;
+    float GetTotalWidth() const override;
+
+    /**
+     *  @brief Sets the angle at which the line is drawn.
+     *  @details Used only when drawing by length and angle.
+     *  @param angle in degrees
+     *  @throws std::out_of_range if the angle is beyond the 0 - 360 range.
+     */
+    void SetAngle(float angle);
+    /**
+     *  @brief Changes angle by a value.
+     *  @details Change can be negative. Handles overflow and underflow.
+     *  @param change how much the angle will move.
+     */
+    void IncreaseAngle(float change);
+    float GetAngle() const;
+
+    void SetEndPoint(float x, float y);
+    void SetEndPoint(const Vector2& coordinates);
+    Vector2 GetEndPoint() const;
+
+    /**
+     *  @brief Sets the thickness of the line.
+     *  @param thickness new value of thickness.
+     *  @throws std::invalid_argument if the thickness is negative.
+     */
+    void SetThickness(float thickness);
+    float GetThickness() const;
+
+    /**
+     *  @brief Sets the drawing mode to from point to point.
+     *  @details Use EndPoint to draw it.
+     */
+    void DrawPointToPoint();
+    /**
+     *  @brief Sets the drawing mode to using length and angle.
+     *  @details Set length and angle to draw it.
+     */
+    void DrawLengthAndAngle();
+    /**
+     *  @brief Sets drawing method.
+     *  @param flag true - point to point, false - length and angle.
+     */
+    void SetDrawingMethod(bool flag);
+    /**
+     *  @brief Returns drawing method.
+     *  @returns true - point to point, false - length and angle.
+     */
+    bool GetDrawingMethod() const;
+
+private:
+    bool pointToPoint;
+    float thickness;
+    float angle;
+    float xEnd;
+    float yEnd;
+
+    void CalculateLength(); // sets length (width)
+};
+
+class Square : public Shape {
+public:
+
+    Square() : Item("Square"), Shape("Square") {height = width;}
+
+    void DrawMyself(float elapsedTime) const override;
+
+    float CalculateMyArea() const override;
+
+    void SetWidth(float value) override; /// also sets height.
+    void SetHeight(float value) override; /// overrides into width.
+    float GetHeight() const override; /// overrides into width.
+    float GetTotalHeight() const override;
+};
+
+class Rectangle : public Shape {
+public:
+
+    Rectangle() : Item("Rectangle"), Shape("Rectangle") {height = width;}
+
+    void DrawMyself(float elapsedTime) const override;
+
+    float CalculateMyArea() const override;
 };
 
 }

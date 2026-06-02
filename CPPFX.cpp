@@ -3,7 +3,7 @@
 using namespace CPPFX;
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
-    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "Chart", "PieChart"};
+    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "Chart", "PieChart", "Line"};
 
 //--- Main loop ---
 
@@ -113,10 +113,15 @@ void GUI::CreateItem(std::unique_ptr<Item>& item) {
 
 void GUI::CreateItemID(std::unique_ptr<Item>& item, const std::string& ID) {
     if (ID.empty()) {
-        size_t currentCount = ItemsCounter.at(item->GetFxID());
-        std::string newID = currentCount == 0 ? item->GetFxID()
+        try {
+            size_t currentCount = ItemsCounter.at(item->GetFxID());
+            std::string newID = currentCount == 0 ? item->GetFxID()
                                     : item->GetFxID() + std::to_string(currentCount);
-        item->SetID("GUI_AUTO_" + newID);
+            item->SetID("GUI_AUTO_" + newID);
+        } catch (std::out_of_range) {
+            throw std::out_of_range("Invalid creation of item with the fxid " + item->GetFxID() + " while trying to give it id " + ID + "or " + item->GetID());
+        }
+
     } else item->SetID(ID);
     ItemsCounter[item->GetFxID()]++;
 }
@@ -124,7 +129,7 @@ void GUI::CreateItemID(std::unique_ptr<Item>& item, const std::string& ID) {
 TextField* GUI::AddTextField(const std::string& ID) {
     std::unique_ptr<Item> textField = std::make_unique<TextField>();
     CreateItemID(textField, ID);
-    auto pointer = static_cast<TextField*>(textField.get());
+    auto pointer = dynamic_cast<TextField*>(textField.get());
     CreateItem(textField);
     return pointer;
 }
@@ -132,7 +137,7 @@ TextField* GUI::AddTextField(const std::string& ID) {
 Label* GUI::AddLabel(const std::string& ID) {
     std::unique_ptr<Item> label = std::make_unique<Label>();
     CreateItemID(label, ID);
-    auto pointer = static_cast<Label*>(label.get());
+    auto pointer = dynamic_cast<Label*>(label.get());
     CreateItem(label);
     return pointer;
 }
@@ -140,7 +145,7 @@ Label* GUI::AddLabel(const std::string& ID) {
 Button* GUI::AddButton(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<Button>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<Button*>(item.get());
+    auto pointer = dynamic_cast<Button*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -148,7 +153,7 @@ Button* GUI::AddButton(const std::string& ID) {
 CheckBox* GUI::AddCheckBox(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<CheckBox>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<CheckBox*>(item.get());
+    auto pointer = dynamic_cast<CheckBox*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -156,7 +161,7 @@ CheckBox* GUI::AddCheckBox(const std::string& ID) {
 AnchorPane* GUI::AddAnchorPane(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<AnchorPane>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<AnchorPane*>(item.get());
+    auto pointer = dynamic_cast<AnchorPane*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -164,7 +169,7 @@ AnchorPane* GUI::AddAnchorPane(const std::string& ID) {
 VBox* GUI::AddVBox(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<VBox>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<VBox*>(item.get());
+    auto pointer = dynamic_cast<VBox*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -172,7 +177,7 @@ VBox* GUI::AddVBox(const std::string& ID) {
 HBox* GUI::AddHBox(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<HBox>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<HBox*>(item.get());
+    auto pointer = dynamic_cast<HBox*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -180,7 +185,7 @@ HBox* GUI::AddHBox(const std::string& ID) {
 Workspace* GUI::AddWorkspace(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<Workspace>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<Workspace*>(item.get());
+    auto pointer = dynamic_cast<Workspace*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -188,7 +193,7 @@ Workspace* GUI::AddWorkspace(const std::string& ID) {
 Spinner* GUI::AddSpinner(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<Spinner>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<Spinner*>(item.get());
+    auto pointer = dynamic_cast<Spinner*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -196,7 +201,7 @@ Spinner* GUI::AddSpinner(const std::string& ID) {
 EditableSpinner* GUI::AddEditableSpinner(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<EditableSpinner>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<EditableSpinner*>(item.get());
+    auto pointer = dynamic_cast<EditableSpinner*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -204,7 +209,7 @@ EditableSpinner* GUI::AddEditableSpinner(const std::string& ID) {
 PasswordField* GUI::AddPasswordField(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<PasswordField>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<PasswordField*>(item.get());
+    auto pointer = dynamic_cast<PasswordField*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -212,7 +217,7 @@ PasswordField* GUI::AddPasswordField(const std::string& ID) {
 ProgressIndicator* GUI::AddProgressIndicator(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<ProgressIndicator>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<ProgressIndicator*>(item.get());
+    auto pointer = dynamic_cast<ProgressIndicator*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -220,7 +225,7 @@ ProgressIndicator* GUI::AddProgressIndicator(const std::string& ID) {
 ProgressBar* GUI::AddProgressBar(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<ProgressBar>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<ProgressBar*>(item.get());
+    auto pointer = dynamic_cast<ProgressBar*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -228,7 +233,7 @@ ProgressBar* GUI::AddProgressBar(const std::string& ID) {
 PressedButton* GUI::AddPressedButton(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<PressedButton>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<PressedButton*>(item.get());
+    auto pointer = dynamic_cast<PressedButton*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -236,7 +241,15 @@ PressedButton* GUI::AddPressedButton(const std::string& ID) {
 PieChart* GUI::AddPieChart(const std::string& ID) {
     std::unique_ptr<Item> item = std::make_unique<PieChart>();
     CreateItemID(item, ID);
-    auto pointer = static_cast<PieChart*>(item.get());
+    auto pointer = dynamic_cast<PieChart*>(item.get());
+    CreateItem(item);
+    return pointer;
+}
+
+Line* GUI::AddLine(const std::string& ID) {
+    std::unique_ptr<Item> item = std::make_unique<Line>();
+    CreateItemID(item, ID);
+    auto pointer = dynamic_cast<Line*>(item.get());
     CreateItem(item);
     return pointer;
 }
@@ -459,6 +472,16 @@ PieChart* GUI::GetPieChart(const std::string& ID) {
         return ptr;
     } catch (const std::out_of_range& e) {
         throw std::out_of_range("No PieChart with the ID " + ID + " exists");
+    }
+}
+
+Line* GUI::GetLine(const std::string& ID) {
+    try {
+        auto* ptr = dynamic_cast<Line*>(Items.at(ID).get());
+        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a Line");
+        return ptr;
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range("No Line with the ID " + ID + " exists");
     }
 }
 

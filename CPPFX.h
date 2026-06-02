@@ -44,7 +44,7 @@ public:
     T* AddItem(const std::string& ID = "") {
         std::unique_ptr<Item> item = std::make_unique<T>();
         CreateItemID(item, ID);
-        auto pointer = static_cast<T*>(item.get());
+        auto pointer = dynamic_cast<T*>(item.get());
         CreateItem(item);
         return pointer;
     }
@@ -117,7 +117,7 @@ public:
     DropDown<T>* AddDropDown(const std::string& ID = "") {
         std::unique_ptr<Item> dropdown = std::make_unique<DropDown<T>>();
         CreateItemID(dropdown, ID);
-        auto pointer = static_cast<DropDown<T>*>(dropdown.get());
+        auto pointer = dynamic_cast<DropDown<T>*>(dropdown.get());
         CreateItem(dropdown);
         return pointer;
     }
@@ -128,10 +128,14 @@ public:
     List<T>* AddList(const std::string& ID = "") {
         std::unique_ptr<Item> alist = std::make_unique<List<T>>();
         CreateItemID(alist, ID);
-        auto pointer = static_cast<List<T>*>(alist.get());
+        auto pointer = dynamic_cast<List<T>*>(alist.get());
         CreateItem(alist);
         return pointer;
     }
+    /**
+     *  @copydoc AddTextField
+     */
+    Line* AddLine(const std::string& ID = "");
 
     /**
      *  @brief Removes an item.
@@ -254,6 +258,10 @@ public:
      *  @copydoc GetTextField
      */
     PieChart* GetPieChart(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
+    Line* GetLine(const std::string& ID);
 
     /**
      *  @brief Sets the item's priority to highest available.
@@ -392,9 +400,6 @@ private:
     void CreateItemID(std::unique_ptr<Item>& item, const std::string& ID = "");
 
     static const std::unordered_set<std::string> FXIDs;
-    /*{"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
-    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "Chart", "PieChart"}*/
-
 };
 
 }
