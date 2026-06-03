@@ -49,10 +49,11 @@ protected:
 
 class PersistentState : public virtual Item {
 public:
+    Colour pressedColour;
 
-    PersistentState() : Item(), pressed(false) {}
+    PersistentState() : Item(), pressed(false) {pressedColour.SetColour(GREY);}
 
-    void SetPressed(const bool& flag);
+    void SetPressed(bool flag);
     void Press();
     void Unpress();
     void SwitchPress();

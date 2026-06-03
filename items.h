@@ -61,12 +61,10 @@ protected:
  */
 class Button : public TextItem {
 public:
-
     Colour pressedColour;
-    Colour unPressedColour;
 
-    Button() : Item("Button"), TextItem("Button"), pressedColour(GREY), unPressedColour(LIGHTGREY) {}
-    Button(const std::string& id) : TextItem(id), pressedColour(GREY), unPressedColour(LIGHTGREY) {}
+    Button() : Item("Button"), TextItem("Button"), pressedColour(GREY) {}
+    Button(const std::string& id) : TextItem(id), pressedColour(GREY) {}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -83,12 +81,9 @@ public:
      ///<automatically stretches to accommodate text.
     Border clickBorder; ///< border solely around clickable area.
 
-    Colour pressedColour;
-    Colour unPressedColour;
-
     bool drawsX = true; //TODO add different shapes
 
-    CheckBox() : Item("CheckBox", 50, 50), TextItem("CheckBox", 50, 50), PersistentState(), pressedColour(GRAY), unPressedColour(LIGHTGRAY), labelMargin(10) {font.SetFontSize(height / 2);}
+    CheckBox() : Item("CheckBox", 50, 50), TextItem("CheckBox", 50, 50), PersistentState(), labelMargin(10) {font.SetFontSize(height / 2);}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;

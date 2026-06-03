@@ -93,7 +93,10 @@ void Label::DoFocusAction(float elapsedTime) {
 //--- Button ---
 
 void Button::DrawMyself(float elapsedTime) const {
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+    if (timer > 0) {
+        DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour());
+    } else DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+
     if (text != "") {
        DrawText(text.c_str(), xAnchor + (width / 2) - (MeasureText(text.c_str(), font.GetFontSize()) / 2), yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
     }
@@ -104,13 +107,11 @@ void Button::DoFocusAction(float elapsedTime) {
     if (focused) {
         if (timer > 0) {
             if (elapsedTime > timer) {
-                colour.SetColour(unPressedColour.GetColour());
                 timer = 0;
                 focused = false;
             }
         } else {
             timer = elapsedTime + 0.1f;
-            colour.SetColour(pressedColour.GetColour());
         }
     } else {
         timer = 0;
@@ -120,27 +121,24 @@ void Button::DoFocusAction(float elapsedTime) {
 // --- CheckBox ---
 
 void CheckBox::DrawMyself(float elapsedTime) const {
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+    if (!pressed) {
+        DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+    } else DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour());
+
     if (text != "") {
        DrawText(text.c_str(), xAnchor + width + textMargin + labelMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
     }
     border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
     clickBorder.DrawMyself(xAnchor, yAnchor, width, height);
     if (pressed && drawsX) { //TODO add other shapes options
-        DrawLineEx({xAnchor, yAnchor}, {xAnchor + width, yAnchor + height}, width / 10, unPressedColour.GetColour());
-        DrawLineEx({xAnchor, yAnchor + height}, {xAnchor + width, yAnchor}, width / 10, unPressedColour.GetColour());
+        DrawLineEx({xAnchor, yAnchor}, {xAnchor + width, yAnchor + height}, width / 10, colour.GetColour());
+        DrawLineEx({xAnchor, yAnchor + height}, {xAnchor + width, yAnchor}, width / 10, colour.GetColour());
     }
 }
 
 void CheckBox::DoFocusAction(float elapsedTime) {
    if (focused) {
-        if (pressed) {
-            colour.SetColour(unPressedColour.GetColour());
-            pressed = false;
-        } else {
-            colour.SetColour(pressedColour.GetColour());
-            pressed = true;
-        }
+        pressed = !pressed;
         focused = false;
    }
 }
@@ -1111,10 +1109,10 @@ bool ProgressBar::IsSegmented() const {
 void PressedButton::DrawMyself(float elapsedTime) const {
     std::string textToDisplay;
     if (pressed) {
-        DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour());
+        DrawRectangle(xAnchor, yAnchor, width, height, PersistentState::pressedColour.GetColour());
         textToDisplay = pressedText;
     } else {
-        DrawRectangle(xAnchor, yAnchor, width, height, unPressedColour.GetColour());
+        DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
         textToDisplay = text;
     }
 
@@ -1252,7 +1250,6 @@ void PieChart::SetShowingPercentage(const bool& flag) {
 bool PieChart::IsShowingPercentage() const {
     return showPercentage;
 }
-
 
 // --- Line ---
 float Line::CalculateMyArea() const {
