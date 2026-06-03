@@ -3,7 +3,7 @@
 using namespace CPPFX;
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
-    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "Chart", "PieChart", "Line"};
+    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "Chart", "PieChart", "Line", "Square", "Rectangle", "Circle"};
 
 //--- Main loop ---
 
@@ -120,6 +120,7 @@ void GUI::CreateItemID(std::unique_ptr<Item>& item, const std::string& ID) {
             item->SetID("GUI_AUTO_" + newID);
         } catch (std::out_of_range) {
             throw std::out_of_range("Invalid creation of item with the fxid " + item->GetFxID() + " while trying to give it id " + ID + "or " + item->GetID());
+            //this shouldn't happen, left it for debug of virtual inheritance
         }
 
     } else item->SetID(ID);
@@ -127,131 +128,79 @@ void GUI::CreateItemID(std::unique_ptr<Item>& item, const std::string& ID) {
 }
 
 TextField* GUI::AddTextField(const std::string& ID) {
-    std::unique_ptr<Item> textField = std::make_unique<TextField>();
-    CreateItemID(textField, ID);
-    auto pointer = dynamic_cast<TextField*>(textField.get());
-    CreateItem(textField);
-    return pointer;
+    return AddItem<TextField>(ID);
 }
 
 Label* GUI::AddLabel(const std::string& ID) {
-    std::unique_ptr<Item> label = std::make_unique<Label>();
-    CreateItemID(label, ID);
-    auto pointer = dynamic_cast<Label*>(label.get());
-    CreateItem(label);
-    return pointer;
+    return AddItem<Label>(ID);
 }
 
 Button* GUI::AddButton(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<Button>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<Button*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<Button>(ID);
 }
 
 CheckBox* GUI::AddCheckBox(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<CheckBox>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<CheckBox*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<CheckBox>(ID);
 }
 
 AnchorPane* GUI::AddAnchorPane(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<AnchorPane>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<AnchorPane*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<AnchorPane>(ID);
 }
 
 VBox* GUI::AddVBox(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<VBox>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<VBox*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<VBox>(ID);
 }
 
 HBox* GUI::AddHBox(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<HBox>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<HBox*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<HBox>(ID);
 }
 
 Workspace* GUI::AddWorkspace(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<Workspace>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<Workspace*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<Workspace>(ID);
 }
 
 Spinner* GUI::AddSpinner(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<Spinner>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<Spinner*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<Spinner>(ID);
 }
 
 EditableSpinner* GUI::AddEditableSpinner(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<EditableSpinner>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<EditableSpinner*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<EditableSpinner>(ID);
 }
 
 PasswordField* GUI::AddPasswordField(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<PasswordField>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<PasswordField*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<PasswordField>(ID);
 }
 
 ProgressIndicator* GUI::AddProgressIndicator(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<ProgressIndicator>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<ProgressIndicator*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<ProgressIndicator>(ID);
 }
 
 ProgressBar* GUI::AddProgressBar(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<ProgressBar>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<ProgressBar*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<ProgressBar>(ID);
 }
 
 PressedButton* GUI::AddPressedButton(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<PressedButton>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<PressedButton*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<PressedButton>(ID);
 }
 
 PieChart* GUI::AddPieChart(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<PieChart>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<PieChart*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<PieChart>(ID);
 }
 
 Line* GUI::AddLine(const std::string& ID) {
-    std::unique_ptr<Item> item = std::make_unique<Line>();
-    CreateItemID(item, ID);
-    auto pointer = dynamic_cast<Line*>(item.get());
-    CreateItem(item);
-    return pointer;
+    return AddItem<Line>(ID);
+}
+
+CPPFX::Square* GUI::AddSquare(const std::string& ID) {
+    return AddItem<CPPFX::Square>(ID);
+}
+
+CPPFX::Rectangle* GUI::AddRectangle(const std::string& ID) {
+    return AddItem<CPPFX::Rectangle>(ID);
+}
+
+Circle* GUI::AddCircle(const std::string& ID) {
+    return AddItem<Circle>(ID);
 }
 
 //--- Remover ---
@@ -316,173 +265,83 @@ std::vector<std::string> GUI::GetItemsIDs() const {
 //--- Getters ---
 
 TextField* GUI::GetTextField(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<TextField*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a TextField");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No TextField with the ID " + ID + " exists");
-    }
+    return GetItem<TextField>(ID);
 }
 
 Label* GUI::GetLabel(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<Label*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a Label");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No Label with the ID " + ID + " exists");
-    }
+    return GetItem<Label>(ID);
 }
 
 Button* GUI::GetButton(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<Button*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a Button");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No Button with the ID " + ID + " exists");
-    }
+    return GetItem<Button>(ID);
 }
 
 CheckBox* GUI::GetCheckBox(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<CheckBox*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a CheckBox");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No CheckBox with the ID " + ID + " exists");
-    }
+    return GetItem<CheckBox>(ID);
 }
 
 AnchorPane* GUI::GetAnchorPane(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<AnchorPane*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a AnchorPane");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No AnchorPane with the ID " + ID + " exists");
-    }
+    return GetItem<AnchorPane>(ID);
 }
 
 VBox* GUI::GetVBox(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<VBox*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a VBox");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No VBox with the ID " + ID + " exists");
-    }
+    return GetItem<VBox>(ID);
 }
 
 HBox* GUI::GetHBox(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<HBox*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a HBox");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No HBox with the ID " + ID + " exists");
-    }
+    return GetItem<HBox>(ID);
 }
 
 Container* GUI::GetContainer(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<Container*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a Container");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No Container with the ID " + ID + " exists");
-    }
+    return GetItem<Container>(ID);
 }
 
 Workspace* GUI::GetWorkspace(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<Workspace*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a Workspace");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No Workspace with the ID " + ID + " exists");
-    }
+    return GetItem<Workspace>(ID);
 }
 
 Spinner* GUI::GetSpinner(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<Spinner*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a Spinner");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No Spinner with the ID " + ID + " exists");
-    }
+    return GetItem<Spinner>(ID);
 }
 
 EditableSpinner* GUI::GetEditableSpinner(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<EditableSpinner*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a EditableSpinner");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No EditableSpinner with the ID " + ID + " exists");
-    }
+    return GetItem<EditableSpinner>(ID);
 }
 
 PasswordField* GUI::GetPasswordField(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<PasswordField*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a PasswordField");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No PasswordField with the ID " + ID + " exists");
-    }
+    return GetItem<PasswordField>(ID);
 }
 
 ProgressIndicator* GUI::GetProgressIndicator(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<ProgressIndicator*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a ProgressIndicator");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No ProgressIndicator with the ID " + ID + " exists");
-    }
+    return GetItem<ProgressIndicator>(ID);
 }
 
 ProgressBar* GUI::GetProgressBar(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<ProgressBar*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a ProgressBar");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No ProgressBar with the ID " + ID + " exists");
-    }
+    return GetItem<ProgressBar>(ID);
 }
 
 PressedButton* GUI::GetPressedButton(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<PressedButton*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a PressedButton");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No PressedButton with the ID " + ID + " exists");
-    }
+    return GetItem<PressedButton>(ID);
 }
 
 PieChart* GUI::GetPieChart(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<PieChart*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a PieChart");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No PieChart with the ID " + ID + " exists");
-    }
+    return GetItem<PieChart>(ID);
 }
 
 Line* GUI::GetLine(const std::string& ID) {
-    try {
-        auto* ptr = dynamic_cast<Line*>(Items.at(ID).get());
-        if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a Line");
-        return ptr;
-    } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No Line with the ID " + ID + " exists");
-    }
+    return GetItem<Line>(ID);
+}
+
+CPPFX::Square* GUI::GetSquare(const std::string& ID) {
+    return GetItem<Square>(ID);
+}
+
+CPPFX::Rectangle* GUI::GetRectangle(const std::string& ID) {
+    return GetItem<Rectangle>(ID);
+}
+
+Circle* GUI::GetCircle(const std::string& ID) {
+    return GetItem<Circle>(ID);
 }
 
 //--- Priority helpers ---

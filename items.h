@@ -1104,6 +1104,8 @@ public:
 
     /**
      *  @brief Returns length of the line.
+     *  @details Use it to smoothly go between methods of drawing, at least length wise.
+     *  @returns Line's length.
      */
     float CalculateMyArea() const override;
 
@@ -1174,15 +1176,20 @@ public:
     bool GetDrawingMethod() const;
 
 private:
-    bool pointToPoint;
-    float thickness;
-    float angle;
-    float xEnd;
-    float yEnd;
+    bool pointToPoint; ///< method of drawing. False is based on angle and length (width)
+    float thickness; ///< thickness of the line
+    float angle; ///< angle at which the line will be drawn (from X axis counterclockwise).
+    float xEnd; ///< in point to point method: point at which the line should end.
+    float yEnd; ///< in point to point method: point at which the line should end.
 
     void CalculateLength(); // sets length (width)
 };
 
+/**
+ *  @class Square
+ *  @brief Equal sides. May conflict with something (probably raylib). Preface with CPPFX:: to solve issues.
+ *  @details Uses only width, overrides heights.
+ */
 class Square : public Shape {
 public:
 
@@ -1190,7 +1197,7 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
 
-    float CalculateMyArea() const override;
+    float CalculateMyArea() const override; /// width * width
 
     void SetWidth(float value) override; /// also sets height.
     void SetHeight(float value) override; /// overrides into width.
@@ -1198,14 +1205,33 @@ public:
     float GetTotalHeight() const override;
 };
 
+/**
+ *  @class Rectangle
+ *  @brief Conflicts with raylib. Preface with CPPFX:: to solve issues.
+ */
 class Rectangle : public Shape {
 public:
 
-    Rectangle() : Item("Rectangle"), Shape("Rectangle") {height = width;}
+    Rectangle() : Item("Rectangle"), Shape("Rectangle") {}
 
     void DrawMyself(float elapsedTime) const override;
 
-    float CalculateMyArea() const override;
+    float CalculateMyArea() const override; /// width * height
+};
+
+/**
+ *  @class Circle
+ *  @brief Is a perfect circle.
+ *  @details Composes Circular for x,y translation and radius.
+ */
+class Circle : public Shape, public virtual Circular {
+public:
+
+    Circle() : Item("Circle"), Shape("Circle") {}
+
+    void DrawMyself(float elapsedTime) const override;
+
+    float CalculateMyArea() const override; ///< uses raylib's PI definition. PI * width^2
 };
 
 }

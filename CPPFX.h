@@ -136,6 +136,18 @@ public:
      *  @copydoc AddTextField
      */
     Line* AddLine(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
+    Square* AddSquare(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
+    Rectangle* AddRectangle(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
+    Circle* AddCircle(const std::string& ID = "");
 
     /**
      *  @brief Removes an item.
@@ -262,6 +274,18 @@ public:
      *  @copydoc GetTextField
      */
     Line* GetLine(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
+    Square* GetSquare(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
+    Rectangle* GetRectangle(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
+    Circle* GetCircle(const std::string& ID);
 
     /**
      *  @brief Sets the item's priority to highest available.

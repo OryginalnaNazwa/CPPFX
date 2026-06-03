@@ -1152,12 +1152,7 @@ void PieChart::DrawMyself(float elapsedTime) const {
     double sum = std::accumulate(values.begin(), values.end(), 0.0);
     std::vector<Color> colours = {BLUE, RED, GREEN, PINK, BROWN, DARKGREEN, PURPLE}; //TODO Add user colours
 
-    if (xyIsCentre) {
-        border.DrawMyself(xAnchor, yAnchor, GetRadius(), height);
-    } else {
-         border.DrawMyself(TranslateXToCentre(), TranslateYToCentre(), GetRadius(), height);
-    }
-
+    border.DrawMyself(TranslateXToCentre(), TranslateYToCentre(), GetRadius(), height);
 
     float currentAngle = 0;
     size_t index = 0;
@@ -1167,11 +1162,8 @@ void PieChart::DrawMyself(float elapsedTime) const {
         if (index >= colours.size()) {
             c = colours[index % colours.size()];
         } else c = colours[index];
-        if (xyIsCentre) {
-            DrawCircleSector(Vector2{xAnchor, yAnchor}, GetRadius(), currentAngle, currentAngle + (percent * 360), std::max(4, (int)(percent * 36)), c);
-        } else {
-            DrawCircleSector(Vector2{TranslateXToCentre(), TranslateYToCentre()}, GetRadius(), currentAngle, currentAngle + (percent * 360), std::max(4, (int)(percent * 36)), c);
-        }
+
+        DrawCircleSector(Vector2{TranslateXToCentre(), TranslateYToCentre()}, GetRadius(), currentAngle, currentAngle + (percent * 360), std::max(4, (int)(percent * 36)), c);
 
         if (showPercentage) {
             float xShift = 0;
@@ -1184,34 +1176,31 @@ void PieChart::DrawMyself(float elapsedTime) const {
                 xShift = MeasureText(valueString.c_str(), font.GetFontSize());
             }
 
-            if (xyIsCentre) {
-                DrawText(valueString.c_str(), xAnchor + ((GetRadius() / 2) * cos(textAngle * DEG2RAD)) - (MeasureText(valueString.c_str(), font.GetFontSize()) / 2) + xShift,
-                            yAnchor + (GetRadius() / 2* sin(textAngle * DEG2RAD)), font.GetFontSize(), font.colour.GetColour());
-            } else {
-                DrawText(valueString.c_str(), TranslateXToCentre() + (GetRadius() / 2 * cos(textAngle * DEG2RAD)) - (MeasureText(valueString.c_str(), font.GetFontSize()) / 2) + xShift,
-                            TranslateYToCentre() + (GetRadius() / 2 * sin(textAngle * DEG2RAD)), font.GetFontSize(), font.colour.GetColour());
-            }
+            DrawText(valueString.c_str(), TranslateXToCentre() + (GetRadius() / 2 * cos(textAngle * DEG2RAD)) - (MeasureText(valueString.c_str(), font.GetFontSize()) / 2) + xShift,
+                    TranslateYToCentre() + (GetRadius() / 2 * sin(textAngle * DEG2RAD)), font.GetFontSize(), font.colour.GetColour());
         }
         if (showLabels) {
             float xShift = 0, yShift = 0;
             float textAngle = currentAngle + (180 * percent); //average of start and end angle, simplified
 
             if (textAngle > 180) {
-                yShift = -font.GetFontSize();
+                yShift += -font.GetFontSize() - border.GetThickness();
             }
 
             if (values.size() == labels.size()) {
                 std::string label = labels[index];
                 if (textAngle > 90 && textAngle < 270) {
-                    xShift = -MeasureText(label.c_str(), font.GetFontSize());
+                    xShift = -MeasureText(label.c_str(), font.GetFontSize()) - border.GetThickness();
                 } else if (textAngle < 90) {
-                    xShift = MeasureText(label.c_str(), font.GetFontSize());
+                    xShift = MeasureText(label.c_str(), font.GetFontSize()) + border.GetThickness();
                 }
 
-                DrawText(label.c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(label.c_str(), font.GetFontSize()) / 2) + xShift, yAnchor + (width * sin(textAngle * DEG2RAD)) + yShift, font.GetFontSize(), font.colour.GetColour());
+                DrawText(label.c_str(), TranslateXToCentre() + (GetRadius()  * cos(textAngle * DEG2RAD)) - (MeasureText(label.c_str(), font.GetFontSize()) / 2) + xShift,
+                        TranslateYToCentre() + (GetRadius() * sin(textAngle * DEG2RAD)) + yShift, font.GetFontSize(), font.colour.GetColour());
             } else {
                 std::string elementText = std::to_string(element);
-                DrawText(elementText.c_str(), xAnchor + (width  * cos(textAngle * DEG2RAD)) - (MeasureText(elementText.c_str(), font.GetFontSize()) / 2) + xShift, yAnchor + (width * sin(textAngle * DEG2RAD)) + yShift, font.GetFontSize(), font.colour.GetColour());
+                DrawText(elementText.c_str(), TranslateXToCentre() + (GetRadius()  * cos(textAngle * DEG2RAD)) - (MeasureText(elementText.c_str(), font.GetFontSize()) / 2) + xShift,
+                        TranslateYToCentre() + (GetRadius() * sin(textAngle * DEG2RAD)) + yShift, font.GetFontSize(), font.colour.GetColour());
             }
         }
         currentAngle += 360 * percent;
@@ -1409,4 +1398,13 @@ void CPPFX::Rectangle::DrawMyself(float elapsedTime) const {
 
 float CPPFX::Rectangle::CalculateMyArea() const {
     return width * height;
+}
+
+void CPPFX::Circle::DrawMyself(float elapsedTime) const {
+    border.DrawMyself(TranslateXToCentre(), TranslateYToCentre(), GetRadius(), GetRadius());
+    DrawCircle(TranslateXToCentre(), TranslateYToCentre(), GetRadius(), colour.GetColour());
+}
+
+float CPPFX::Circle::CalculateMyArea() const {
+    return PI * GetRadius() * GetRadius();
 }
