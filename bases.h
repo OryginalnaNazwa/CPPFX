@@ -50,7 +50,6 @@ public:
     /**
      *  @brief Sets the distance between border and text in x axis.
      *  @param margin new value
-     *  @details Sets 0 at throw.
      *  @throws std::invalid_argument if margin is negative.
      */
     void SetTextMargin(float margin);

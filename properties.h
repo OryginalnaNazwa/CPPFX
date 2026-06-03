@@ -9,6 +9,7 @@
 #include <map>
 #include <memory>
 #include <functional>
+#include <iostream>
 
 /******************************************************************
  *  @file properties
@@ -81,8 +82,8 @@ public:
     Color GetColour() const;
 
 private:
-    std::string name; ///colour's name
-    Color value; ///Raylib's colour
+    std::string name; ///< colour's name
+    Color value; ///< Raylib's colour
 
     /**
      *  @brief Gets valid colours.
@@ -93,10 +94,19 @@ private:
      *  @brief Gets an RGB value based on a colour's name.
      *  @details Accepts only Raylib's colours. Both GREY and GRAY work.
      *  @param str A string with a colour's name.
+     *  @returns colour's value
+     *  @throws std::invalid_argument if colour is not a valid one
      */
     static Color StringToColour(const std::string& str);
+    /**
+     *  @brief Gets the name of a colour based on the value.
+     *  @details Accepts only raylib colours.
+     *  @param c color value
+     *  @returns name of the colour
+     *  @throws std::invalid_argument if colour is not a valid one
+     */
     static std::string ColourToString(Color c);
-    ///Normalises a colour potential name for further validity check.
+    /// Normalises a colour potential name for further validity check.
     static std::string Normalise(const std::string& str);
 };
 
@@ -120,7 +130,7 @@ public:
     std::string GetFxID() const;
 
 protected:
-    std::string fxID; ///internal use ID
+    std::string fxID; ///< internal use ID
 
 };
 
@@ -173,8 +183,8 @@ public:
     void DrawMyself(float x, float y, float width, float height) const;
 
 private:
-    float thickness;
-    std::function<void(float x, float y, float width, float height)> drawMyself;
+    float thickness; ///< thickness of the border, radiating outward
+    std::function<void(float x, float y, float width, float height)> drawMyself; ///< drawing method
 };
 
 /**
@@ -210,8 +220,8 @@ public:
     float GetFontSize() const;
 
 private:
-    float fontSize;
-    std::string name; //TODO ///< name of the font to be used for loading custom ones
+    float fontSize; ///< distance from the bottom to the top of the letter
+    //std::string name; //TODO ///< name of the font to be used for loading custom ones
 };
 
 /**
@@ -221,9 +231,9 @@ private:
 class Alignment : public Property {
 public:
     enum Alignments {
-        TOP_CENTRE,     TOP_LEFT,   TOP_RIGHT,
-        CENTRE_LEFT,    CENTRE,     CENTRE_RIGHT,
-        BOTTOM_LEFT,    BOTTOM_CENTRE, BOTTOM_RIGHT
+        TOP_LEFT,       TOP_CENTRE,     TOP_RIGHT,
+        CENTRE_LEFT,    CENTRE,         CENTRE_RIGHT,
+        BOTTOM_LEFT,    BOTTOM_CENTRE,  BOTTOM_RIGHT
     };
 
     Alignment() : Property("Alignment"), alignment(TOP_LEFT) {}
@@ -281,7 +291,7 @@ private:
     std::string AlignmentToString(const Alignments& alignment) const;
     Alignments StringToAlignment(const std::string& alignment) const; ///< normalises
 
-    Alignments alignment;
+    Alignments alignment; ///< current alignment
 };
 
 }

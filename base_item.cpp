@@ -4,13 +4,9 @@ using namespace CPPFX;
 
 // --- Item ---
 
-void Item::DrawMyself(float elapsedTime) const {
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-}
-
 void Item::DrawMyself(float elapsedTime, const Camera2D& camera) const {
     float savedX = xAnchor, savedY = yAnchor;
-    xAnchor = camera.target.x + (xAnchor - camera.offset.x) / camera.zoom;
+    xAnchor = camera.target.x + (xAnchor - camera.offset.x) / camera.zoom; // this is very ugly. Probably needs a rework with internal draw taking actual parameters.
     yAnchor = camera.target.y + (yAnchor - camera.offset.y) / camera.zoom;
     DrawMyself(elapsedTime);
     xAnchor = savedX;
@@ -18,9 +14,9 @@ void Item::DrawMyself(float elapsedTime, const Camera2D& camera) const {
 }
 
 bool Item::WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const {
-    float height = this->height * camera.zoom;
+    float height = this->height * camera.zoom; // works. Not sure why. Praise the Omnissiah.
     float width = this->width * camera.zoom;
-    int xClick = mousePosition.x, yClick = mousePosition.y;
+    float xClick = mousePosition.x, yClick = mousePosition.y;
     if (xClick >= xAnchor && xClick <= (xAnchor + width) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
         return true;
     }
@@ -28,7 +24,7 @@ bool Item::WasIClicked(const Vector2& mousePosition, const Camera2D& camera) con
 }
 
 bool Item::WasIClicked(const Vector2& mousePosition) const {
-    int xClick = mousePosition.x, yClick = mousePosition.y;
+    float xClick = mousePosition.x, yClick = mousePosition.y;
     if (xClick >= xAnchor && xClick <= (xAnchor + width) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
         return true;
     }
@@ -105,7 +101,7 @@ void Item::SetPriority(int value) {
     if (value < 0) {
         throw std::invalid_argument("In item " + ID + ": Negative priority.");
     } else {
-        priority = value;
+        priority = (size_t)(value);
     }
 }
 
@@ -132,7 +128,7 @@ void Item::MakeActive() {
     inactive = false;
 }
 
-void Item::SetInactive(const bool& flag) {
+void Item::SetInactive(bool flag) {
     inactive = flag;
 }
 
@@ -144,7 +140,7 @@ void Item::MakeVisible() {
     visible = true;
 }
 
-void Item::SetVisible(const bool& flag) {
+void Item::SetVisible(bool flag) {
     visible = flag;
 }
 

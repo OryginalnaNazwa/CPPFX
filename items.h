@@ -146,7 +146,7 @@ public:
     bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const override {
         float height = this->height * camera.zoom;
         float width = this->width * camera.zoom;
-        //std::cout << "xAnchor: " << xAnchor << " yAnchor: " << yAnchor << " xEnd: " << xAnchor + width << " yEnd: " << yAnchor + height << " mouseX: " << mousePosition.x << " mouseY: " << mousePosition.y << " zoom: " << camera.zoom << "\n";
+
         if (focused) {
             if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y >= yAnchor && mousePosition.y <= yAnchor + ((values.size() + 1) * height)) {
                 return true;
@@ -193,7 +193,6 @@ public:
             currentLabel = it->first;
             currentValue = it->second;
             focused = false;
-            std::cout << "DoFocusAction fired. mouseY: " << mousePosition.y << " yAnchor: " << yAnchor << " yAnchor+height: " << yAnchor + height << "\n";
             return;
         }
         if (!WasIClicked(mousePosition, camera)) {
@@ -751,13 +750,13 @@ public:
      *  @param shape a ProgressIndicator::SHAPE enum - {DOTS, RING, CIRCLE}
      *  @throws std::invalid_argument if the parameter is outside the available list
      */
-    void SetShape(const ProgressIndicator::Shapes& shape);
+    virtual void SetShape(const ProgressIndicator::Shapes& shape);
     /**
      *  @brief Sets new shape
      *  @param shape a string containing the name of the shape - {"DOTS", "RING", "CIRCLE"}
      *  @throws std::invalid_argument if the parameter is outside the available list
      */
-    void SetShape(const std::string& shape);
+    virtual void SetShape(const std::string& shape);
     Shapes GetShape() const;
     std::string GetShapeString() const;
 
@@ -787,7 +786,7 @@ protected:
     float value; ///< Raw value of the progress - between 0 and 1, or -1;
 
     Shapes StringToShape(const std::string& shape) const;
-    std::string ShapeToString(const ProgressIndicator::Shapes& shape) const;
+    virtual std::string ShapeToString(const ProgressIndicator::Shapes& shape) const;
 };
 
 
@@ -853,17 +852,32 @@ public:
     void SetSegemented(const bool& flag);
     bool IsSegmented() const;
 
+    /**
+     *  @brief Sets new shape
+     *  @param shape a ProgressIndicator::SHAPE enum - {DOTS, RING, CIRCLE, BAR}
+     *  @throws std::invalid_argument if the parameter is outside the available list
+     */
+    void SetShape(const ProgressIndicator::Shapes& shape) override;
+    /**
+     *  @brief Sets new shape
+     *  @param shape a string containing the name of the shape - {"DOTS", "RING", "CIRCLE", "BAR"}
+     *  @throws std::invalid_argument if the parameter is outside the available list
+     */
+    void SetShape(const std::string& shape) override;
+
 private:
     float barMargin; ///< the distance between the top/side of the main bar and the progress bar.
     bool segmented;
     int numberOfSegments;
     float gapBetweenSegments;
+
+    std::string ShapeToString(const ProgressIndicator::Shapes& shape) const override;
 };
 
-class PressedButton : public Button, public virtual PersistentState {
+class PressedButton : public TextItem, public virtual PersistentState {
 public:
 
-    PressedButton() : Item("PressedButton"), Button("PressedButton"), pressedText("Pressed Button") {}
+    PressedButton() : Item("PressedButton"), TextItem("PressedButton"), pressedText("Pressed Button") {}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -889,20 +903,20 @@ public:
         items.push_back(item);
     }
     void RemoveItem(int index) {
-        if (index < 0 || index >= items.size()) {
+        if (index < 0 || (size_t)(index) >= items.size()) {
             throw std::out_of_range("In List " + this->ID + ": index beyond range at removal.");
         }
         items.erase(items.begin() + index);
     }
     void ReplaceItem(int index, const T& item) {
-        if (index < 0 || index >= items.size()) {
+        if (index < 0 || (size_t)(index) >= items.size()) {
             throw std::out_of_range("In List " + this->ID + ": index beyond range at replacing.");
         }
         items[index] = item;
     }
 
     const T& GetItem(int index) const {
-        if (index < 0 || index >= items.size()) {
+        if (index < 0 || (size_t)(index) >= items.size()) {
             throw std::out_of_range("In List " + this->ID + ": index beyond range at getting.");
         }
         return items[index];
@@ -946,13 +960,13 @@ public:
     void DrawMyself(float elapsedTime) const override {
         if (displayMethod) {
             if (vertical) {
-                float nextY = 0;
+                float nextY = 0.0f;
                 for (const auto& item : items) {
                     DrawText(displayMethod(item).c_str(), xAnchor, yAnchor + nextY, font.GetFontSize(), font.colour.GetColour());
                     nextY += font.GetFontSize() + padding;
                 }
             } else {
-                float nextX = 0;
+                float nextX = 0.0f;
                 std::string text = "";
                 for (const auto& item : items) {
                     text = displayMethod(item);
@@ -963,13 +977,13 @@ public:
         } else {
             if constexpr (std::is_same_v<T, std::string>) {
                 if (vertical) {
-                    float nextY = 0;
+                    float nextY = 0.0f;
                     for (const auto& item : items) {
                         DrawText(item.c_str(), xAnchor, yAnchor + nextY, font.GetFontSize(), font.colour.GetColour());
                         nextY += font.GetFontSize() + padding;
                     }
                 } else {
-                    float nextX = 0;
+                    float nextX = 0.0f;
                     for (const auto& item : items) {
                         DrawText(item.c_str(), xAnchor + nextX, yAnchor, font.GetFontSize(), font.colour.GetColour());
                         nextX += MeasureText(item.c_str(), font.GetFontSize()) + padding;
@@ -977,13 +991,13 @@ public:
                 }
             } else if constexpr (requires { std::to_string(T{}); }) {
                 if (vertical) {
-                    float nextY = 0;
+                    float nextY = 0.0f;
                     for (const auto& item : items) {
                         DrawText(std::to_string(item).c_str(), xAnchor, yAnchor + nextY, font.GetFontSize(), font.colour.GetColour());
                         nextY += font.GetFontSize() + padding;
                     }
                 } else {
-                    float nextX = 0;
+                    float nextX = 0.0f;
                     std::string text = "";
                     for (const auto& item : items) {
                         text = std::to_string(item);
@@ -1028,7 +1042,7 @@ public:
             return width;
         }
         if (displayMethod) {
-            float sum = 0;
+            float sum = 0.0f;
             for (const auto& item : items) {
                 sum += MeasureText(displayMethod(item).c_str(), font.GetFontSize()) + padding;
             }
@@ -1042,13 +1056,13 @@ public:
             return sum;
         }
         if constexpr (requires { std::to_string(T{}); }) {
-            float sum = 0;
+            float sum = 0.0f;
             for (const auto& item : items) {
                 sum += MeasureText(std::to_string(item).c_str(), font.GetFontSize()) + padding;
             }
             return sum;
         }
-        throw std::runtime_error("List " + this->ID + ": no display method set for a non-standard type - couldn't calculate width");
+        throw std::runtime_error("In List " + this->ID + ": no display method set for a non-standard type - couldn't calculate width");
     }
     /**
      *  @brief Returns total height.
@@ -1231,7 +1245,7 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
 
-    float CalculateMyArea() const override; ///< uses raylib's PI definition. PI * width^2
+    float CalculateMyArea() const override; ///< uses raylib's PI definition. PI * (width/2)^2
 };
 
 }

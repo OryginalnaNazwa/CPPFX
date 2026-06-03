@@ -118,7 +118,7 @@ void GUI::CreateItemID(std::unique_ptr<Item>& item, const std::string& ID) {
             std::string newID = currentCount == 0 ? item->GetFxID()
                                     : item->GetFxID() + std::to_string(currentCount);
             item->SetID("GUI_AUTO_" + newID);
-        } catch (std::out_of_range) {
+        } catch (std::out_of_range& e) {
             throw std::out_of_range("Invalid creation of item with the fxid " + item->GetFxID() + " while trying to give it id " + ID + "or " + item->GetID());
             //this shouldn't happen, left it for debug of virtual inheritance
         }

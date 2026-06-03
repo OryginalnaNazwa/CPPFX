@@ -45,7 +45,7 @@ public:
      *  @brief Draws the item in world coordinates.
      *  @param elapsedTime total elapsed time of all frames
      */
-    virtual void DrawMyself(float elapsedTime) const;
+    virtual void DrawMyself(float elapsedTime) const = 0;
     /**
      *  @brief Draws the item in screen coordinates.
      *  @param elapsedTime total elapsed time of all frames
@@ -125,7 +125,7 @@ public:
      *  @brief Sets the item's activity state.
      *  @param flag true - inactive, false - active
      */
-    void SetInactive(const bool& flag);
+    void SetInactive(bool flag);
     /**
      *  @brief Checks whether the item is inactive.
      *  @returns true if inactive
@@ -158,7 +158,7 @@ public:
      *  @brief Sets the item's visibility.
      *  @param flag true - visible.
      */
-    void SetVisible(const bool& flag);
+    void SetVisible(bool flag);
     /**
      *  @brief Checks whether the item is visible.
      *  @returns true if visible.
@@ -167,7 +167,7 @@ public:
 
     /**
      *  @brief Makes the item invisible and not interactable.
-     *  @details Sets both inactive and invisible to true.
+     *  @details Sets both inactive and invisible to false.
      */
     void Hide();
     /**
@@ -301,8 +301,8 @@ public:
 
 protected:
     std::string ID; ///<ID used by the user, variable.
-    mutable float xAnchor; ///<top left x coordinate
-    mutable float yAnchor; ///<top left y coordinate
+    mutable float xAnchor; ///<top left x coordinate. Mutable for screen coordinate translation
+    mutable float yAnchor; ///<top left y coordinate. Mutable for screen coordinate translation
     float height; ///<vertical length of the item
     float width; ///<horizontal length of the item
 

@@ -3,24 +3,15 @@
 using namespace CPPFX;
 
 bool Circular::WasIClicked(const Vector2& mousePosition) const {
-    if (xyIsCentre) {
-        if (CheckCollisionPointCircle(mousePosition, {xAnchor, yAnchor}, width)) return true;
-        return false;
-    } else {
-        if (CheckCollisionPointCircle(mousePosition, {xAnchor + (width / 2), yAnchor + (width / 2)}, width / 2)) return true;
-        return false;
-    }
+    if (CheckCollisionPointCircle(mousePosition, {TranslateXToCentre(), TranslateYToCentre()}, GetRadius())) return true;
+    return false;
 }
 
 bool Circular::WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const {
-    float width = this->width * camera.zoom;
-    if (xyIsCentre) {
-        if (CheckCollisionPointCircle(mousePosition, {xAnchor, yAnchor}, width)) return true;
-        return false;
-    } else {
-        if (CheckCollisionPointCircle(mousePosition, {xAnchor + (width / 2), yAnchor + (width / 2)}, width / 2)) return true;
-        return false;
-    }
+    float radius = GetRadius() * camera.zoom;
+
+    if (CheckCollisionPointCircle(mousePosition, {TranslateXToCentre(), TranslateYToCentre()}, radius)) return true;
+    return false;
 }
 
 void Circular::MakeRadiusBased() {
@@ -91,6 +82,16 @@ float Circular::GetRadius() const {
     return width / 2;
 }
 
+void Circular::SetRadius(float radius) {
+    if (radius < 0) {
+        throw std::invalid_argument("In " + fxID + " " + ID + ": Negative radius");
+    }
+    if (radius == 0.0f) {
+        CPPFX_WARN("In " + fxID + ID + ": radius equals 0. Will not be visible and may break stuff.");
+    }
+    SetWidth(radius * 2);
+}
+
 float Circular::GetXTransformed() const {
     if (xyIsCentre) {
         return TranslateXToCorner();
@@ -117,7 +118,7 @@ Vector2 Circular::GetXYTransformed() const {
 
 void Padded::SetPadding(float value) {
     if (value < 0) {
-        throw std::invalid_argument("In " + ID + "Negative padding.");
+        throw std::invalid_argument("In " + fxID + " " + ID + ": Negative padding.");
     }
     padding = value;
 }

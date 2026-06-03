@@ -83,10 +83,11 @@ std::string Colour::ColourToString(Color c) {
     if (c.r == LIME.r        && c.g == LIME.g        && c.b == LIME.b)        return "LIME";
     if (c.r == GOLD.r        && c.g == GOLD.g        && c.b == GOLD.b)        return "GOLD";
     if (c.r == MAROON.r      && c.g == MAROON.g      && c.b == MAROON.b)      return "MAROON";
-    // Fallback: hex string for custom colours
+    throw std::invalid_argument("Unknown colour");
+    /*// Fallback: hex string for custom colours
     char buf[10];
     snprintf(buf, sizeof(buf), "#%02X%02X%02X%02X", c.r, c.g, c.b, c.a);
-    return std::string(buf);
+    return std::string(buf);*/ // fllback would be nice, but it'd need to be supported everywhere else.
 }
 
 void Colour::SetColour(const std::string& col) {
@@ -120,7 +121,7 @@ void Border::DrawMyself(float x, float y, float width, float height) const {
         if (drawMyself) {
             drawMyself(x, y, width, height);
         } else {
-            DrawRectangleLinesEx({x - thickness, y - thickness, width + thickness, height + thickness}, thickness, colour.GetColour());
+            DrawRectangleLinesEx({x - thickness, y - thickness, width + (2 * thickness), height + (2 * thickness)}, thickness, colour.GetColour());
         }
     }
 }
@@ -151,6 +152,9 @@ void CPPFX::Font::SetFontSize(float size) {
     if (size < 0) {
         throw std::invalid_argument("Negative font size.");
     } else {
+        if ((int)(size) == 0) {
+            CPPFX_WARN("Font size set to 0. It will not be visible.");
+        }
         fontSize = size;
     }
 }

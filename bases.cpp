@@ -55,7 +55,6 @@ std::string TextItem::GetText() const {
 
 void TextItem::SetTextMargin(float margin) {
     if (margin < 0) {
-        textMargin = 0;
         throw std::invalid_argument("Negative text margin value in " + ID + " type " + fxID);
     } else textMargin = margin;
 }
@@ -96,12 +95,14 @@ void Container::RemoveItem(const Item* item) {
             throw std::out_of_range("In container " + this->ID + ": cannot delete item " + item->GetID() + " as it's not in the container.");
         }
     } else throw std::invalid_argument("In container " + this->ID + ": cannot delete item - doesn't exist.");
+    needsOrdering = true;
 }
 
 void Container::SafeRemoveItem(const std::string& ID) {
     if (IsIDTaken(ID)) {
         ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [&ID](const Item* item) { return item->GetID() == ID; }), ItemsInDrawingOrder.end());
         Items.erase(ID);
+        needsOrdering = true;
     }
 }
 
@@ -109,6 +110,7 @@ void Container::SafeRemoveItem(const Item* item) {
     if (item && IsIDTaken(item->GetID())) {
         ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [&item](const Item* i) { return i->GetID() == item->GetID(); }), ItemsInDrawingOrder.end());
         Items.erase(item->GetID());
+        needsOrdering = true;
     }
 }
 

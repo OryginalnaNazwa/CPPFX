@@ -235,7 +235,7 @@ void AnchorPane::SetY(float y) {
 }
 
 void AnchorPane::SetHeight(float value) {
-    if (value < 0) {
+    if (value < 0.0f) {
         throw std::invalid_argument("In item " + ID + ": Negative height.");
     } else {
         if (!Items.empty()) {
@@ -247,8 +247,8 @@ void AnchorPane::SetHeight(float value) {
 }
 
 void AnchorPane::SetWidth(float value) {
-    if (value < 0) {
-        throw std::invalid_argument("In item " + ID + ": Negative height.");
+    if (value < 0.0f) {
+        throw std::invalid_argument("In item " + ID + ": Negative width.");
     } else {
         if (!Items.empty()) {
            needsOrdering = true;
@@ -851,7 +851,7 @@ void PasswordField::DrawMyself(float elapsedTime) const {
     } else {
         std::string password(text.size(), mask);
         std::string truncated = Truncate(password);
-        DrawText(Truncate(truncated).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
+        DrawText(truncated.c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
         if (focused && fmod(elapsedTime, 1.0f) < 0.5f) {
             DrawText("|", MeasureText(truncated.c_str(), font.GetFontSize()) + xAnchor + textMargin + 2, yAnchor + (height / 2) - (font.GetFontSize() / 2),
                       font.GetFontSize(), font.colour.GetColour());
@@ -871,7 +871,7 @@ char PasswordField::GetMask() const {
 // --- ProgressIndicator ---
 
 void ProgressIndicator::SetProgress(float value) {
-    if ((value > 1 || value < 0) && value != -1) {
+    if ((value > 1.0f || value < 0.0f) && value != -1.0f) {
         throw std::out_of_range("Progress in ProgressIndicator " + ID + " beyond the valid range - " + std::to_string(value));
     } else {
         this->value = value;
@@ -880,17 +880,19 @@ void ProgressIndicator::SetProgress(float value) {
 
 void ProgressIndicator::IncreaseProgress(float change) {
     value += change;
-    if (value > 1) {
-        value = 1;
-    } else if (value < 0) {
-        value = 0;
+    if (value > 1.0f) {
+        value = 1.0f;
+    } else if (value < 0.0f) {
+        value = 0.0f;
     }
 }
 
 void ProgressIndicator::DecreaseProgress(float change) {
     value -= change;
-    if (value < 0) {
-        value = 0;
+    if (value < 0.0f) {
+        value = 0.0f;
+    } else if (value > 1.0f) {
+        value = 1.0f;
     }
 }
 
@@ -899,16 +901,16 @@ float ProgressIndicator::GetProgress() const {
 }
 
 int ProgressIndicator::GetProgressPercentage() const {
-    if (value == -1) return value;
-    return (int)(value * 100);
+    if (value == -1.0f) return -1;
+    return (int)(value * 100.0f);
 }
 
 void ProgressIndicator::MakeIndefinite() {
-    value = -1;
+    value = -1.0f;
 }
 
 bool ProgressIndicator::IsComplete() const {
-    if (value >= 1) {
+    if (value >= 1.0f) {
         return true;
     }
     return false;
@@ -929,7 +931,8 @@ ProgressIndicator::Shapes ProgressIndicator::StringToShape(const std::string& sh
     static const std::unordered_map<std::string, ProgressIndicator::Shapes> shapeMap = {
         {"RING", ProgressIndicator::Shapes::RING},
         {"CIRCLE", ProgressIndicator::Shapes::CIRCLE},
-        {"DOTS", ProgressIndicator::Shapes::DOTS}
+        {"DOTS", ProgressIndicator::Shapes::DOTS},
+        {"BAR", ProgressIndicator::Shapes::BAR}
     };
     auto it = shapeMap.find(shape);
     if (it != shapeMap.end()) return it->second;
@@ -958,10 +961,10 @@ std::string ProgressIndicator::GetShapeString() const {
 }
 
 void ProgressIndicator::DrawMyself(float elapsedTime) const {
-    if (value == -1 || shape == Shapes::DOTS) {
+    if (value == -1.0f || shape == Shapes::DOTS) {
         int dotCount = 8;
-        float radius = width / 2;
-        float dotRadius = radius / 6; //TODO make stuff customisable
+        float radius = width / 2.0f;
+        float dotRadius = radius / 6.0f; //TODO make stuff customisable
         float angle = fmod(elapsedTime * 180.0f, 360.0f); // rotation speed
         for (int i = 0; i < dotCount; i++) {
             float dotAngle = angle + (360.0f / dotCount) * i;
@@ -1013,6 +1016,27 @@ bool ProgressIndicator::IsDisplayingValue() const {
 
 // --- ProgressBar ---
 
+void ProgressBar::SetShape(const ProgressIndicator::Shapes& shape) {
+    if (shape != ProgressIndicator::Shapes::RING && shape != ProgressIndicator::Shapes::DOTS && shape != ProgressIndicator::Shapes::CIRCLE && shape != ProgressIndicator::Shapes::BAR) {
+        throw std::invalid_argument("Invalid shape");
+    }
+    this->shape = shape;
+}
+
+std::string ProgressBar::ShapeToString(const ProgressIndicator::Shapes& shape) const {
+    switch (shape) {
+        case ProgressIndicator::Shapes::RING: return "RING";
+        case ProgressIndicator::Shapes::CIRCLE:  return "CIRCLE";
+        case ProgressIndicator::Shapes::DOTS: return "DOTS";
+        case ProgressIndicator::Shapes::BAR: return "BAR";
+        default: throw std::invalid_argument("Invalid shape");
+    }
+}
+
+void ProgressBar::SetShape(const std::string& shape) {
+    this->shape = StringToShape(shape);
+}
+
 void ProgressBar::DrawMyself(float elapsedTime) const {
     if (shape != Shapes::BAR) {
         ProgressIndicator::DrawMyself(elapsedTime);
@@ -1020,7 +1044,7 @@ void ProgressBar::DrawMyself(float elapsedTime) const {
     }
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (segmented) {
-       float segmentWidth = ((width - (2 * barMargin)) - (gapBetweenSegments * (numberOfSegments - 1))) / numberOfSegments;
+       float segmentWidth = ((width - (2.0f * barMargin)) - (gapBetweenSegments * (numberOfSegments - 1))) / numberOfSegments;
         float step = segmentWidth + gapBetweenSegments;
 
         float currentX = xAnchor + barMargin;
@@ -1032,18 +1056,19 @@ void ProgressBar::DrawMyself(float elapsedTime) const {
     } else DrawRectangle(xAnchor + barMargin , yAnchor + barMargin, value * (width - (2 * barMargin)), height - (2 * barMargin), barColour.GetColour());
 
     if (displayValue && value != -1) {
-        std::string valueString = value * 100 == (int)(value * 100) ? TextFormat("%d", (int)(value * 100)) : TextFormat("%.1f", value * 100);
+        std::string valueString = value * 100.0f == (int)(value * 100) ? TextFormat("%d", (int)(value * 100.0f)) : TextFormat("%.1f", value * 100.0f);
         valueString += "%";
-        DrawText(valueString.c_str(), xAnchor + (width / 2) - (MeasureText(valueString.c_str(), font.GetFontSize()) / 2), yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
+        DrawText(valueString.c_str(), xAnchor + (width / 2.0f) - (MeasureText(valueString.c_str(),
+                font.GetFontSize()) / 2.0f), yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
     }
 }
 
 void ProgressBar::SetBarMargin(float value) {
-    if (value < 0) {
-        barMargin = 0;
+    if (value < 0.0f) {
+        barMargin = 0.0f;
         throw std::invalid_argument("Bar margin value in " + this->ID + " is lower than 0.");
-    } else if (value > height / 2) {
-        barMargin = height / 2;
+    } else if (value > height / 2.0f) {
+        barMargin = height / 2.0f;
         throw std::out_of_range("Bar margin value in " + this->ID + " is too big.");
     } else {
         barMargin = value;
@@ -1152,7 +1177,7 @@ void PieChart::DrawMyself(float elapsedTime) const {
     double sum = std::accumulate(values.begin(), values.end(), 0.0);
     std::vector<Color> colours = {BLUE, RED, GREEN, PINK, BROWN, DARKGREEN, PURPLE}; //TODO Add user colours
 
-    border.DrawMyself(TranslateXToCentre(), TranslateYToCentre(), GetRadius(), height);
+    border.DrawMyself(TranslateXToCentre(), TranslateYToCentre(), GetRadius(), GetRadius());
 
     float currentAngle = 0;
     size_t index = 0;
@@ -1255,7 +1280,7 @@ void Line::DrawMyself(float elapsedTime) const {
 
 void Line::SetLength(float length) {
     if (length < 0) {
-        throw std::invalid_argument("In line " + ID + ": negative length");
+        throw std::invalid_argument("In Line " + ID + ": negative length");
     }
     width = length;
 }
@@ -1290,7 +1315,7 @@ float Line::GetTotalWidth() const {
 
 void Line::SetAngle(float angle) {
     if (angle < 0 || angle > 360) {
-        throw std::out_of_range("In line " + ID + ": angle beyond the [0;360] range");
+        throw std::out_of_range("In Line " + ID + ": angle beyond the [0;360] range");
     }
     this->angle = angle;
 }
@@ -1310,7 +1335,7 @@ float Line::GetAngle() const {
 
 void Line::SetEndPoint(float x, float y) {
     if (x == xAnchor && y == yAnchor) {
-        CPPFX_WARN("In line " + ID + ": new end coordinates are the same as the start coordinates.");
+        CPPFX_WARN("In Line " + ID + ": new end coordinates are the same as the start coordinates.");
     }
     xEnd = x;
     yEnd = y;
@@ -1319,7 +1344,7 @@ void Line::SetEndPoint(float x, float y) {
 
 void Line::SetEndPoint(const Vector2& coordinates) {
     if (coordinates.x == xAnchor && coordinates.y == yAnchor) {
-        CPPFX_WARN("In line " + ID + ": new end coordinates are the same as the start coordinates.");
+        CPPFX_WARN("In Line " + ID + ": new end coordinates are the same as the start coordinates.");
     }
     xEnd = coordinates.x;
     yEnd = coordinates.y;
@@ -1336,7 +1361,7 @@ Vector2 Line::GetEndPoint() const {
 
 void Line::SetThickness(float thickness) {
     if (thickness < 0) {
-        throw std::invalid_argument("In line " + ID + ": negative thickness.");
+        throw std::invalid_argument("In Line " + ID + ": negative thickness.");
     }
     this->thickness = thickness;
 }
