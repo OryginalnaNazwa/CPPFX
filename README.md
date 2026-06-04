@@ -6,7 +6,7 @@ https://www.raylib.com/
 https://github.com/raysan5/raylib
 
 ## Requirements
-raylib 6.0, mingw-w64 64bit or GNU C++ Compiler (those were tested), C++20
+raylib 6.0, mingw-w64 64bit or GNU C++ Compiler (those were tested), C++23
 
 ## Setup
 Compiler path: ../CPPFX/include
@@ -18,6 +18,9 @@ Linker flags:
 Windows:      -lCPPFX -lraylib -lopengl32 -lgdi32 -lwinmm
 
 Linux Ubuntu: -lCPPFX -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+
+Remember to also link raylib!
+raylib path's should be after CPPFX's
 
 ## Quick example
 This is a basic example that will display a label surrounded by a black border, containing the text "Hello world!" around the middle of the window.
@@ -41,7 +44,9 @@ int main() {
   while (!WindowShouldClose()) {
     BeginDrawing();
     ClearBackground(RAYWHITE);
+
     gui.DoUI(camera); //this renders items in the gui and handles interaction;
+
     EndDrawing();
   }
   
@@ -72,6 +77,10 @@ Check out the examples provided in the Examples folder for more.
 - List
 - PieChart
 - PressedButton
+- Line
+- Square
+- Rectangle
+- Circle
 
 ## Properties in some widgets
 - Border
