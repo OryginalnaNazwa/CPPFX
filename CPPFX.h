@@ -115,22 +115,14 @@ public:
      */
     template <typename T>
     DropDown<T>* AddDropDown(const std::string& ID = "") {
-        std::unique_ptr<Item> dropdown = std::make_unique<DropDown<T>>();
-        CreateItemID(dropdown, ID);
-        auto pointer = dynamic_cast<DropDown<T>*>(dropdown.get());
-        CreateItem(dropdown);
-        return pointer;
+        return AddItem<DropDown<T>>(ID);
     }
     /**
      *  @copydoc AddTextField
      */
     template <typename T>
     List<T>* AddList(const std::string& ID = "") {
-        std::unique_ptr<Item> alist = std::make_unique<List<T>>();
-        CreateItemID(alist, ID);
-        auto pointer = dynamic_cast<List<T>*>(alist.get());
-        CreateItem(alist);
-        return pointer;
+        return AddItem<List<T>>(ID);
     }
     /**
      *  @copydoc AddTextField
@@ -208,23 +200,11 @@ public:
      */
     template <typename T>
     DropDown<T>* GetDropDown(const std::string& ID) {
-        try {
-            auto* ptr = dynamic_cast<DropDown<T>*>(Items.at(ID).get());
-            if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a Dropdown");
-            return ptr;
-        } catch (const std::out_of_range& e) {
-            throw std::out_of_range("No Dropdown with the ID " + ID + " exists");
-        }
+        return GetItem<DropDown<T>>(ID);
     }
     template <typename T>
     List<T>* GetList(const std::string& ID) {
-       try {
-            auto* ptr = dynamic_cast<List<T>*>(Items.at(ID).get());
-            if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a List");
-            return ptr;
-        } catch (const std::out_of_range& e) {
-            throw std::out_of_range("No List with the ID " + ID + " exists");
-        }
+       return GetItem<List<T>>(ID);
     }
     /**
      *  @copydoc GetTextField
@@ -347,6 +327,14 @@ public:
      */
     bool IsIDTaken(const std::string& ID) const;
     /**
+     *  @brief Checks whether the item of the given ID exists.
+     *  @details alias for IsIDTaken
+     *  @param ID ID of the item to check
+     *  @return true if the item exists.
+     */
+    bool HasItem(const std::string& ID) const;
+
+    /**
      * @brief Checks whether the item of specified ID is a container.
      * @details {Workspace, Anchorpane, VBox, HBox}
      * @param ID Item to be checked
@@ -354,19 +342,50 @@ public:
      * @throws std::out_of_range if item doesn't exist.
      */
     bool IsItemContainer(const std::string& ID) const;
+
+    /**
+     *  @brief Checks whether the widget type is a container
+     *  @param fxID widget name
+     *  @returns true if it is a container
+     */
+    static bool IsContainer(const std::string& fxID);
     /**
      * @brief Checks whether the ID is one of the library's internal use identificators.
      * @details fxIDs are the names of the classes of widgets.
      * @param fxID string to be checked.
      * @returns true if it is an fxID
      */
-    bool IsFxID(const std::string& fxID) const;
+    static bool IsFxID(const std::string& fxID);
+
+    /**
+     *  @brief Returns a set of fxIDs.
+     *  @returns fxIDs.
+     */
+    static const std::unordered_set<std::string>& GetFxIDs();
 
     /**
      *  @brief Grabs IDs of all items currently in GUI.
      *  @returns a vector of IDs of all items.
      */
-    std::vector<std::string> GetItemsIDs() const;
+    const std::unordered_set<std::string> GetItemsIDs() const;
+
+    /**
+     *  @brief Returns the prefix used to create IDs when user has specified none.
+     *  @returns the prefix
+     */
+    static const std::string& GetAutomaticIDPrefix();
+
+    /**
+     *  @brief Checks whether the given ID has been generated automatically.
+     *  @returns true if yes.
+     */
+    static bool IsIDAutomatic(const std::string& ID);
+
+    /**
+     *  @brief Gives a set of containers fxIDs.
+     *  @returns a set of names of containers.
+     */
+    static const std::unordered_set<std::string>& GetContainersFxIDs();
 
     /**
      *  @brief Sets every item coordinate system to Screen based.
@@ -405,8 +424,6 @@ private:
 
     void DefocusItems(); // defocuses all items after a click.
 
-    bool IsContainer(const std::string& fxID) const;
-
     Container* GetContainer(const std::string& ID);
 
     /**
@@ -424,6 +441,10 @@ private:
     void CreateItemID(std::unique_ptr<Item>& item, const std::string& ID = "");
 
     static const std::unordered_set<std::string> FXIDs;
+
+    static const std::string AUTOMATIC_ID_PREFIX;
+
+    static const std::unordered_set<std::string> CONTAINERS;
 };
 
 }

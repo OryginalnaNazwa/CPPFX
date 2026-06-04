@@ -5,6 +5,10 @@ using namespace CPPFX;
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
     "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "Chart", "PieChart", "Line", "Square", "Rectangle", "Circle"};
 
+const std::string GUI::AUTOMATIC_ID_PREFIX = "GUI_AUTO_";
+
+const std::unordered_set<std::string> GUI::CONTAINERS = {"AnchorPane", "VBox", "HBox", "Workspace"};
+
 //--- Main loop ---
 
 void GUI::DoUI(const Camera2D& camera) {
@@ -117,7 +121,7 @@ void GUI::CreateItemID(std::unique_ptr<Item>& item, const std::string& ID) {
             size_t currentCount = ItemsCounter.at(item->GetFxID());
             std::string newID = currentCount == 0 ? item->GetFxID()
                                     : item->GetFxID() + std::to_string(currentCount);
-            item->SetID("GUI_AUTO_" + newID);
+            item->SetID(AUTOMATIC_ID_PREFIX + newID);
         } catch (std::out_of_range& e) {
             throw std::out_of_range("Invalid creation of item with the fxid " + item->GetFxID() + " while trying to give it id " + ID + "or " + item->GetID());
             //this shouldn't happen, left it for debug of virtual inheritance
@@ -238,6 +242,10 @@ bool GUI::IsIDTaken(const std::string& ID) const {
     return Items.contains(ID);
 }
 
+bool GUI::HasItem(const std::string& ID) const {
+    return IsIDTaken(ID);
+}
+
 bool GUI::IsItemContainer(const std::string& ID) const {
     if (!IsIDTaken(ID)) {
         throw std::out_of_range("No item with " + ID + " found when trying to check whether it's a container.");
@@ -245,21 +253,36 @@ bool GUI::IsItemContainer(const std::string& ID) const {
     return IsContainer(Items.at(ID)->GetFxID());
 }
 
-bool GUI::IsContainer(const std::string& fxID) const {
-    static const std::unordered_set<std::string> CONTAINERS = {"AnchorPane", "VBox", "HBox", "Workspace"};
+bool GUI::IsContainer(const std::string& fxID) {
     return CONTAINERS.contains(fxID);
 }
 
-bool GUI::IsFxID(const std::string& fxID) const {
+const std::unordered_set<std::string>& GUI::GetContainersFxIDs() {
+    return CONTAINERS;
+}
+
+bool GUI::IsFxID(const std::string& fxID) {
     return FXIDs.contains(fxID);
 }
 
-std::vector<std::string> GUI::GetItemsIDs() const {
-    std::vector<std::string> ids;
+const std::unordered_set<std::string>& GUI::GetFxIDs() {
+    return FXIDs;
+}
+
+const std::unordered_set<std::string> GUI::GetItemsIDs() const {
+    std::unordered_set<std::string> ids;
     for (const auto& [key, value] : Items) {
-        ids.push_back(key);
+        ids.insert(key);
     }
     return ids;
+}
+
+const std::string& GUI::GetAutomaticIDPrefix() {
+    return AUTOMATIC_ID_PREFIX;
+}
+
+bool GUI::IsIDAutomatic(const std::string& ID) {
+    return ID.contains(AUTOMATIC_ID_PREFIX);
 }
 
 //--- Getters ---
