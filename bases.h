@@ -1,7 +1,14 @@
 #ifndef BASES_H
 #define BASES_H
 
-#include "mixins.h"
+#include <stddef.h>      // for size_t
+#include <map>           // for map
+#include <string>        // for string
+#include <vector>        // for vector
+#include "base_item.h"   // for Item
+#include "mixins.h"      // for Padded
+#include "properties.h"  // for Colour, Font, Alignment
+#include "raylib.h"      // for BLANK
 
 /**********************************************************************
  *  @file base.h

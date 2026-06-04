@@ -1,5 +1,11 @@
 #include "items.h"
 
+#include "items.h"
+#include <cmath>          // for cos, sin, fmod, pow, sqrt
+#include <numeric>        // for accumulate
+#include <unordered_map>  // for unordered_map, operator==, _Node_const_iter...
+#include <utility>        // for pair
+
 using namespace CPPFX;
 
 //--- Text Field ---
@@ -51,6 +57,21 @@ void TextField::ClearPromptText() {
 
 std::string TextField::GetPromptText() const {
     return promptText;
+}
+
+std::string TextField::Truncate(const std::string& text) const {
+    const static float BLINKER_PAD = 2; //makes sure that the blinker won't get out
+    if (MeasureText((text + "|").c_str(), font.GetFontSize()) + textMargin + BLINKER_PAD > width) {
+        std::string truncated = "";
+        for (const auto& c : text) {
+            const std::string characterString(1,c);
+            if (MeasureText((truncated + characterString + "_...|").c_str(), font.GetFontSize()) + BLINKER_PAD > width) {//'_' - little hack to make sure the blinker will stay inbound
+                return truncated + "...";
+            }
+            truncated += c;
+        }
+        return truncated;
+    } else return text;
 }
 
 //--- Label ---

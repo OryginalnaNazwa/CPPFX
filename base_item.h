@@ -1,18 +1,12 @@
 #ifndef ITEM_H
 #define ITEM_H
 
-#include <string>
-#include <unordered_set>
-#include <stdexcept>
-#include <algorithm>
-#include <map>
-#include <memory>
-#include <cmath>
-#include <functional>
-#include <iostream>
-#include <vector>
-#include <numeric>
 #include "properties.h"
+
+#include <stddef.h>      // for size_t
+#include <functional>    // for function
+#include <string>        // for allocator, string
+#include "raylib.h"      // for Vector2, Camera2D
 
 namespace CPPFX {
 

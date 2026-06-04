@@ -1,7 +1,10 @@
 #ifndef MIXINS_H
 #define MIXINS_H
 
-#include "base_item.h"
+#include <functional>    // for function
+#include "base_item.h"   // for Item
+#include "properties.h"  // for Border, Colour, GREY
+#include "raylib.h"      // for Vector2, DrawCircle, Camera2D
 
 /**************************************************************************************
  *  @file mixins.h

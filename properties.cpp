@@ -1,5 +1,9 @@
 #include "properties.h"
 
+#include <ctype.h>    // for toupper
+#include <algorithm>  // for transform
+#include <stdexcept>  // for invalid_argument
+
 using namespace CPPFX;
 
 // --- Properties ---

@@ -1,23 +1,26 @@
 #include "bases.h"
+#include <algorithm>  // for remove_if, find, sort
+#include <compare>    // for operator<
+#include <iterator>   // for distance
+#include <stdexcept>  // for out_of_range, invalid_argument
 
 using namespace CPPFX;
 
 // --- Text Item ---
 
 std::string TextItem::Truncate(const std::string& text) const {
-    const static float BLINKER_PAD = 2; //makes sure that the blinker won't get out
-    if (MeasureText((text + "|").c_str(), font.GetFontSize()) + textMargin + BLINKER_PAD > width) {
-        std::string truncated = "";
-        for (const auto& c : text) {
-            const std::string characterString(1,c);
-            if (MeasureText((truncated + characterString + "_...|").c_str(), font.GetFontSize()) + BLINKER_PAD > width) {//may have to switch to MeasureTextEx with fonts //'_' - little hack to make sure the blinker will stay inbound
-                return truncated + "...";
+        if (MeasureText(text.c_str(), font.GetFontSize()) + textMargin > width) {
+            std::string truncated = "";
+            for (const auto& c : text) {
+                const std::string characterString(1,c);
+                if (MeasureText((truncated + "..." + characterString).c_str(), font.GetFontSize()) > width) {//may have to switch to MeasureTextEx with fonts
+                    return truncated + "...";
+                }
+                truncated += c;
             }
-            truncated += c;
-        }
-        return truncated;
-    } else return text;
-}
+            return truncated;
+        } else return text;
+    }
 
 void TextItem::ExpandToText() {
     int textWidth = MeasureText(text.c_str(), font.GetFontSize());

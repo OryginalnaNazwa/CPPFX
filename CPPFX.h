@@ -1,7 +1,41 @@
 #ifndef CPPFX_H
 #define CPPFX_H
 
-#include "items.h"
+#include <stddef.h>       // for size_t
+#include <map>            // for map
+#include <memory>         // for allocator, unique_ptr, make_unique
+#include <stdexcept>      // for out_of_range, runtime_error
+#include <string>         // for string, basic_string, operator+, char_traits
+#include <typeinfo>       // for type_info
+#include <unordered_set>  // for unordered_set, operator==, _Node_const_iter...
+#include <vector>         // for vector
+#include "base_item.h"    // for Item
+#include "properties.h"   // for Colour
+#include "raylib.h"       // for Camera2D, Vector2, Color
+/*// declarations
+namespace CPPFX { class AnchorPane; }
+namespace CPPFX { class Button; }
+namespace CPPFX { class CheckBox; }
+namespace CPPFX { class Circle; }
+namespace CPPFX { class Container; }
+namespace CPPFX { class EditableSpinner; }
+namespace CPPFX { class HBox; }
+namespace CPPFX { class Label; }
+namespace CPPFX { class Line; }
+namespace CPPFX { class PasswordField; }
+namespace CPPFX { class PieChart; }
+namespace CPPFX { class PressedButton; }
+namespace CPPFX { class ProgressBar; }
+namespace CPPFX { class ProgressIndicator; }
+namespace CPPFX { class Rectangle; }
+namespace CPPFX { class Spinner; }
+namespace CPPFX { class Square; }
+namespace CPPFX { class TextField; }
+namespace CPPFX { class VBox; }
+namespace CPPFX { class Workspace; }
+namespace CPPFX { template <typename T> class DropDown; }
+namespace CPPFX { template <typename T> class List; }*/
+#include "items.h" // for items. Needs it, otherwise you'd need to link more files than just this one.
 
 /******************************************************************************
  *  @file CPPFX

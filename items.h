@@ -1,9 +1,20 @@
 #ifndef ITEMS_H
 #define ITEMS_H
 
-#include "raylib.h"
-#include "mixins.h"
-#include "bases.h"
+#include <stddef.h>      // for size_t
+#include <algorithm>     // for sort, reverse
+#include <functional>    // for function
+#include <iterator>      // for next
+#include <map>           // for map
+#include <stdexcept>     // for out_of_range, invalid_argument, runtime_error
+#include <string>        // for allocator, string, operator+, basic_string
+#include <vector>        // for vector
+#include "base_item.h"   // for Item
+#include "bases.h"       // for TextItem, Shape, Box, Container, Chart
+#include "mixins.h"      // for Circular, PersistentState, Padded
+#include "properties.h"  // for Font, Colour, Border, GREY, Alignment, CPPFX...
+#include "raylib.h"      // for MeasureText, Vector2, DrawText, Camera2D
+
 
 /*********************************************************************************
  *  @file items
@@ -52,6 +63,12 @@ public:
 
 protected:
     std::string promptText; ///< string displayed when the text is empty
+
+    /**
+     *  @see TextItem::Truncate
+     *  @details Includes blinker in truncation
+     */
+    std::string Truncate(const std::string& text) const override;
 };
 
 /**
@@ -160,7 +177,7 @@ public:
         }
     }
 
-    void DoFocusAction(float elapsedTime) {
+    void DoFocusAction(float elapsedTime) override {
         return;
     }
 
@@ -308,7 +325,7 @@ public:
      *  @see TextItem::FitToText.
      *  @details Works based on currentLabel.
      */
-    void FitToText() {
+    void FitToText() override {
         int textWidth = MeasureText(currentLabel.c_str(), font.GetFontSize());
         if (textWidth != width) {
             width = textWidth + textMargin;
@@ -343,20 +360,6 @@ private:
     std::string currentLabel;
     T currentValue;
 
-    std::string Truncate(const std::string& text) const override {
-        const float BLINKER_PAD = 2; //makes sure that the blinker won't get out
-        if (MeasureText((text + "|").c_str(), font.GetFontSize()) + textMargin + BLINKER_PAD > width) {
-            std::string truncated = "";
-            for (const auto& c : text) {
-                const std::string characterString(1,c);
-                if (MeasureText(truncated.c_str(), font.GetFontSize()) + MeasureText("...|", font.GetFontSize()) + MeasureText(characterString.c_str(), font.GetFontSize()) + BLINKER_PAD > width) {
-                    return truncated + "...";
-                }
-                truncated += c;
-            }
-            return truncated;
-        } else return text;
-    }
 };
 
 // --- Containers ---

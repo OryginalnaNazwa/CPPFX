@@ -1,15 +1,12 @@
 #ifndef PROPERTIES_H
 #define PROPERTIES_H
 
-#include "raylib.h"
-#include <string>
-#include <unordered_set>
-#include <stdexcept>
-#include <algorithm>
-#include <map>
-#include <memory>
-#include <functional>
-#include <iostream>
+#include <functional>     // for function
+#include <iostream>       // for operator<<, basic_ostream, char_traits, cerr
+#include <string>         // for string, allocator
+#include <unordered_set>  // for unordered_set
+#include "raylib.h"       // for Color, BLACK, LIGHTGRAY, DARKGRAY, GRAY
+
 
 /******************************************************************
  *  @file properties

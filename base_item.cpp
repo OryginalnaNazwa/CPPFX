@@ -1,5 +1,7 @@
 #include "base_item.h"
 
+#include <stdexcept>  // for invalid_argument
+
 using namespace CPPFX;
 
 // --- Item ---

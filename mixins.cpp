@@ -1,4 +1,6 @@
 #include "mixins.h"
+#include <stdexcept>  // for invalid_argument
+#include <string>     // for operator+, allocator, char_traits, basic_string
 
 using namespace CPPFX;
 
