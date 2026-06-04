@@ -41,6 +41,8 @@ public:
     Item(const std::string& i, float w, float h)
         : ID(""), xAnchor(0), yAnchor(0), height(h), width(w), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
 
+    virtual ~Item() = default;
+
     /**
      *  @brief Draws the item in world coordinates.
      *  @param elapsedTime total elapsed time of all frames
