@@ -2,6 +2,8 @@
 
 using namespace CPPFX;
 
+// --- Circular ---
+
 bool Circular::WasIClicked(const Vector2& mousePosition) const {
     if (CheckCollisionPointCircle(mousePosition, {TranslateXToCentre(), TranslateYToCentre()}, GetRadius())) return true;
     return false;
@@ -79,17 +81,17 @@ Vector2 Circular::TranslateXYToCorner() const {
 }
 
 float Circular::GetRadius() const {
-    return width / 2;
+    return width / 2.0f;
 }
 
 void Circular::SetRadius(float radius) {
-    if (radius < 0) {
+    if (radius < 0.0f) {
         throw std::invalid_argument("In " + fxID + " " + ID + ": Negative radius");
     }
     if (radius == 0.0f) {
         CPPFX_WARN("In " + fxID + ID + ": radius equals 0. Will not be visible and may break stuff.");
     }
-    SetWidth(radius * 2);
+    SetWidth(radius * 2.0f);
 }
 
 float Circular::GetXTransformed() const {
@@ -116,8 +118,32 @@ Vector2 Circular::GetXYTransformed() const {
     }
 }
 
+// --- PersistentState ---
+
+void PersistentState::SetPressed(bool flag) {
+    pressed = flag;
+}
+
+void PersistentState::Press() {
+    pressed = true;
+}
+
+void PersistentState::Unpress() {
+    pressed = false;
+}
+
+void PersistentState::SwitchPress() {
+    pressed = !pressed;
+}
+
+bool PersistentState::IsPressed() const {
+    return pressed;
+}
+
+// --- Padded ---
+
 void Padded::SetPadding(float value) {
-    if (value < 0) {
+    if (value < 0.0f) {
         throw std::invalid_argument("In " + fxID + " " + ID + ": Negative padding.");
     }
     padding = value;
