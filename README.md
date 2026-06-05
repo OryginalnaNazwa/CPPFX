@@ -26,20 +26,20 @@ raylib path's should be after CPPFX's
 This is a basic example that will display a label surrounded by a black border, containing the text "Hello world!" around the middle of the window.
 
 ```cpp
-#include "CPPFX.h"
+#include "CPPFX.hpp"
 
 int main() {
+  //raylib initialisation
   InitWindow(800, 800, "CPPFX basic example");
-
   Camera2D camera = {0};
   camera.zoom = 1.0f;
 
-  CPPFX::GUI gui;
-  auto helloLabel = gui.AddLabel();
-  helloLabel->SetX(400);
-  helloLabel->SetY(400);
+  CPPFX::GUI gui; // this is used for managing widgets
+
+  auto helloLabel = gui.AddLabel(); // returns a pointer
+  helloLabel->SetXY(400.0f, 400.0f); // or use SetX and SetY
   helloLabel->SetText("Hello world!");
-  helloLabel->border.SetThickness(10);
+  helloLabel->border.SetThickness(10.0f); // border draws only if the thickness is greater than 0.0f
 
   while (!WindowShouldClose()) {
     BeginDrawing();
