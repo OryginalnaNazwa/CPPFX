@@ -1,8 +1,7 @@
 #ifndef ITEM_H
 #define ITEM_H
 
-#include "properties.h"
-
+#include "properties.hpp"
 #include <stddef.h>      // for size_t
 #include <functional>    // for function
 #include <string>        // for allocator, string
@@ -207,7 +206,16 @@ public:
      *  @param y new value to be set
      */
     virtual void SetY(float y);
+    /**
+     *  @brief Sets both x and y coordinate of the item.
+     *  @param x new value to be set of x coordinate
+     *  @param y new value to be set of y coordinate
+     */
     virtual void SetXY(float x, float y);
+    /**
+     *  @brief Sets both x and y coordinate of the item.
+     *  @param xy pair of the new coordinates
+     */
     virtual void SetXY(const Vector2& xy);
     /**
      *  @brief Sets the height of the item.
@@ -253,6 +261,10 @@ public:
      *  @returns y coordinate
      */
     float GetY() const;
+    /**
+     *  @brief Gets the x,y coordinates of the item.
+     *  @returns pair of coordinates
+     */
     Vector2 GetXY() const;
     /**
      *  @brief Returns height of the item.
@@ -296,20 +308,20 @@ public:
     std::string GetFxID() const;
 
 protected:
-    std::string ID; ///<ID used by the user, variable.
-    mutable float xAnchor; ///<top left x coordinate. Mutable for screen coordinate translation
-    mutable float yAnchor; ///<top left y coordinate. Mutable for screen coordinate translation
-    float height; ///<vertical length of the item
-    float width; ///<horizontal length of the item
+    std::string ID; ///< ID used by the user, variable.
+    mutable float xAnchor; ///< top left x coordinate. Mutable for screen coordinate translation
+    mutable float yAnchor; ///< top left y coordinate. Mutable for screen coordinate translation
+    float height; ///< vertical length of the item
+    float width; ///< horizontal length of the item
 
-    bool focused; ///<whether the item is currently doing something; was it clicked.
-    bool visible; ///<invisible items are still interactable
-    bool inactive; ///<inactive items are not interactable
-    bool eatsClick; ///<if false, allows the click to continue under it
-    size_t priority; ///<order of drawing. Set to 3 by default for convenience of moving priority around. The higher the priority, the quicker it gets done - but gets drawn under.
+    bool focused; ///< whether the item is currently doing something; was it clicked.
+    bool visible; ///< invisible items are still interactable
+    bool inactive; ///< inactive items are not interactable
+    bool eatsClick; ///< if false, allows the click to continue under it
+    size_t priority; ///< order of drawing. Set to 3 by default for convenience of moving priority around. The higher the priority, the quicker it gets done - but gets drawn under.
 
-    bool screenBased; ///<if true, item is drawn based on screen, so follows camera.
-    const std::string fxID; ///ID for the library.
+    bool screenBased; ///< if true, item is drawn based on screen, so follows camera.
+    const std::string fxID; ///< ID for the library.
     float timer = 0; ///< in case a widget needs to measure out time. Fully internal.
 };
 

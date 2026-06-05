@@ -1,9 +1,9 @@
-#include "CPPFX.h"
+#include "CPPFX.hpp"
 #include <algorithm>   // for remove_if, sort
 #include <compare>     // for operator<
 #include <functional>  // for function
 #include <utility>     // for pair, move
-#include "bases.h"     // for Container
+#include "bases.hpp"     // for Container
 //#include "items.h"     // for widgets
 
 using namespace CPPFX;

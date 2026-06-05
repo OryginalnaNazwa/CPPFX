@@ -1,4 +1,4 @@
-#include "base_item.h"
+#include "base_item.hpp"
 
 #include <stdexcept>  // for invalid_argument
 
@@ -56,7 +56,7 @@ void Item::DoPassiveAction(float elapsedTime, const Camera2D& camera) {
 // --- Helpers ---
 
 void Item::MoveUpPriority() {
-    if (priority > 0) {
+    if (priority > 0.0f) {
         priority--;
     }
 }
@@ -84,7 +84,7 @@ void Item::SetXY(const Vector2& xy) {
 }
 
 void Item::SetHeight(float value) {
-    if (value < 0) {
+    if (value < 0.0f) {
         throw std::invalid_argument("In item " + ID + ": Negative height.");
     } else {
         height = value;
@@ -92,7 +92,7 @@ void Item::SetHeight(float value) {
 }
 
 void Item::SetWidth(float value) {
-    if (value < 0) {
+    if (value < 0.0f) {
         throw std::invalid_argument("In item " + ID + ": Negative width.");
     } else {
         width = value;
@@ -100,7 +100,7 @@ void Item::SetWidth(float value) {
 }
 
 void Item::SetPriority(int value) {
-    if (value < 0) {
+    if (value < 0.0f) {
         throw std::invalid_argument("In item " + ID + ": Negative priority.");
     } else {
         priority = (size_t)(value);

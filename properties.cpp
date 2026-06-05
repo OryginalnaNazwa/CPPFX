@@ -1,5 +1,4 @@
-#include "properties.h"
-
+#include "properties.hpp"
 #include <ctype.h>    // for toupper
 #include <algorithm>  // for transform
 #include <stdexcept>  // for invalid_argument
@@ -121,7 +120,7 @@ std::string Property::GetFxID() const {
 
 // --- Border ---
 void Border::DrawMyself(float x, float y, float width, float height) const {
-    if (thickness > 0) {
+    if (thickness > 0.0f) {
         if (drawMyself) {
             drawMyself(x, y, width, height);
         } else {
@@ -139,7 +138,7 @@ void Border::RemoveDrawingMethod() {
 }
 
 void Border::SetThickness(float thickness) {
-    if (thickness < 0) {
+    if (thickness < 0.0f) {
         throw std::invalid_argument("Range error: Negative thickness.");
     } else {
         this->thickness = thickness;
@@ -153,10 +152,10 @@ float Border::GetThickness() const {
 //------Font--------
 
 void CPPFX::Font::SetFontSize(float size) {
-    if (size < 0) {
+    if (size < 0.0f) {
         throw std::invalid_argument("Negative font size.");
     } else {
-        if ((int)(size) == 0) {
+        if (size == 0.0f) {
             CPPFX_WARN("Font size set to 0. It will not be visible.");
         }
         fontSize = size;

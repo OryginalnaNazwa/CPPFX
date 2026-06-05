@@ -9,10 +9,10 @@
 #include <stdexcept>     // for out_of_range, invalid_argument, runtime_error
 #include <string>        // for allocator, string, operator+, basic_string
 #include <vector>        // for vector
-#include "base_item.h"   // for Item
-#include "bases.h"       // for TextItem, Shape, Box, Container, Chart
-#include "mixins.h"      // for Circular, PersistentState, Padded
-#include "properties.h"  // for Font, Colour, Border, GREY, Alignment, CPPFX...
+#include "base_item.hpp"   // for Item
+#include "bases.hpp"       // for TextItem, Shape, Box, Container, Chart
+#include "mixins.hpp"      // for Circular, PersistentState, Padded
+#include "properties.hpp"  // for Font, Colour, Border, GREY, Alignment, CPPFX...
 #include "raylib.h"      // for MeasureText, Vector2, DrawText, Camera2D
 
 
@@ -804,7 +804,6 @@ public:
 
     /**
      *  @brief Sets bar margin.
-     *  @details In case of over- or underflow sets the value to maximum or minimum respectively.
      *  @param value new bar margin length
      *  @throws std::out_of_range if value is greater than half of the height
      *  @throws std::invalid_argument if value is lower than 0
@@ -813,7 +812,6 @@ public:
     float GetBarMargin() const;
     /**
      *  @brief Sets number of segments.
-     *  @details In case of underflow sets the value to minimum.
      *  @param value new number of segments
      *  @throws std::invalid_argument if value is lower than 0
      */
@@ -821,7 +819,6 @@ public:
     int GetNumberOfSegments() const;
     /**
      *  @brief Sets length of the gap between segments.
-     *  @details In case of over- or underflow sets the value to maximum or minimum respectively.
      *  @param value new gap length
      *  @throws std::out_of_range if value is greater than the available maximum gap based on width and the number of segments
      *  @throws std::invalid_argument if value is lower than 0

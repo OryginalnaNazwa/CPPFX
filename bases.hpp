@@ -5,9 +5,9 @@
 #include <map>           // for map
 #include <string>        // for string
 #include <vector>        // for vector
-#include "base_item.h"   // for Item
-#include "mixins.h"      // for Padded
-#include "properties.h"  // for Colour, Font, Alignment
+#include "base_item.hpp"   // for Item
+#include "mixins.hpp"      // for Padded
+#include "properties.hpp"  // for Colour, Font, Alignment
 #include "raylib.h"      // for BLANK
 
 /**********************************************************************
@@ -90,6 +90,11 @@ public:
     Container(const std::string& i) : Item(i) {colour.SetColour(BLANK); priority = 10;}
     Container(const std::string& i, float w, float h) : Item(i, w, h) {colour.SetColour(BLANK); priority = 10;}
 
+    /**
+     *  @brief Adds item to the container.
+     *  @param item pointer to the item to be added
+     *  @throw std::invalid_argument if the pointer is null or if the item already is in the container
+     */
     void AddItem(Item* item);
 
     /**
@@ -169,6 +174,11 @@ public:
 
 };
 
+/**
+ *  @class Chart
+ *  @brief A virtual class for charts and data analysis tools.
+ *  @details Does the basic element and label work.
+ */
 class Chart : public virtual Item {
 public:
     Font font;

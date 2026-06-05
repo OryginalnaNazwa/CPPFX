@@ -1,4 +1,4 @@
-#include "bases.h"
+#include "bases.hpp"
 #include <algorithm>  // for remove_if, find, sort
 #include <compare>    // for operator<
 #include <iterator>   // for distance
@@ -13,7 +13,7 @@ std::string TextItem::Truncate(const std::string& text) const {
             std::string truncated = "";
             for (const auto& c : text) {
                 const std::string characterString(1,c);
-                if (MeasureText((truncated + "..." + characterString).c_str(), font.GetFontSize()) > width) {//may have to switch to MeasureTextEx with fonts
+                if ((float)(MeasureText((truncated + "..." + characterString).c_str(), font.GetFontSize())) > width) {//may have to switch to MeasureTextEx with fonts
                     return truncated + "...";
                 }
                 truncated += c;
@@ -23,7 +23,7 @@ std::string TextItem::Truncate(const std::string& text) const {
     }
 
 void TextItem::ExpandToText() {
-    int textWidth = MeasureText(text.c_str(), font.GetFontSize());
+    float textWidth = MeasureText(text.c_str(), font.GetFontSize());
     if (textWidth > width) {
         width = textWidth + textMargin;
     }
@@ -34,7 +34,7 @@ void TextItem::ExpandToText() {
 }
 
 void TextItem::FitToText() {
-    int textWidth = MeasureText(text.c_str(), font.GetFontSize());
+    float textWidth = MeasureText(text.c_str(), font.GetFontSize());
     if (textWidth != width) {
         width = textWidth + textMargin;
     }
@@ -57,7 +57,7 @@ std::string TextItem::GetText() const {
 }
 
 void TextItem::SetTextMargin(float margin) {
-    if (margin < 0) {
+    if (margin < 0.0f) {
         throw std::invalid_argument("Negative text margin value in " + ID + " type " + fxID);
     } else textMargin = margin;
 }
@@ -69,6 +69,9 @@ float TextItem::GetTextMargin() const {
 //--- Container ---
 
 void Container::AddItem(Item* item) {
+    if (!item) {
+        throw std::invalid_argument("In container " + ID + ": null pointer, cannot add item.");
+    }
     if (!IsIDTaken(item->GetID())) {
         Items.insert({item->GetID(), item});
         ItemsInDrawingOrder.push_back(item);

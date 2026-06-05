@@ -9,8 +9,8 @@
 #include <typeinfo>       // for type_info
 #include <unordered_set>  // for unordered_set, operator==, _Node_const_iter...
 #include <vector>         // for vector
-#include "base_item.h"    // for Item
-#include "properties.h"   // for Colour
+#include "base_item.hpp"    // for Item
+#include "properties.hpp"   // for Colour
 #include "raylib.h"       // for Camera2D, Vector2, Color
 /*// declarations
 namespace CPPFX { class AnchorPane; }
@@ -35,7 +35,7 @@ namespace CPPFX { class VBox; }
 namespace CPPFX { class Workspace; }
 namespace CPPFX { template <typename T> class DropDown; }
 namespace CPPFX { template <typename T> class List; }*/
-#include "items.h" // for items. Needs it, otherwise you'd need to link more files than just this one.
+#include "items.hpp" // for items. Needs it, otherwise you'd need to link more files than just this one.
 
 /******************************************************************************
  *  @file CPPFX
@@ -443,22 +443,22 @@ public:
 private:
     bool screenBased; /// global flag for whether the items are drawn in world or screen coordinates
 
-    std::map<std::string, std::unique_ptr<Item>> Items; // lookup map by ID
-    std::vector<Item*> ItemsInDrawingOrder; // items in reverse priority order — back is the highest priority. Which is indeed the correct drawing order
+    std::map<std::string, std::unique_ptr<Item>> Items; /// lookup map by ID
+    std::vector<Item*> ItemsInDrawingOrder; /// items in reverse priority order — back is the highest priority. Which is indeed the correct drawing order
 
     std::map<std::string, size_t> ItemsCounter; /// each new created item increments its counter. Used for auto IDs.
 
     float elapsedTime = 0; /// total elapsed time of all frames
     bool needsSorting = false; /// lazy sort
 
-    void DrawUI(const Camera2D& camera) const; // draws the items
-    void onMouseClick(const Vector2& mousePos, const Camera2D& camera); // defocuses nad does onClick
-    void DoItemsActions(const Vector2& mousePos, const Camera2D& camera); // does focused and passive actions
-    void DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera); // does actions that require mouse input
+    void DrawUI(const Camera2D& camera) const; /// draws the items
+    void onMouseClick(const Vector2& mousePos, const Camera2D& camera); /// defocuses nad does onClick
+    void DoItemsActions(const Vector2& mousePos, const Camera2D& camera); /// does focused and passive actions
+    void DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera); /// does actions that require mouse input
 
-    void DefocusItems(); // defocuses all items after a click.
+    void DefocusItems(); /// defocuses all items after a click.
 
-    Container* GetContainer(const std::string& ID);
+    Container* GetContainer(const std::string& ID); /// returns a polymorphic pointer to Container
 
     /**
      *  @brief Pushes a pointer to the items in order and moves the unique_ptr to the map.
@@ -474,11 +474,11 @@ private:
      */
     void CreateItemID(std::unique_ptr<Item>& item, const std::string& ID = "");
 
-    static const std::unordered_set<std::string> FXIDs;
+    static const std::unordered_set<std::string> FXIDs; /// list of widget names
 
-    static const std::string AUTOMATIC_ID_PREFIX;
+    static const std::string AUTOMATIC_ID_PREFIX; /// how are automatic IDs created
 
-    static const std::unordered_set<std::string> CONTAINERS;
+    static const std::unordered_set<std::string> CONTAINERS; /// list of which widgets are containers
 };
 
 }

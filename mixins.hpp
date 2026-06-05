@@ -2,8 +2,8 @@
 #define MIXINS_H
 
 #include <functional>    // for function
-#include "base_item.h"   // for Item
-#include "properties.h"  // for Border, Colour, GREY
+#include "base_item.hpp"   // for Item
+#include "properties.hpp"  // for Border, Colour, GREY
 #include "raylib.h"      // for Vector2, DrawCircle, Camera2D
 
 /**************************************************************************************
@@ -197,6 +197,10 @@ public:
      *  @param value new padding value
      */
     virtual void SetPadding(float value);
+    /**
+     *  @brief Gets padding.
+     *  @returns padding
+     */
     float GetPadding() const;
 
 protected:
