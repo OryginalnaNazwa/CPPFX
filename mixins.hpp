@@ -190,7 +190,7 @@ public:
     /**
      *  @brief Default padding is 10.
      */
-    Padded() : Item(), padding(10) {}
+    Padded() : Item(), padding(10.0f) {}
 
     /**
      *  @brief Sets padding.

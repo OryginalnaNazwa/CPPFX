@@ -112,28 +112,29 @@ void Label::DoFocusAction(float elapsedTime) {
 //--- Button ---
 
 void Button::DrawMyself(float elapsedTime) const {
-    if (timer > 0) {
+    if (timer > 0.0f) {
         DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour());
     } else DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
 
     if (text != "") {
-       DrawText(text.c_str(), xAnchor + (width / 2.0f) - (MeasureText(text.c_str(), font.GetFontSize()) / 2.0f), yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+       DrawText(text.c_str(), xAnchor + (width / 2.0f) - (MeasureText(text.c_str(), font.GetFontSize()) / 2.0f), yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f),
+                    font.GetFontSize(), font.colour.GetColour());
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
 void Button::DoFocusAction(float elapsedTime) {
     if (focused) {
-        if (timer > 0) {
+        if (timer > 0.0f) {
             if (elapsedTime > timer) {
-                timer = 0;
+                timer = 0.0f;
                 focused = false;
             }
         } else {
             timer = elapsedTime + 0.1f;
         }
     } else {
-        timer = 0;
+        timer = 0.0f;
     }
 }
 
@@ -163,7 +164,7 @@ void CheckBox::DoFocusAction(float elapsedTime) {
 }
 
 void CheckBox::SetLabelMargin(float value) {
-    if (value >= 0) {
+    if (value >= 0.0f) {
         labelMargin = value;
     } else {
         throw std::invalid_argument("In " + this->ID + ": negative value of label margin.");
@@ -381,7 +382,7 @@ void HBox::SetPositionsOfItems() {
 }
 
 float HBox::GetTotalWidth() const {
-    float widthSum = 0;
+    float widthSum = 0.0f;
     for (auto& child : Items) {
         widthSum += child.second->GetTotalWidth();
         widthSum += padding;
@@ -393,7 +394,8 @@ float HBox::GetTotalWidth() const {
 
 void Spinner::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+    DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value),
+                xAnchor + valueMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
 
     incrementButton.DrawMyself(elapsedTime);
     decrementButton.DrawMyself(elapsedTime);
@@ -406,7 +408,8 @@ void Spinner::DrawMyself(float elapsedTime, const Camera2D& camera) const {
     float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
 
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+    DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin,
+                yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
 
     //shift the buttons to where they should be
     const float savedButtonX = incrementButton.GetX();
@@ -544,7 +547,7 @@ void Spinner::SetY(float y) {
 }
 
 void Spinner::SetWidth(float value) {
-    if (value < 0) {
+    if (value < 0.0f) {
         throw std::invalid_argument("In Spinner " + ID + ": Negative width.");
     }
     width = value;
@@ -553,7 +556,7 @@ void Spinner::SetWidth(float value) {
 }
 
 void Spinner::SetHeight(float value) {
-    if (value < 0) {
+    if (value < 0.0f) {
         throw std::invalid_argument("In Spinner " + ID + ": Negative width.");
     }
     height = value;
@@ -563,7 +566,7 @@ void Spinner::SetHeight(float value) {
 }
 
 void Spinner::SetValueMargin(float value) {
-    if (value < 0) {
+    if (value < 0.0f) {
         throw std::invalid_argument("In Spinner " + ID + ": Negative value margin.");
     }
     valueMargin = value;
@@ -593,14 +596,14 @@ void Spinner::Initialise() {
     incrementButton.SetX(xAnchor + width);
     incrementButton.SetY(yAnchor);
     incrementButton.SetHeight(height / 2.0f);
-    incrementButton.SetWidth(50);
+    incrementButton.SetWidth(50.0f);
     incrementButton.SetText("/\\");
     incrementButton.border.SetThickness(2.0f);
     incrementButton.onClick = [this]() { Increment(); };
     decrementButton.SetX(xAnchor + width);
     decrementButton.SetY(yAnchor + (height / 2.0f));
     decrementButton.SetHeight(height / 2.0f);
-    decrementButton.SetWidth(50);
+    decrementButton.SetWidth(50.0f);
     decrementButton.SetText("\\/");
     decrementButton.border.SetThickness(2.0f);
     decrementButton.onClick = [this]() { Decrement(); };
@@ -608,7 +611,7 @@ void Spinner::Initialise() {
 }
 
 void Spinner::SetButtonsWidth(float value) {
-    if (value < 0) {
+    if (value < 0.0f) {
         throw std::invalid_argument("In spinner " + ID + ": Negative width of buttons.");
     }
     incrementButton.SetWidth(value);
@@ -828,7 +831,7 @@ void EditableSpinner::SetHeight(float value) {
 }
 
 void EditableSpinner::SetValueMargin(float value) {
-    if (value < 0) {
+    if (value < 0.0f) {
         throw std::invalid_argument("In Spinner " + ID + ": Negative value margin.");
     }
     editArea.SetTextMargin(value);

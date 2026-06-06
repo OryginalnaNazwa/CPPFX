@@ -106,7 +106,8 @@ void Container::RemoveItem(const Item* item) {
 
 void Container::SafeRemoveItem(const std::string& ID) {
     if (IsIDTaken(ID)) {
-        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [&ID](const Item* item) { return item->GetID() == ID; }), ItemsInDrawingOrder.end());
+        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),
+                                [&ID](const Item* item) { return item->GetID() == ID; }), ItemsInDrawingOrder.end());
         Items.erase(ID);
         needsOrdering = true;
     }
@@ -114,7 +115,8 @@ void Container::SafeRemoveItem(const std::string& ID) {
 
 void Container::SafeRemoveItem(const Item* item) {
     if (item && IsIDTaken(item->GetID())) {
-        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [&item](const Item* i) { return i->GetID() == item->GetID(); }), ItemsInDrawingOrder.end());
+        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),
+                                [&item](const Item* i) { return i->GetID() == item->GetID(); }), ItemsInDrawingOrder.end());
         Items.erase(item->GetID());
         needsOrdering = true;
     }

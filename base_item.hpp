@@ -24,7 +24,7 @@ public:
      *  @param i fxID of the new item.
      */
     Item(const std::string& i)
-        : ID(""), xAnchor(0), yAnchor(0), height(100), width(200), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
+        : ID(""), xAnchor(0.0f), yAnchor(0.0f), height(100.0f), width(200.0f), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
     /**
      *  @brief Constructor for items with different dimensions than the default ones.
      *  @param i fxID of the new item.
@@ -32,7 +32,7 @@ public:
      *  @param h height
      */
     Item(const std::string& i, float w, float h)
-        : ID(""), xAnchor(0), yAnchor(0), height(h), width(w), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
+        : ID(""), xAnchor(0.0f), yAnchor(0.0f), height(h), width(w), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
 
     virtual ~Item() = default;
 
@@ -82,14 +82,14 @@ public:
     virtual void DoFocusAction(float elapsedTime, const Camera2D& camera);
     /**
      *  @brief Action done while the item is focused and it depends on mouse click in world coordinates.
-     *  @details Defaults to the previous DoActiveAction().
+     *  @details Defaults to the previous DoFocusAction().
      *  @param elapsedTime Frame time
      *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
      */
     virtual void DoFocusAction(float elapsedTime, const Vector2& mousePosition);
     /**
      *  @brief Action done while the item is focused and it depends on mouse click in screen coordinates.
-     *  @details Defaults to the previous DoActiveAction().
+     *  @details Defaults to the previous DoFocusAction().
      *  @param elapsedTime Frame time
      *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
      */
@@ -322,7 +322,7 @@ protected:
 
     bool screenBased; ///< if true, item is drawn based on screen, so follows camera.
     const std::string fxID; ///< ID for the library.
-    float timer = 0; ///< in case a widget needs to measure out time. Fully internal.
+    float timer = 0.0f; ///< in case a widget needs to measure out time. Fully internal.
 };
 
 }

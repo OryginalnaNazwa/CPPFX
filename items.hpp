@@ -100,7 +100,7 @@ public:
 
     bool drawsX = true; //TODO add different shapes
 
-    CheckBox() : Item("CheckBox", 50, 50), TextItem("CheckBox", 50, 50), PersistentState(), labelMargin(10) {font.SetFontSize(height / 2);}
+    CheckBox() : Item("CheckBox", 50.0f, 50.0f), TextItem("CheckBox", 50.0f, 50.0f), PersistentState(), labelMargin(10.0f) {font.SetFontSize(height / 2.0f);}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -134,11 +134,11 @@ public:
     void DrawMyself(float elapsedTime) const override {
         DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
         if (currentLabel != "") {
-            DrawText(Truncate(currentLabel).c_str(), xAnchor + textMargin, yAnchor + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
+            DrawText(Truncate(currentLabel).c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
         }
-        if (border.GetThickness() > 0) {
-            border.DrawMyself(xAnchor, yAnchor, width + textMargin, height);
-        }
+
+        border.DrawMyself(xAnchor, yAnchor, width + textMargin, height);
+
         if (focused) {
             float yCurrent = yAnchor + height;
             DrawLineEx({xAnchor, yCurrent}, {xAnchor + width, yCurrent}, 10, BLACK);
@@ -372,7 +372,7 @@ private:
 class Workspace : public Container {
 public:
 
-    Workspace() : Item("Workspace"), Container("Workspace", 500, 500) {}
+    Workspace() : Item("Workspace"), Container("Workspace", 500.0f, 500.0f) {}
 
     void SetPositionsOfItems() override;
 };
@@ -384,7 +384,7 @@ public:
 class AnchorPane : public Container {
 public:
 
-    AnchorPane() : Item("AnchorPane"), Container("AnchorPane", 500, 500), previousX(500), previousY(500), previousWidth(200), previousHeight(200) {}
+    AnchorPane() : Item("AnchorPane"), Container("AnchorPane", 500.0f, 500.0f), previousX(500.0f), previousY(500.0f), previousWidth(200.0f), previousHeight(200.0f) {}
 
     void SetPositionsOfItems() override;
 
@@ -425,7 +425,7 @@ private:
 class VBox : public Box {
 public:
 
-    VBox() : Item("VBox"), Box("VBox", 100, 200) {}
+    VBox() : Item("VBox"), Box("VBox", 100.0f, 200.0f) {}
 
     void SetPositionsOfItems() override;
     /**
@@ -443,7 +443,7 @@ public:
 class HBox : public Box {
 public:
 
-    HBox() : Item("HBox"), Box("HBox", 200, 100) {}
+    HBox() : Item("HBox"), Box("HBox", 200.0f, 100.0f) {}
 
     void SetPositionsOfItems() override;
     /**
@@ -466,12 +466,14 @@ public:
     Font font;
 
     Spinner()
-        : Item("Spinner", 200, 100), font(height / 2), valueMargin(10), value(0), stepValue(1), hasMin(false), hasMax(false), minValue(0), maxValue(100), allowWrap(false)  {
-        Initialise();
+        : Item("Spinner", 200.0f, 100.0f), font(height / 2.0f), valueMargin(10.0f), value(0.0f), stepValue(1.0f),
+            hasMin(false), hasMax(false), minValue(0.0f), maxValue(100.0f), allowWrap(false)  {
+                Initialise();
     }
     Spinner(const std::string& i)
-        : Item(i, 200, 100), font(height / 2), valueMargin(10), value(0), stepValue(1), hasMin(false), hasMax(false), minValue(0), maxValue(100), allowWrap(false) {
-        Initialise();
+        : Item("Spinner", 200.0f, 100.0f), font(height / 2.0f), valueMargin(10.0f), value(0.0f), stepValue(1.0f),
+            hasMin(false), hasMax(false), minValue(0.0f), maxValue(100.0f), allowWrap(false) {
+                Initialise();
     }
 
     void DrawMyself(float elapsedTime) const override;
@@ -707,8 +709,8 @@ public:
 
     Font font;
 
-    ProgressIndicator() : Item("ProgressIndicator"), font(height / 4), shape(ProgressIndicator::Shapes::DOTS), displayValue(true), value(-1)  {}
-    ProgressIndicator(const std::string& i) : Item(i), font(height / 4), shape(ProgressIndicator::Shapes::BAR), displayValue(true), value(-1) {}
+    ProgressIndicator() : Item("ProgressIndicator"), font(height / 4.0f), shape(ProgressIndicator::Shapes::DOTS), displayValue(true), value(-1.0f)  {}
+    ProgressIndicator(const std::string& i) : Item(i), font(height / 4.0f), shape(ProgressIndicator::Shapes::BAR), displayValue(true), value(-1.0f) {}
 
     /**
      *  @brief Sets progress value;
@@ -798,7 +800,7 @@ public:
     Colour barColour;
 
     ProgressBar() : ProgressIndicator("ProgressBar"),
-                    barColour(GREEN), barMargin(5), segmented(false), numberOfSegments(10), gapBetweenSegments(1) {shape = ProgressIndicator::Shapes::BAR;}
+                    barColour(GREEN), barMargin(5.0f), segmented(false), numberOfSegments(10), gapBetweenSegments(1.0f) {shape = ProgressIndicator::Shapes::BAR;}
 
     void DrawMyself(float elapsedTime) const override;
 
@@ -1049,7 +1051,7 @@ public:
             return sum;
         }
         if constexpr (std::is_same_v<T, std::string>) {
-            float sum = 0;
+            float sum = 0.0f;
             for (const auto& item : items) {
                 sum += MeasureText(item.c_str(), font.GetFontSize()) + padding;
             }
@@ -1073,14 +1075,14 @@ public:
         if (!vertical || items.empty()) {
             return height;
         }
-        return (items.size() - 1) * (padding + font.GetFontSize()) + font.GetFontSize();
+        return (float)(items.size() - 1) * (padding + font.GetFontSize()) + font.GetFontSize();
     }
 
 private:
-    std::vector<T> items;
-    std::function<std::string(const T&)> displayMethod;
+    std::vector<T> items; ///< objects in the list
+    std::function<std::string(const T&)> displayMethod; ///< how the items will be displayed. By default, just spaced out strings.
 
-    bool vertical;
+    bool vertical; ///< whether the next item in the list will be next to or under the previous one
 };
 
 class PieChart : public Chart, virtual public Circular {
@@ -1114,7 +1116,7 @@ private:
 class Line : public Shape {
 public:
 
-    Line() : Item("Line"), Shape("Line"), pointToPoint(true), thickness(10), angle(0), xEnd(xAnchor + width), yEnd(yAnchor) {}
+    Line() : Item("Line"), Shape("Line"), pointToPoint(true), thickness(10.0f), angle(0.0f), xEnd(xAnchor + width), yEnd(yAnchor) {}
 
     /**
      *  @brief Returns length of the line.

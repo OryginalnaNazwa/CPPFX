@@ -25,8 +25,8 @@ class TextItem : public virtual Item {
 public:
     Font font;
 
-    TextItem(const std::string& i) : Item(i), font(height / 4), text(i), textMargin(10) {}
-    TextItem(const std::string& i, float w, float h) : Item(i, w, h), font(h / 4), text(i), textMargin(10) {}
+    TextItem(const std::string& i) : Item(i), font(height / 4.0f), text(i), textMargin(10.0f) {}
+    TextItem(const std::string& i, float w, float h) : Item(i, w, h), font(h / 4.0f), text(i), textMargin(10.0f) {}
 
     /**
      *  @brief Expands the width and height to accommodate text.
@@ -184,7 +184,7 @@ public:
     Font font;
 
 
-    Chart (const std::string& i) : Item(i), font(height / 4) {}
+    Chart (const std::string& i) : Item(i), font(height / 4.0f) {}
 
     void AddElement(const std::string& label, double value);
     void AddElement(double value);

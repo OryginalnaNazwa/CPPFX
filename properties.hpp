@@ -195,7 +195,7 @@ public:
      *  @brief Default constructor.
      *  @details Sets fontSize to 20 and colour to black.
      */
-    Font() : Property("Font", BLACK), fontSize(20) {}
+    Font() : Property("Font", BLACK), fontSize(20.0f) {}
     /**
      *  @brief Constructor for custom size.
      *  @details Sets colour to black.
