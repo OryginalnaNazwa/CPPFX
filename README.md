@@ -20,7 +20,7 @@ Windows:      -lCPPFX -lraylib -lopengl32 -lgdi32 -lwinmm
 Linux Ubuntu: -lCPPFX -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 Remember to also link raylib!
-raylib path's should be after CPPFX's
+raylib's paths should be after CPPFX's
 
 ## Quick example
 This is a basic example that will display a label surrounded by a black border, containing the text "Hello world!" around the middle of the window.
