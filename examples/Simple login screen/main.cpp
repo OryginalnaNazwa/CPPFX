@@ -27,8 +27,7 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(1200, 800, "Simple login screen example");
     SetTargetFPS(60);
-    Camera2D camera;
-    camera = {0};
+    Camera2D camera = {0};
     camera.zoom = 1.0f;
 
     GUI gui;
