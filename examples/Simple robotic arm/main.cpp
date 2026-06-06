@@ -1,10 +1,15 @@
-#include "CPPFX.h"
+#include "CPPFX.hpp"
 #include <vector>
 #include <cmath>
 
+/*************************************************************************************************************************************************************
+ *  A simple robotic arm (v2)
+ *  Use controls to move the arm around. Arm is composed of nodes that are linked. Change length and angle using spinners. You can also add and delete nodes.
+ *************************************************************************************************************************************************************/
+
 class Node {
 public:
-    float length;   // renamed from radius — clearer
+    float length;
     float baseX, baseY;
     float endX, endY;
     float angle;    // in degrees, 0 = pointing up
@@ -38,7 +43,7 @@ void UpdateChain(std::vector<Node>& nodes) {
     }
 }
 
-void InitialiseNodes(std::vector<Node>& nodes) {
+static void InitialiseNodes(std::vector<Node>& nodes) {
     // Only node 0 has a fixed base; the rest are chained
     nodes.emplace_back(100.0f, 800.0f, 500.0f, 0.0f);
     nodes.emplace_back(100.0f, 0.0f,   0.0f,   0.0f); // base overwritten by chain
@@ -46,12 +51,12 @@ void InitialiseNodes(std::vector<Node>& nodes) {
     UpdateChain(nodes);
 }
 
-void AddNode(std::vector<Node>& nodes) {
+static void AddNode(std::vector<Node>& nodes) {
     nodes.emplace_back(100.0f, 0.0f, 0.0f, 0.0f);
     UpdateChain(nodes);
 }
 
-void RemoveNode(std::vector<Node>& nodes) {
+static void RemoveNode(std::vector<Node>& nodes) {
     if (nodes.size() > 1) {
         nodes.pop_back();
     }
@@ -71,15 +76,15 @@ int main() {
     CPPFX::GUI gui;
 
     auto nodeChoice   = gui.AddSpinner();
-    nodeChoice->SetMin(); nodeChoice->SetMinValue(0);
+    nodeChoice->SetMin(); nodeChoice->SetMinValue(0.0f);
     nodeChoice->SetMax();
 
     auto lengthChoice = gui.AddEditableSpinner();
-    lengthChoice->SetMin(); lengthChoice->SetMinValue(1);
+    lengthChoice->SetMin(); lengthChoice->SetMinValue(1.0f);
 
     auto angleChoice  = gui.AddEditableSpinner();
-    angleChoice->SetMin();  angleChoice->SetMinValue(0);
-    angleChoice->SetMax();  angleChoice->SetMaxValue(360);
+    angleChoice->SetMin();  angleChoice->SetMinValue(0.0f);
+    angleChoice->SetMax();  angleChoice->SetMaxValue(360.0f);
     angleChoice->AllowWrap();
 
     auto nodeLabel   = gui.AddLabel();  nodeLabel->SetText("Active node index");    nodeLabel->ExpandToText();
@@ -101,12 +106,12 @@ int main() {
     auto addButton = gui.AddButton();
     addButton->SetText("Add node to the top");  addButton->ExpandToText();
     addButton->onClick = [&nodes]() {AddNode(nodes);};
-    addButton->border.SetThickness(5);
+    addButton->border.SetThickness(5.0f);
 
     auto removeButton = gui.AddButton();
     removeButton->SetText("Remove the top node");   removeButton->ExpandToText();
     removeButton->onClick = [&nodes]() {RemoveNode(nodes);};
-    removeButton->border.SetThickness(5);
+    removeButton->border.SetThickness(5.0f);
 
     auto ui = gui.AddVBox();
     ui->AddItem(nodePick);
@@ -114,7 +119,7 @@ int main() {
     ui->AddItem(anglePick);
     ui->AddItem(addButton);
     ui->AddItem(removeButton);
-    ui->SetPriority(11); //must go before the previous ones to set them first, by default containers have priority of 10.
+    ui->MoveDownPriority(); //must go before the previous ones to set them first
 
     int prevIdx = 0;
     lengthChoice->SetValue(nodes[0].length); //sets the base node display correctly

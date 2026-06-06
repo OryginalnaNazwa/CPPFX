@@ -1,9 +1,12 @@
-#include "CPPFX.h"
+#include "CPPFX.hpp"
+#include <cmath> // for fmod
 
-/**************
- * Simple mockup simulation controlled by a simple UI.
+/*****************************************************************************************************************************
+ * Simple mockup simulation controlled by a simple UI. v2
  * A clock-arm like spins around. It's speed is controlled by a Spinner and the simulation can be stopped with a PressedButton.
- *************/
+ * ===========================================================================================================================
+ *  v2 - switched to Line for the clock.
+ ******************************************************************************************************************************/
 
 int main()
 {
@@ -20,27 +23,30 @@ int main()
 
     //gui initialisation
     auto speedPicker = gui.AddSpinner("SpeedPicker");
-    speedPicker->SetX(100);
-    speedPicker->SetY(100);
+    speedPicker->SetX(100.0f);
+    speedPicker->SetY(100.0f);
     speedPicker->SetMin();
-    speedPicker->SetMinValue(1);
+    speedPicker->SetMinValue(1.0f);
     speedPicker->SetMax();
-    speedPicker->SetMaxValue(10);
-    speedPicker->SetValue(1);
+    speedPicker->SetMaxValue(10.0f);
+    speedPicker->SetValue(1.0f);
 
     auto startButton = gui.AddPressedButton("StartButton");
     startButton->pressedColour.SetColour(RED);
-    startButton->unPressedColour.SetColour(DARKGREEN);
+    startButton->colour.SetColour(DARKGREEN);
     startButton->font.colour.SetColour(RAYWHITE);
     startButton->SetText("START");
     startButton->SetPressedText("STOP");
-    startButton->SetX(100);
-    startButton->SetY(300);
+    startButton->SetX(100.0f);
+    startButton->SetY(300.0f);
 
-    //sim initialisation
-    const float Ox = 1000, Oy = 500, radius = 250;
-    float endX = Ox + radius, endY = Oy;
-    float dt = 0; //stands upright without a jump
+    auto arm = gui.AddLine("Arm"); // simple shape
+    arm->DrawLengthAndAngle(); // sets drawing based on length and angle, rather than from point to point
+    arm->SetLength(250.0f);
+    arm->SetXY(1000.0f, 500.0f);
+    arm->colour.SetColour(BLACK);
+
+    float dt = 0.0f; // small helper
 
     while (!WindowShouldClose()) {
         BeginDrawing();
@@ -48,14 +54,11 @@ int main()
         ClearBackground(WHITE);
 
         //calculate line
-        if (startButton->IsPressed()) {
-            dt += GetFrameTime() * speedPicker->GetValue();
-            float angle = fmod(dt * 360.0f, 360.0f);
-            endX = Ox + cos(angle * DEG2RAD) * radius;
-            endY = Oy + sin(angle * DEG2RAD) * radius;
+        if (startButton->IsPressed()) { // easier than doing it in callback
+            dt += GetFrameTime() * speedPicker->GetValue(); // time of move
+            float angle = fmod(dt * 360.0f, 360.0f); // calculate angle based on that
+            arm->SetAngle(angle);
         }
-        //draw line
-        DrawLineEx({Ox, Oy}, {endX, endY}, 10, BLACK);
 
         //draw ui and update it
         gui.DoUI(camera);
