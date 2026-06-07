@@ -24,6 +24,8 @@
 #define CPPFX_WARN(msg) std::cerr << "[CPPFX Warning] " << msg << "\n"
 #endif
 
+#define CPPFX_THROW(ex, msg) throw ex("In " + fxID + " " + ID + ": " + msg)
+
 namespace CPPFX {
 
 /**
@@ -193,7 +195,7 @@ public:
 
     /**
      *  @brief Default constructor.
-     *  @details Sets fontSize to 20 and colour to black.
+     *  @details Sets font's size to 20 and colour to black.
      */
     Font() : Property("Font", BLACK), fontSize(20.0f) {}
     /**
@@ -202,6 +204,19 @@ public:
      *  @param fS size of the font to be set.
      */
     Font(float fS) : Property("Font", BLACK), fontSize(fS) {}
+    /**
+     *  @brief Constructor for custom colour.
+     *  @details Sets font's size to 20.
+     *  @param c colour to be set.
+     */
+    Font(const Color& c) : Property("Font", c), fontSize(20.0f) {}
+    /**
+     *  @brief Constructor for custom size.
+     *  @details Sets colour to black.
+     *  @param fS size of the font to be set.
+     *  @param c colour to be set.
+     */
+    Font(float fS, const Color& c) : Property("Font", c), fontSize(fS) {}
 
     /**
      *  @brief Sets font size.
@@ -230,10 +245,32 @@ public:
     enum Alignments {
         TOP_LEFT,       TOP_CENTRE,     TOP_RIGHT,
         CENTRE_LEFT,    CENTRE,         CENTRE_RIGHT,
-        BOTTOM_LEFT,    BOTTOM_CENTRE,  BOTTOM_RIGHT
-    };
+        BOTTOM_LEFT,    BOTTOM_CENTRE,  BOTTOM_RIGHT,
+        //aliases (convenience and reuse of axes)
+        LEFT = CENTRE_LEFT,
+        RIGHT = CENTRE_RIGHT,
+        TOP = TOP_CENTRE,
+        UP = TOP_CENTRE,
+        ABOVE = TOP_CENTRE,
+        BOTTOM = BOTTOM_CENTRE,
+        DOWN = BOTTOM_CENTRE,
+        UNDER = BOTTOM_CENTRE,
+        MIDDLE = CENTRE
+    }; ///< alignments matrix
 
+    /**
+     *  @brief Default constructor
+     *  @details Sets alignment to top left.
+     */
     Alignment() : Property("Alignment"), alignment(TOP_LEFT) {}
+    /**
+     *  @brief Constructor for setting alignment using enum value.
+     */
+    Alignment(const Alignments& a) : Property("Alignment"), alignment(a) {}
+    /**
+     *  @brief Constructor for setting alignment using string.
+     */
+    Alignment(const std::string& a) : Property("Alignment"), alignment(StringToAlignment(a)) {}
 
     /**
      *  @brief Sets the alignment based on a string.
@@ -284,9 +321,36 @@ public:
      */
     bool IsTopAlignment() const;
 
+    /**
+     *  @brief Gets x coordinate aligned according to current alignment.
+     *  @details Assumes top left is the default and doesn't have to do anything.
+     *  @param x x coordinate
+     *  @param width width of the object to align, for properly centering it
+     *  @param objectWidth width of the space in which aligning is happening
+     *  @returns x aligned to the current alignment
+     *  @throws std::invalid_argument if width or objectWidth is negative
+     */
+    float GetAlignedX(float x, float width, float objectWidth) const;
+    /**
+     *  @brief Gets y coordinate aligned according to current alignment.
+     *  @details Assumes top left is the default and doesn't have to do anything.
+     *  @param y y coordinate
+     *  @param width width of the object to align, for properly centering it
+     *  @param objectHeight height of the space in which aligning is happening
+     *  @returns y aligned to the current alignment
+     *  @throws std::invalid_argument if height or objectHeight is negative
+     */
+    float GetAlignedY(float y, float height, float objectHeight) const;
+
 private:
     std::string AlignmentToString(const Alignments& alignment) const;
-    Alignments StringToAlignment(const std::string& alignment) const; ///< normalises
+    /**
+     *  @brief Gets alignment based on a name.
+     *  @details Take in aliases, but overwrites them.
+     *  @param alignment name of the alignment
+     *  @returns Alignment
+     */
+    Alignments StringToAlignment(const std::string& alignment) const;
 
     Alignments alignment; ///< current alignment
 };

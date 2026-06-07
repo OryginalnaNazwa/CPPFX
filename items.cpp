@@ -6,18 +6,39 @@
 
 using namespace CPPFX;
 
+//--- Label ---
+
+void Label::DrawMyself(float elapsedTime) const {
+    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+    if (text != "") {
+        float textWidth = (float)(MeasureText(text.c_str(), font.GetFontSize()));
+        DrawText(text.c_str(), alignment.GetAlignedX(xAnchor + textMargin, textWidth, width - textMargin), alignment.GetAlignedY(yAnchor, font.GetFontSize(), height), font.GetFontSize(), font.colour.GetColour());
+    }
+    border.DrawMyself(xAnchor, yAnchor, width, height);
+}
+
+void Label::DoFocusAction(float elapsedTime) {
+    Defocus();
+    return;
+}
+
+const std::string Label::GetClassID() {
+    return "Label";
+}
+
 //--- Text Field ---
 
 void TextField::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
-            DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), GREY);
+            DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (promptFont.GetFontSize() / 2.0f),
+                        promptFont.GetFontSize(), promptFont.colour.GetColour());
         }
     } else {
         std::string truncated = Truncate(text);
         DrawText(truncated.c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
-        if (focused && fmod(elapsedTime, 1.0f) < 0.5f) { //checks whether half a second passed
+        if (focused && fmod(elapsedTime, 1.0f) < 0.5f) { //checks whether half a second passed // could use timer, like in button?
             DrawText("|", MeasureText(truncated.c_str(), font.GetFontSize()) + xAnchor + textMargin + 2.0f, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f),
                       font.GetFontSize(), font.colour.GetColour());
         }
@@ -33,7 +54,7 @@ void TextField::DoFocusAction(float elapsedTime) {
             }
         } else if (IsKeyDown(KEY_BACKSPACE)) {
             if (text != "") {
-                if (fmod(elapsedTime, 0.1f) < GetFrameTime()) {
+                if (fmod(elapsedTime, 0.1f) < GetFrameTime()) { // works, but it's a bit janky
                     text.erase(text.size() - 1);
                 }
             }
@@ -72,48 +93,15 @@ std::string TextField::Truncate(const std::string& text) const {
     } else return text;
 }
 
-//--- Label ---
-
-void Label::DrawMyself(float elapsedTime) const {
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    if (text != "") {
-        float startX = xAnchor, startY = yAnchor, textOffset = 0, yTextOffSet = 0;
-        float textWidth = MeasureText(text.c_str(), font.GetFontSize());
-        switch (alignment.GetAlignment()) {
-            case Alignment::Alignments::TOP_LEFT:
-                startX = xAnchor; startY = yAnchor; textOffset = textMargin; yTextOffSet = textMargin; break;
-            case Alignment::Alignments::TOP_CENTRE:
-                startX = xAnchor + (width / 2.0f); startY = yAnchor; textOffset = -textWidth; yTextOffSet = textMargin; break;
-            case Alignment::Alignments::TOP_RIGHT:
-                startX = xAnchor + width; startY = yAnchor; textOffset = -textMargin - textWidth; yTextOffSet = textMargin; break;
-            case Alignment::Alignments::CENTRE_LEFT:
-                startX = xAnchor; startY = yAnchor + (height / 2.0f); textOffset = textMargin; yTextOffSet = -font.GetFontSize() / 2.0f; break;
-            case Alignment::Alignments::CENTRE:
-                startX = xAnchor + (width / 2.0f); startY = yAnchor + (height / 2.0f); textOffset = -(textWidth / 2.0f); yTextOffSet = -font.GetFontSize() / 2.0f; break;
-            case Alignment::Alignments::CENTRE_RIGHT:
-                startX = xAnchor + width; startY = yAnchor + (height / 2.0f); textOffset = -textMargin - textWidth; yTextOffSet = -font.GetFontSize() / 2.0f; break;
-            case Alignment::Alignments::BOTTOM_LEFT:
-                startX = xAnchor; startY = yAnchor + height; textOffset = textMargin; yTextOffSet = -font.GetFontSize(); break;
-            case Alignment::Alignments::BOTTOM_CENTRE:
-                startX = xAnchor + (width / 2.0f); startY = yAnchor + height; textOffset = -(textWidth / 2.0f); yTextOffSet = -font.GetFontSize(); break;
-            case Alignment::Alignments::BOTTOM_RIGHT:
-                startX = xAnchor + width; startY = yAnchor + height; textOffset = -textMargin - textWidth; yTextOffSet = -font.GetFontSize(); break;
-        }
-       DrawText(text.c_str(), startX + textOffset, startY + yTextOffSet, font.GetFontSize(), font.colour.GetColour());
-    }
-    border.DrawMyself(xAnchor, yAnchor, width, height);
-}
-
-void Label::DoFocusAction(float elapsedTime) {
-    Defocus();
-    return;
+const std::string TextField::GetClassID() {
+    return "TextField";
 }
 
 //--- Button ---
 
 void Button::DrawMyself(float elapsedTime) const {
     if (timer > 0.0f) {
-        DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour());
+        DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour()); //button during click
     } else DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
 
     if (text != "") {
@@ -136,6 +124,10 @@ void Button::DoFocusAction(float elapsedTime) {
     } else {
         timer = 0.0f;
     }
+}
+
+const std::string Button::GetClassID() {
+    return "Button";
 }
 
 // --- CheckBox ---
@@ -176,7 +168,11 @@ float CheckBox::GetLabelMargin() const {
 }
 
 float CheckBox::GetTotalWidth() const {
-    return width + labelMargin + (2.0f * textMargin) + MeasureText(text.c_str(), font.GetFontSize());
+    return Item::GetTotalWidth() + clickBorder.GetThickness() + labelMargin + (2.0f * textMargin) + (float)(MeasureText(text.c_str(), font.GetFontSize()));
+}
+
+const std::string CheckBox::GetClassID() {
+    return "CheckBox";
 }
 
 // --- Containers ---
@@ -194,6 +190,10 @@ void Workspace::SetPositionsOfItems() {
             item->SetY(this->yAnchor + this->height - item->GetHeight());
         }
     }
+}
+
+const std::string Workspace::GetClassID() {
+    return "Workspace";
 }
 
 void AnchorPane::SetPositionsOfItems() {
@@ -278,6 +278,10 @@ void AnchorPane::SetWidth(float value) {
     }
 }
 
+const std::string AnchorPane::GetClassID() {
+    return "AnchorPane";
+}
+
 void VBox::SetPositionsOfItems() {
     /*float currentPadding = padding;
     for (auto& item : ItemsInDrawingOrder) {
@@ -310,13 +314,13 @@ void VBox::SetPositionsOfItems() {
     float itemOffsetX = 0, itemOffsetY = 0;
     for (auto& item : ItemsInDrawingOrder) {
         if (alignment.IsRightAlignment()) {
-            itemOffsetX = -item->GetWidth();
+            itemOffsetX = -item->GetTotalWidth();
             itemOffsetY = 0;
         } else if (alignment.IsCentreAlignment()) {
-            itemOffsetX = -item->GetWidth() / 2.0f;
+            itemOffsetX = -item->GetTotalWidth() / 2.0f;
             itemOffsetY = 0;
         } else if (alignment.IsBottomAlignment()) {
-            itemOffsetY = -item->GetHeight();
+            itemOffsetY = -item->GetTotalHeight();
         } else {
             itemOffsetY = 0;
             itemOffsetX = 0;
@@ -325,7 +329,7 @@ void VBox::SetPositionsOfItems() {
 
         item->SetY(currentY + itemOffsetY);
 
-        currentY += padding + item->GetHeight();
+        currentY += padding + item->GetTotalHeight();
         if (currentY > yAnchor + height) {
             height = currentY - yAnchor;
         }
@@ -339,6 +343,10 @@ float VBox::GetTotalHeight() const {
         heightSum += padding;
     }
     return heightSum;
+}
+
+const std::string VBox::GetClassID() {
+    return "VBox";
 }
 
 void HBox::SetPositionsOfItems() {
@@ -374,7 +382,7 @@ void HBox::SetPositionsOfItems() {
     for (auto& item : ItemsInDrawingOrder) { //TODO Make it work properly
         item->SetX(currentX);
         item->SetY(startY);
-        currentX += padding + item->GetWidth();
+        currentX += padding + item->GetTotalWidth();
         if (currentX > xAnchor + width) {
             width = currentX - xAnchor;
         }
@@ -388,6 +396,10 @@ float HBox::GetTotalWidth() const {
         widthSum += padding;
     }
     return widthSum;
+}
+
+const std::string HBox::GetClassID() {
+    return "HBox";
 }
 
 //--- Spinner ---
@@ -536,8 +548,8 @@ float Spinner::GetStep() const {
 
 void Spinner::SetX(float x) {
     xAnchor = x;
-    incrementButton.SetX(xAnchor + width);
-    decrementButton.SetX(xAnchor + width);
+    incrementButton.SetX(xAnchor + width + border.GetThickness());
+    decrementButton.SetX(xAnchor + width + border.GetThickness());
 }
 
 void Spinner::SetY(float y) {
@@ -551,8 +563,8 @@ void Spinner::SetWidth(float value) {
         throw std::invalid_argument("In Spinner " + ID + ": Negative width.");
     }
     width = value;
-    incrementButton.SetX(xAnchor + width);
-    decrementButton.SetX(xAnchor + width);
+    incrementButton.SetX(xAnchor + width + border.GetThickness());
+    decrementButton.SetX(xAnchor + width + border.GetThickness());
 }
 
 void Spinner::SetHeight(float value) {
@@ -593,21 +605,21 @@ bool Spinner::IsWrapAllowed() const {
 }
 
 void Spinner::Initialise() {
-    incrementButton.SetX(xAnchor + width);
+    border.SetThickness(2.0f);
+    incrementButton.SetX(xAnchor + width + border.GetThickness());
     incrementButton.SetY(yAnchor);
     incrementButton.SetHeight(height / 2.0f);
     incrementButton.SetWidth(50.0f);
     incrementButton.SetText("/\\");
     incrementButton.border.SetThickness(2.0f);
     incrementButton.onClick = [this]() { Increment(); };
-    decrementButton.SetX(xAnchor + width);
+    decrementButton.SetX(xAnchor + width + border.GetThickness());
     decrementButton.SetY(yAnchor + (height / 2.0f));
     decrementButton.SetHeight(height / 2.0f);
     decrementButton.SetWidth(50.0f);
     decrementButton.SetText("\\/");
     decrementButton.border.SetThickness(2.0f);
     decrementButton.onClick = [this]() { Decrement(); };
-    border.SetThickness(2.0f);
 }
 
 void Spinner::SetButtonsWidth(float value) {
@@ -687,7 +699,11 @@ bool Spinner::IsAtMin() const {
 }
 
 float Spinner::GetTotalWidth() const {
-    return width + incrementButton.GetTotalWidth();
+    return Item::GetTotalWidth() + incrementButton.GetWidth();
+}
+
+const std::string Spinner::GetClassID() {
+    return "Spinner";
 }
 
 // --- EditableSpinner ---
@@ -702,7 +718,7 @@ void EditableSpinner::DrawMyself(float elapsedTime) const {
     incrementButton.DrawMyself(elapsedTime);
     decrementButton.DrawMyself(elapsedTime);
 
-    border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
+    border.DrawMyself(xAnchor, yAnchor, width + incrementButton.GetWidth() + editArea.border.GetThickness(), height);
 }
 
 void EditableSpinner::DrawMyself(float elapsedTime, const Camera2D& camera) const {
@@ -710,6 +726,7 @@ void EditableSpinner::DrawMyself(float elapsedTime, const Camera2D& camera) cons
     float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
 
     editArea.Item::DrawMyself(elapsedTime, camera);
+    editArea.border.DrawMyself(xAnchor, yAnchor, width, height);
     //shift the buttons to where they should be
     const float savedButtonX = incrementButton.GetX();
     const float savedIncButtonY = incrementButton.GetY(), savedDecButtonY = decrementButton.GetY();
@@ -726,7 +743,7 @@ void EditableSpinner::DrawMyself(float elapsedTime, const Camera2D& camera) cons
     incrementButton.SetY(savedIncButtonY);
     decrementButton.SetY(savedDecButtonY);
 
-    border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
+    border.DrawMyself(xAnchor, yAnchor, width + incrementButton.GetWidth() + editArea.border.GetThickness(), height);
 }
 
 void EditableSpinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
@@ -832,7 +849,8 @@ void EditableSpinner::SetHeight(float value) {
 
 void EditableSpinner::SetValueMargin(float value) {
     if (value < 0.0f) {
-        throw std::invalid_argument("In Spinner " + ID + ": Negative value margin.");
+        //throw std::invalid_argument("In Spinner " + ID + ": Negative value margin.");
+        CPPFX_THROW(std::invalid_argument, "Negative value margin");
     }
     editArea.SetTextMargin(value);
 }
@@ -862,6 +880,10 @@ void EditableSpinner::SetToScreen() {
     Spinner::SetToScreen();
 }
 
+const std::string EditableSpinner::GetClassID() {
+    return "EditableSpinner";
+}
+
 // --- PasswordField ---
 
 void PasswordField::DrawMyself(float elapsedTime) const {
@@ -888,6 +910,10 @@ void PasswordField::SetMask(const char character) {
 
 char PasswordField::GetMask() const {
     return mask;
+}
+
+const std::string PasswordField::GetClassID() {
+    return "PasswordField";
 }
 
 // --- ProgressIndicator ---
@@ -988,7 +1014,7 @@ void ProgressIndicator::DrawMyself(float elapsedTime) const {
         float radius = width / 2.0f;
         float dotRadius = radius / 6.0f; //TODO make stuff customisable
         float angle = fmod(elapsedTime * 180.0f, 360.0f); // rotation speed
-        for (size_t i = 0; i < dotCount; i++) {
+        for (size_t i = 0; i < (size_t)(dotCount); i++) {
             float dotAngle = angle + (360.0f / dotCount) * i;
             float x = xAnchor + width / 2.0f + cos(dotAngle * DEG2RAD) * radius;
             float y = yAnchor + height / 2.0f + sin(dotAngle * DEG2RAD) * radius;
@@ -1035,6 +1061,10 @@ void ProgressIndicator::SetDisplayValue(const bool& flag) {
 
 bool ProgressIndicator::IsDisplayingValue() const {
     return displayValue;
+}
+
+const std::string ProgressIndicator::GetClassID() {
+    return "ProgressIndicator";
 }
 
 // --- ProgressBar ---
@@ -1147,6 +1177,10 @@ bool ProgressBar::IsSegmented() const {
     return segmented;
 }
 
+const std::string ProgressBar::GetClassID() {
+    return "ProgressBar";
+}
+
 // --- Pressed button ---
 
 void PressedButton::DrawMyself(float elapsedTime) const {
@@ -1184,6 +1218,10 @@ void PressedButton::ClearPressedText() {
 
 std::string PressedButton::GetPressedText() const {
     return pressedText;
+}
+
+const std::string PressedButton::GetClassID() {
+    return "PressedButton";
 }
 
 // ---------- Pie chart -----------
@@ -1282,6 +1320,10 @@ void PieChart::SetShowingPercentage(const bool& flag) {
 
 bool PieChart::IsShowingPercentage() const {
     return showPercentage;
+}
+
+const std::string PieChart::GetClassID() {
+    return "PieChart";
 }
 
 // --- Line ---
@@ -1405,6 +1447,10 @@ bool Line::GetDrawingMethod() const {
     return pointToPoint;
 }
 
+const std::string Line::GetClassID() {
+    return "Line";
+}
+
 // --- Square ---
 
 void CPPFX::Square::DrawMyself(float elapsedTime) const {
@@ -1433,6 +1479,10 @@ float CPPFX::Square::GetTotalHeight() const {
     return GetWidth();
 }
 
+const std::string CPPFX::Square::GetClassID() {
+    return "Square";
+}
+
 // --- Rectangle ---
 
 void CPPFX::Rectangle::DrawMyself(float elapsedTime) const {
@@ -1444,6 +1494,12 @@ float CPPFX::Rectangle::CalculateMyArea() const {
     return width * height;
 }
 
+const std::string CPPFX::Rectangle::GetClassID() {
+    return "Rectangle";
+}
+
+// --- Circle ---
+
 void CPPFX::Circle::DrawMyself(float elapsedTime) const {
     border.DrawMyself(TranslateXToCentre(), TranslateYToCentre(), GetRadius(), GetRadius());
     DrawCircle(TranslateXToCentre(), TranslateYToCentre(), GetRadius(), colour.GetColour());
@@ -1451,4 +1507,8 @@ void CPPFX::Circle::DrawMyself(float elapsedTime) const {
 
 float CPPFX::Circle::CalculateMyArea() const {
     return PI * GetRadius() * GetRadius();
+}
+
+const std::string Circle::GetClassID() {
+    return "Circle";
 }

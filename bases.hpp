@@ -66,6 +66,12 @@ public:
      */
     float GetTextMargin() const;
 
+    /**
+     *  @see Item::GetClassID()
+     *  @note Pointless here, just a reminder to put it in inherited classes.
+     */
+    static const std::string GetClassID();
+
 protected:
     std::string text;
     float textMargin; ///<distance from limit to text.
@@ -145,6 +151,12 @@ public:
      */
     bool IsIDTaken(const std::string& ID) const;
 
+    /**
+     *  @see Item::GetClassID()
+     *  @note Pointless here, just a reminder to put it in inherited classes.
+     */
+    static const std::string GetClassID();
+
 protected:
     std::map<std::string, Item*> Items;
     std::vector<Item*> ItemsInDrawingOrder;
@@ -171,6 +183,12 @@ public:
      *  @throws std::invalid_argument if the padding is negative
      */
     void SetPadding(float value) override;
+
+    /**
+     *  @see Item::GetClassID()
+     *  @note Pointless here, just a reminder to put it in inherited classes.
+     */
+    static const std::string GetClassID();
 
 };
 
@@ -201,6 +219,12 @@ public:
     size_t GetLabelsSize() const;
     size_t GetValuesSize() const;
 
+    /**
+     *  @see Item::GetClassID()
+     *  @note Pointless here, just a reminder to put it in inherited classes.
+     */
+    static const std::string GetClassID();
+
 protected:
     std::vector<std::string> labels;
     std::vector<double> values;
@@ -223,6 +247,12 @@ public:
      */
     virtual float CalculateMyArea() const = 0;
     void DoFocusAction(float elapsedTime) override; ///< does nothing
+
+    /**
+     *  @see Item::GetClassID()
+     *  @note Pointless here, just a reminder to put it in inherited classes.
+     */
+    static const std::string GetClassID();
 };
 
 }

@@ -207,6 +207,11 @@ public:
      */
     virtual void SetY(float y);
     /**
+     *  @brief Sets both x and y coordinates to the same value
+     *  @param xy coordinates
+     */
+    virtual void SetXY(float xy);
+    /**
      *  @brief Sets both x and y coordinate of the item.
      *  @param x new value to be set of x coordinate
      *  @param y new value to be set of y coordinate
@@ -272,7 +277,7 @@ public:
      */
     virtual float GetHeight() const;
     /**
-     *  @brief Returns total height of the item, if it's different from the standard.
+     *  @brief Returns total height of the item, if it's different from the standard. Takes border into account.
      *  @details Sometimes items have variable total height at runtime, or the standard height is a dimension of the "main body." For interaction, use GetHeight, for drawing - GetTotalHeight.
      *  @returns runtime height
      */
@@ -283,7 +288,7 @@ public:
      */
     virtual float GetWidth() const;
     /**
-     *  @brief Returns total width of the item, if it's different from the standard.
+     *  @brief Returns total width of the item, if it's different from the standard. Takes border into account.
      *  @details Sometimes items have variable total width at runtime, or the standard width is a dimension of the "main body." For interaction, use GetWidth, for drawing - GetTotalWidth.
      *  @returns runtime width
      */
@@ -306,6 +311,14 @@ public:
      *  @returns Internal ID
      */
     std::string GetFxID() const;
+    /**
+     *  @brief Returns the internal library identificator of the item.
+     *  @details The same as GetFxID, but static.
+     *  @returns Internal ID
+     *  @see Item::GetFxID
+     *  @note It's pointless here, but it cannot be inherited. It's just a reminder here - add this to other items.
+     */
+    static const std::string GetClassID();
 
 protected:
     std::string ID; ///< ID used by the user, variable.

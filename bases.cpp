@@ -66,6 +66,10 @@ float TextItem::GetTextMargin() const {
     return textMargin;
 }
 
+const std::string TextItem::GetClassID() {
+    return "TextItem";
+}
+
 //--- Container ---
 
 void Container::AddItem(Item* item) {
@@ -153,11 +157,19 @@ void Container::DoFocusAction(float elapsedTime) {
     return;
 }
 
+const std::string Container::GetClassID() {
+    return "Container";
+}
+
     // --- Box ---
 
 void Box::SetPadding(float value) {
     Padded::SetPadding(value);
     needsOrdering = true;
+}
+
+const std::string Box::GetClassID() {
+    return "Box";
 }
 
 // --- Chart ---
@@ -227,8 +239,16 @@ size_t Chart::GetValuesSize() const {
     return values.size();
 }
 
+const std::string Chart::GetClassID() {
+    return "Chart";
+}
+
 // --- Shape ---
 
 void Shape::DoFocusAction(float elapsedTime) {
     return;
+}
+
+const std::string Shape::GetClassID() {
+    return "Shape";
 }

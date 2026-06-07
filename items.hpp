@@ -28,31 +28,36 @@ namespace CPPFX {
 /**
  *  @class Label
  *  @brief A simple text displayer.
- *  @details Displays the text. Position is based on alignment. Has border.
+ *  @details Displays the text. Position is based on alignment. Default alignment is CENTRE. Has border.
  */
 class Label : public TextItem {
 public:
 
     Alignment alignment;
 
-    Label() : Item("Label"), TextItem("Label") {colour.SetColour(BLANK); text = "Label";}
+    Label() : Item("Label"), TextItem("Label"), alignment(Alignment::CENTRE) {colour.SetColour(BLANK); text = "Label";}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 
 };
 
 /**
  *  @class TextField
  *  @brief Allows user to enter text into the field.
- *  @details Displays the text and allows input when focused. Has border.
+ *  @details Displays the text and allows input when focused. Has border. Has different font object for prompt.
  */
 class TextField : public TextItem {
 public:
+    Font promptFont; ///< mostly here for colour, but maybe you want other font for your prompt text, why not
 
-
-    TextField() : Item("TextField"), TextItem("TextField"), promptText("") {}
-    TextField(const std::string& i) : Item("TextField"), TextItem(i), promptText("") {}
+    TextField() : Item("TextField"), TextItem("TextField"), promptFont(height / 4, GREY), promptText("") {}
+    TextField(const std::string& i) : Item("TextField"), TextItem(i), promptFont(height / 4, GREY), promptText("") {}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -60,6 +65,11 @@ public:
     void SetPromptText(const std::string& text);
     void ClearPromptText();
     std::string GetPromptText() const;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 
 protected:
     std::string promptText; ///< string displayed when the text is empty
@@ -74,28 +84,31 @@ protected:
 /**
  * @class Button
  * @brief A single click pushable item.
- * @details Unpushes after a click. Has border. Has colour for clicked and unclicked state.
+ * @details Unpushes after a click. Has border. Has a different colour for clicked state.
  */
 class Button : public TextItem {
 public:
     Colour pressedColour;
 
     Button() : Item("Button"), TextItem("Button"), pressedColour(GREY) {}
-    Button(const std::string& id) : TextItem(id), pressedColour(GREY) {}
+    Button(const std::string& id) : Item("Button"), TextItem(id), pressedColour(GREY) {}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
 
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 };
 
 /**
  * @class CheckBox
  * @brief A turn on - turn off button.
- * @details Width is the length of the box, not the total one. Total length is width + MeasureText(text) + textMargin + labelMargin. Has border. Has colour for pressed state and unpressed.
+ * @details Width is the length of the box, not the total one. Total length is width + MeasureText(text) + textMargin + labelMargin. Has border. Has colour for pressed state and unpressed. Border includes label.
  */
 class CheckBox : public TextItem, public virtual PersistentState {
 public:
-     ///<automatically stretches to accommodate text.
     Border clickBorder; ///< border solely around clickable area.
 
     bool drawsX = true; //TODO add different shapes
@@ -114,6 +127,11 @@ public:
      */
     void SetLabelMargin(float value);
     float GetLabelMargin() const;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 
 private:
     float labelMargin; ///<distance between the box and the label text.
@@ -354,6 +372,12 @@ public:
         return height * (values.size() + 1);
     }
 
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID() {
+        return "DropDown";
+    }
 
 private:
     std::map<std::string, T> values;
@@ -375,6 +399,11 @@ public:
     Workspace() : Item("Workspace"), Container("Workspace", 500.0f, 500.0f) {}
 
     void SetPositionsOfItems() override;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 };
 
 /**
@@ -409,6 +438,11 @@ public:
      */
     void SetHeight(float value) override;
 
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
+
 private:
     // used for recalculating positions of children when pane moves or reshapes.
     float previousX;
@@ -433,6 +467,11 @@ public:
      *  @details (heights + padding) * number of items, roughly
      */
     float GetTotalHeight() const override;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 };
 
 /**
@@ -451,6 +490,11 @@ public:
      *  @details (widths + padding) * number of items, roughly
      */
     float GetTotalWidth() const override;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 };
 
 /**
@@ -458,7 +502,7 @@ public:
  *  @brief A value picker. Use buttons to increase or decrease value.
  *  @details Can wrap around. Composed of buttons. Has border. Has font. Min and max values can be set. Bounds are inclusive.
  */
-class Spinner : public Item {
+class Spinner : virtual public Item {
 public:
     mutable Button incrementButton;
     mutable Button decrementButton;
@@ -594,6 +638,11 @@ public:
      */
     float GetTotalWidth() const override;
 
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
+
 protected:
     float valueMargin; ///< distance between value and border
 
@@ -609,8 +658,6 @@ protected:
     void Increment(); ///< Increases value by stepValue
     void Decrement(); ///< Decreases value by stepValue
 
-private:
-
 };
 
 /**
@@ -618,17 +665,20 @@ private:
  *  @brief Spinner in which you can enter a value.
  *  @details Composed of a Spinner and a TextField.
  */
-class EditableSpinner : public Spinner {
+class EditableSpinner : virtual public Item, public Spinner {
 public:
     mutable TextField editArea;
 
-    EditableSpinner() : Spinner("EditableSpinner") {
+    EditableSpinner() : Item("EditableSpinner"), Spinner("EditableSpinner") {
         editArea.SetX(xAnchor);
         editArea.SetY(yAnchor);
         editArea.SetWidth(width);
         editArea.SetHeight(height);
+        editArea.border.SetThickness(2.0f);
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
         editArea.font.SetFontSize(font.GetFontSize());
+        incrementButton.SetX(xAnchor + width + editArea.border.GetThickness());
+        decrementButton.SetX(xAnchor + width + editArea.border.GetThickness());
     }
 
     void DrawMyself(float elapsedTime) const override;
@@ -677,6 +727,11 @@ public:
      *  @details Interface for text field.
      */
     float GetValueMargin() const override;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 };
 
 /**
@@ -693,6 +748,11 @@ public:
 
     void SetMask(const char character);
     char GetMask() const;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 
 private:
     char mask;
@@ -785,6 +845,11 @@ public:
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
 
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
+
 protected:
     Shapes shape;
     bool displayValue; ///< whether displays the value in percents. Indefinite doesn't display value.
@@ -867,6 +932,11 @@ public:
      */
     void SetShape(const std::string& shape) override;
 
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
+
 private:
     float barMargin; ///< the distance between the top/side of the main bar and the progress bar.
     bool segmented;
@@ -888,6 +958,11 @@ public:
     void SetPressedText(const std::string& value);
     void ClearPressedText();
     std::string GetPressedText() const;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 
 private:
     std::string pressedText;
@@ -1078,6 +1153,13 @@ public:
         return (float)(items.size() - 1) * (padding + font.GetFontSize()) + font.GetFontSize();
     }
 
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID() {
+        return "List";
+    }
+
 private:
     std::vector<T> items; ///< objects in the list
     std::function<std::string(const T&)> displayMethod; ///< how the items will be displayed. By default, just spaced out strings.
@@ -1102,6 +1184,11 @@ public:
     void DoNotShowPercentage();
     void SetShowingPercentage(const bool& flag);
     bool IsShowingPercentage() const;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 
 private:
     bool showLabels;
@@ -1191,6 +1278,11 @@ public:
      */
     bool GetDrawingMethod() const;
 
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
+
 private:
     bool pointToPoint; ///< method of drawing. False is based on angle and length (width)
     float thickness; ///< thickness of the line
@@ -1219,6 +1311,11 @@ public:
     void SetHeight(float value) override; /// overrides into width.
     float GetHeight() const override; /// overrides into width.
     float GetTotalHeight() const override;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 };
 
 /**
@@ -1233,6 +1330,11 @@ public:
     void DrawMyself(float elapsedTime) const override;
 
     float CalculateMyArea() const override; /// width * height
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 };
 
 /**
@@ -1248,6 +1350,11 @@ public:
     void DrawMyself(float elapsedTime) const override;
 
     float CalculateMyArea() const override; ///< uses raylib's PI definition. PI * (width/2)^2
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 };
 
 }

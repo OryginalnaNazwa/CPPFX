@@ -56,7 +56,7 @@ void Item::DoPassiveAction(float elapsedTime, const Camera2D& camera) {
 // --- Helpers ---
 
 void Item::MoveUpPriority() {
-    if (priority > 0.0f) {
+    if (priority > (size_t)(0)) {
         priority--;
     }
 }
@@ -71,6 +71,11 @@ void Item::SetX(float x) {
 }
 void Item::SetY(float y) {
     yAnchor = y;
+}
+
+void Item::SetXY(float xy) {
+    SetX(xy);
+    SetY(xy);
 }
 
 void Item::SetXY(float x, float y) {
@@ -190,7 +195,7 @@ float Item::GetHeight() const {
 }
 
 float Item::GetTotalHeight() const {
-    return height;
+    return height + (2 * border.GetThickness());
 }
 
 float Item::GetWidth() const {
@@ -198,11 +203,15 @@ float Item::GetWidth() const {
 }
 
 float Item::GetTotalWidth() const {
-    return width;
+    return width + (2 * border.GetThickness());
 }
 
 std::string Item::GetFxID() const {
     return fxID;
+}
+
+const std::string Item::GetClassID() {
+    return "Item";
 }
 
 size_t Item::GetPriority() const {
