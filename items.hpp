@@ -113,7 +113,7 @@ public:
 
     bool drawsX = true; //TODO add different shapes
 
-    CheckBox() : Item("CheckBox", 50.0f, 50.0f), TextItem("CheckBox", 50.0f, 50.0f), PersistentState(), labelMargin(10.0f) {font.SetFontSize(height / 2.0f);}
+    CheckBox() : Item("CheckBox", 50.0f, 50.0f), PersistentState(), TextItem("CheckBox", 50.0f, 50.0f), labelMargin(10.0f) {font.SetFontSize(height / 2.0f);}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -1170,7 +1170,7 @@ private:
 class PieChart : public Chart, virtual public Circular {
 public:
 
-    PieChart() : Item("PieChart"), Chart("PieChart"), Circular(), showLabels(false), showPercentage(false) {}
+    PieChart() : Item("PieChart"), Circular(), Chart("PieChart"), showLabels(false), showPercentage(false) {}
 
     void DoFocusAction(float elapsedTime) override;
     void DrawMyself(float elapsedTime) const override;

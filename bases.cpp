@@ -9,6 +9,7 @@ using namespace CPPFX;
 // --- Text Item ---
 
 std::string TextItem::Truncate(const std::string& text) const {
+        if (text.empty()) return text;
         if (MeasureText(text.c_str(), font.GetFontSize()) + textMargin > width) {
             std::string truncated = "";
             for (const auto& c : text) {
@@ -58,7 +59,7 @@ std::string TextItem::GetText() const {
 
 void TextItem::SetTextMargin(float margin) {
     if (margin < 0.0f) {
-        throw std::invalid_argument("Negative text margin value in " + ID + " type " + fxID);
+        CPPFX_THROW(std::invalid_argument, "Negative text margin.");
     } else textMargin = margin;
 }
 
@@ -74,13 +75,13 @@ const std::string TextItem::GetClassID() {
 
 void Container::AddItem(Item* item) {
     if (!item) {
-        throw std::invalid_argument("In container " + ID + ": null pointer, cannot add item.");
+        CPPFX_THROW(std::invalid_argument, "Null pointer - cannot add item.");
     }
     if (!IsIDTaken(item->GetID())) {
         Items.insert({item->GetID(), item});
         ItemsInDrawingOrder.push_back(item);
     } else {
-        throw std::invalid_argument("Item " + item->GetID() + " is already in the container " + ID);
+        CPPFX_THROW(std::invalid_argument, "Item already in container - cannot add item.");
     }
     needsSorting = true;
     needsOrdering = true;
@@ -91,7 +92,7 @@ void Container::RemoveItem(const std::string& ID) {
         ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&ID](const Item* item) { return item->GetID() == ID; }),ItemsInDrawingOrder.end());
         Items.erase(ID);
     } else {
-        throw std::invalid_argument("Item " + ID + " is not in the container " + this->ID + " or doesn't exist");
+        CPPFX_THROW(std::invalid_argument, "Item is not in container - cannot remove item.");
     }
     needsOrdering = true;
 }
@@ -102,9 +103,9 @@ void Container::RemoveItem(const Item* item) {
             ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&item](const Item* i) { return i->GetID() == item->GetID(); }),ItemsInDrawingOrder.end());
             Items.erase(item->GetID());
         } else {
-            throw std::out_of_range("In container " + this->ID + ": cannot delete item " + item->GetID() + " as it's not in the container.");
+            CPPFX_THROW(std::out_of_range, "Item " + item->GetID() + " is not in the container - cannot remove.");
         }
-    } else throw std::invalid_argument("In container " + this->ID + ": cannot delete item - doesn't exist.");
+    } else CPPFX_THROW(std::invalid_argument, "Null pointer - cannot remove item.");
     needsOrdering = true;
 }
 
@@ -188,12 +189,12 @@ double Chart::GetElement(const std::string& label) const {
     if (it != labels.end()) {
         size_t index = std::distance(labels.begin(), it);
         return values[index];
-    } else throw std::out_of_range("Chart " + this->ID + " at element getting: does not contain a label " + label);
+    } else CPPFX_THROW(std::out_of_range, "There is no label " + label + " - unable to get element");
 }
 
 double Chart::GetElement(int index) const {
     if (index < 0 || size_t(index) >= values.size()) {
-        throw std::out_of_range("Chart " + this->ID + ": invalid index at getting");
+        CPPFX_THROW(std::out_of_range, "Invalid index - cannot get element");
     } else return values[index];
 }
 
@@ -202,12 +203,12 @@ void Chart::SetElement(const std::string& label, double newValue) {
     if (it != labels.end()) {
         size_t index = std::distance(labels.begin(), it);
         values[index] = newValue;
-    } else throw std::out_of_range("Chart " + this->ID + " in element setting: does not contain a label " + label);
+    } else CPPFX_THROW(std::out_of_range, "There is no label " + label + " - unable to set element");
 }
 
 void Chart::SetElement(int index, double newValue) {
     if (index < 0 || size_t(index) >= values.size()) {
-        throw std::out_of_range("Chart " + this->ID + ": invalid index at setting element");
+        CPPFX_THROW(std::out_of_range, "Invalid index - cannot set element");
     } else values[index] = newValue;
 }
 
@@ -217,12 +218,12 @@ void Chart::RemoveElement(const std::string& label) {
         size_t index = std::distance(labels.begin(), it);
         values.erase(values.begin() + index);
         labels.erase(it);
-    } else throw std::out_of_range("Chart " + this->ID + " at element removal: does not contain a label " + label);
+    } else CPPFX_THROW(std::out_of_range, "There is no label " + label + " - unable to remove element");
 }
 
 void Chart::RemoveElement(int index) {
     if (index < 0 || size_t(index) >= values.size()) {
-        throw std::out_of_range("Chart " + this->ID + ": invalid index at removal");
+        CPPFX_THROW(std::out_of_range, "Invalid index - cannot remove element");
     } else {
         values.erase(values.begin() + index);
         if (size_t(index) < labels.size()) {

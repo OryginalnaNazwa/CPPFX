@@ -173,8 +173,8 @@ protected:
 class Box : public Container, public virtual Padded {
 public:
 
-    Box(const std::string& i) : Container(i), Padded() {}
-    Box(const std::string& i, float w, float h) : Container(i, w, h), Padded() {}
+    Box(const std::string& i) : Padded(), Container(i)  {}
+    Box(const std::string& i, float w, float h) : Padded(), Container(i, w, h)  {}
 
     /**
      *  @brief Sets padding.

@@ -12,7 +12,8 @@ void Label::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
         float textWidth = (float)(MeasureText(text.c_str(), font.GetFontSize()));
-        DrawText(text.c_str(), alignment.GetAlignedX(xAnchor + textMargin, textWidth, width - textMargin), alignment.GetAlignedY(yAnchor, font.GetFontSize(), height), font.GetFontSize(), font.colour.GetColour());
+        DrawText(text.c_str(), alignment.GetAlignedX(xAnchor + textMargin, textWidth, width - textMargin), alignment.GetAlignedY(yAnchor, font.GetFontSize(), height),
+                    font.GetFontSize(), font.colour.GetColour());
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
@@ -485,7 +486,7 @@ void Spinner::DoFocusAction(float elapsedTime) {
 }
 
 bool Spinner::WasIClicked(const Vector2& mousePosition) const {
-    int xClick = mousePosition.x, yClick = mousePosition.y;
+    float xClick = mousePosition.x, yClick = mousePosition.y;
     if (xClick >= xAnchor && xClick <= (xAnchor + width + incrementButton.GetWidth()) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
         return true;
     }
@@ -547,31 +548,25 @@ float Spinner::GetStep() const {
 }
 
 void Spinner::SetX(float x) {
-    xAnchor = x;
+    Item::SetX(x);
     incrementButton.SetX(xAnchor + width + border.GetThickness());
     decrementButton.SetX(xAnchor + width + border.GetThickness());
 }
 
 void Spinner::SetY(float y) {
-    yAnchor = y;
+    Item::SetY(y);
     incrementButton.SetY(yAnchor);
     decrementButton.SetY(yAnchor + (height / 2.0f));
 }
 
 void Spinner::SetWidth(float value) {
-    if (value < 0.0f) {
-        throw std::invalid_argument("In Spinner " + ID + ": Negative width.");
-    }
-    width = value;
+    Item::SetWidth(value);
     incrementButton.SetX(xAnchor + width + border.GetThickness());
     decrementButton.SetX(xAnchor + width + border.GetThickness());
 }
 
 void Spinner::SetHeight(float value) {
-    if (value < 0.0f) {
-        throw std::invalid_argument("In Spinner " + ID + ": Negative width.");
-    }
-    height = value;
+    Item::SetHeight(value);
     incrementButton.SetHeight(height / 2.0f);
     decrementButton.SetHeight(height / 2.0f);
     decrementButton.SetY(yAnchor + (height / 2.0f));
@@ -579,7 +574,7 @@ void Spinner::SetHeight(float value) {
 
 void Spinner::SetValueMargin(float value) {
     if (value < 0.0f) {
-        throw std::invalid_argument("In Spinner " + ID + ": Negative value margin.");
+        CPPFX_THROW(std::invalid_argument, "Negative value margin.");
     }
     valueMargin = value;
 }
@@ -624,7 +619,7 @@ void Spinner::Initialise() {
 
 void Spinner::SetButtonsWidth(float value) {
     if (value < 0.0f) {
-        throw std::invalid_argument("In spinner " + ID + ": Negative width of buttons.");
+        CPPFX_THROW(std::invalid_argument, "Negative buttons' width.");
     }
     incrementButton.SetWidth(value);
     decrementButton.SetWidth(value);
@@ -920,7 +915,7 @@ const std::string PasswordField::GetClassID() {
 
 void ProgressIndicator::SetProgress(float value) {
     if ((value > 1.0f || value < 0.0f) && value != -1.0f) {
-        throw std::out_of_range("Progress in ProgressIndicator " + ID + " beyond the valid range - " + std::to_string(value));
+        CPPFX_THROW(std::out_of_range, "Progress (" + std::to_string(value) + ") beyond valid range (-1.0f or 0.0f - 1.0f) - cannot set progress.");
     } else {
         this->value = value;
     }
@@ -970,7 +965,10 @@ void ProgressIndicator::DoFocusAction(float elapsedTime) {
 
 void ProgressIndicator::SetShape(const ProgressIndicator::Shapes& shape) {
     if (shape != ProgressIndicator::Shapes::RING && shape != ProgressIndicator::Shapes::DOTS && shape != ProgressIndicator::Shapes::CIRCLE ) {
-        throw std::invalid_argument("Invalid shape");
+        if (shape == ProgressIndicator::BAR) {
+            CPPFX_WARN("If you want a progress bar, use ProgressBar instead.");
+        }
+        CPPFX_THROW(std::invalid_argument, "Invalid shape (" + ShapeToString(shape) + ") - cannot set shape.");
     }
     this->shape = shape;
 }
@@ -984,7 +982,7 @@ ProgressIndicator::Shapes ProgressIndicator::StringToShape(const std::string& sh
     };
     auto it = shapeMap.find(shape);
     if (it != shapeMap.end()) return it->second;
-    throw std::invalid_argument("Invalid shape: " + shape);
+    CPPFX_THROW(std::invalid_argument, "Invalid shape (" + shape + ")");
 }
 
 std::string ProgressIndicator::ShapeToString(const ProgressIndicator::Shapes& shape) const {
@@ -992,7 +990,7 @@ std::string ProgressIndicator::ShapeToString(const ProgressIndicator::Shapes& sh
         case ProgressIndicator::Shapes::RING: return "RING";
         case ProgressIndicator::Shapes::CIRCLE:  return "CIRCLE";
         case ProgressIndicator::Shapes::DOTS: return "DOTS";
-        default: throw std::invalid_argument("Invalid shape");
+        default: CPPFX_THROW(std::invalid_argument, "Invalid shape (" + ShapeToString(shape) + ")");
     }
 }
 
@@ -1071,7 +1069,10 @@ const std::string ProgressIndicator::GetClassID() {
 
 void ProgressBar::SetShape(const ProgressIndicator::Shapes& shape) {
     if (shape != ProgressIndicator::Shapes::RING && shape != ProgressIndicator::Shapes::DOTS && shape != ProgressIndicator::Shapes::CIRCLE && shape != ProgressIndicator::Shapes::BAR) {
-        throw std::invalid_argument("Invalid shape");
+        if (shape != BAR) {
+            CPPFX_WARN("ProgressBar should work at base shapes, but it's not recommended. Use ProgressIndicator instead and ProgressBar for bars only.");
+        }
+        CPPFX_THROW(std::invalid_argument, "Invalid shape (" + ShapeToString(shape) + ") - cannot set shape.");
     }
     this->shape = shape;
 }
@@ -1082,7 +1083,7 @@ std::string ProgressBar::ShapeToString(const ProgressIndicator::Shapes& shape) c
         case ProgressIndicator::Shapes::CIRCLE:  return "CIRCLE";
         case ProgressIndicator::Shapes::DOTS: return "DOTS";
         case ProgressIndicator::Shapes::BAR: return "BAR";
-        default: throw std::invalid_argument("Invalid shape");
+        default: CPPFX_THROW(std::invalid_argument, "Invalid shape (" + ShapeToString(shape) + ")");
     }
 }
 
@@ -1118,9 +1119,9 @@ void ProgressBar::DrawMyself(float elapsedTime) const {
 
 void ProgressBar::SetBarMargin(float value) {
     if (value < 0.0f) {
-        throw std::invalid_argument("Bar margin value in " + this->ID + " is lower than 0.");
+        CPPFX_THROW(std::invalid_argument, "Negative bar margin.");
     } else if (value > height / 2.0f) {
-        throw std::out_of_range("Bar margin value in " + this->ID + " is too big.");
+        CPPFX_THROW(std::out_of_range, "Bar margin value is greater than half of height.");
     } else {
         barMargin = value;
     }
@@ -1131,8 +1132,8 @@ float ProgressBar::GetBarMargin() const {
 }
 
 void ProgressBar::SetNumberOfSegments(int value) {
-    if (value < 0.0f) {
-        throw std::invalid_argument("Number of segments in " + this->ID + " is lower than 0.");
+    if (value < 0) {
+        CPPFX_THROW(std::invalid_argument, "Negative number of segments.");
     } else {
         numberOfSegments = value;
     }
@@ -1144,9 +1145,9 @@ int ProgressBar::GetNumberOfSegments() const {
 
 void ProgressBar::SetGapBetweenSegments(float value) {
     if (value < 0.0f) {
-        throw std::invalid_argument("Gap between segments in " + this->ID + " is lower than 0.");
+        CPPFX_THROW(std::invalid_argument, "Negative width of gap between segments.");
     } else if (((width - (2.0f * barMargin)) / numberOfSegments) + (value * numberOfSegments) > width - (2.0f * barMargin)) {
-        throw std::out_of_range("Gap between segments in " + this->ID + " is too big.");
+        CPPFX_THROW(std::invalid_argument, "Gap between segments is too big.");
     } else {
         gapBetweenSegments = value;
     }
@@ -1341,7 +1342,7 @@ void Line::DrawMyself(float elapsedTime) const {
 
 void Line::SetLength(float length) {
     if (length < 0.0f) {
-        throw std::invalid_argument("In Line " + ID + ": negative length");
+        CPPFX_THROW(std::invalid_argument, "Negative length.");
     }
     width = length;
 }
@@ -1376,7 +1377,7 @@ float Line::GetTotalWidth() const {
 
 void Line::SetAngle(float angle) {
     if (angle < 0.0f || angle > 360.0f) {
-        throw std::out_of_range("In Line " + ID + ": angle beyond the [0;360] range");
+        CPPFX_THROW(std::out_of_range, "Angle beyond the valid range [0 - 360].");
     }
     this->angle = angle;
 }
@@ -1396,7 +1397,7 @@ float Line::GetAngle() const {
 
 void Line::SetEndPoint(float x, float y) {
     if (x == xAnchor && y == yAnchor) {
-        CPPFX_WARN("In Line " + ID + ": new end coordinates are the same as the start coordinates.");
+        CPPFX_WARN("In Line " + ID + ": new end coordinates are the same as the start coordinates. The line will not be visible.");
     }
     xEnd = x;
     yEnd = y;
@@ -1405,7 +1406,7 @@ void Line::SetEndPoint(float x, float y) {
 
 void Line::SetEndPoint(const Vector2& coordinates) {
     if (coordinates.x == xAnchor && coordinates.y == yAnchor) {
-        CPPFX_WARN("In Line " + ID + ": new end coordinates are the same as the start coordinates.");
+        CPPFX_WARN("In Line " + ID + ": new end coordinates are the same as the start coordinates. The line will not be visible.");
     }
     xEnd = coordinates.x;
     yEnd = coordinates.y;
@@ -1422,7 +1423,7 @@ Vector2 Line::GetEndPoint() const {
 
 void Line::SetThickness(float thickness) {
     if (thickness < 0.0f) {
-        throw std::invalid_argument("In Line " + ID + ": negative thickness.");
+        CPPFX_THROW(std::invalid_argument, "Negative thickness of the line.");
     }
     this->thickness = thickness;
 }

@@ -90,31 +90,28 @@ void Item::SetXY(const Vector2& xy) {
 
 void Item::SetHeight(float value) {
     if (value < 0.0f) {
-        throw std::invalid_argument("In item " + ID + ": Negative height.");
-    } else {
-        height = value;
+        CPPFX_THROW(std::invalid_argument, "Negative height.");
     }
+    height = value;
 }
 
 void Item::SetWidth(float value) {
     if (value < 0.0f) {
-        throw std::invalid_argument("In item " + ID + ": Negative width.");
-    } else {
-        width = value;
+        CPPFX_THROW(std::invalid_argument, "Negative width.");
     }
+    width = value;
 }
 
 void Item::SetPriority(int value) {
-    if (value < 0.0f) {
-        throw std::invalid_argument("In item " + ID + ": Negative priority.");
-    } else {
-        priority = (size_t)(value);
+    if (value < 0) {
+        CPPFX_THROW(std::invalid_argument, "Negative priority.");
     }
+    priority = (size_t)(value);
 }
 
 void Item::SetID(const std::string& id) {
     if (id.empty()) {
-        throw std::invalid_argument("In item: " + ID + ": New ID would be empty.");
+        CPPFX_THROW(std::invalid_argument, "New ID would be empty.");
     }
     ID = id;
 }
@@ -178,6 +175,7 @@ void Item::LetClicksThrough() {
 }
 
 // --- Getters ---
+
 float Item::GetX() const {
     return xAnchor;
 }
@@ -195,7 +193,7 @@ float Item::GetHeight() const {
 }
 
 float Item::GetTotalHeight() const {
-    return height + (2 * border.GetThickness());
+    return height + (2.0f * border.GetThickness());
 }
 
 float Item::GetWidth() const {
@@ -203,7 +201,7 @@ float Item::GetWidth() const {
 }
 
 float Item::GetTotalWidth() const {
-    return width + (2 * border.GetThickness());
+    return width + (2.0f * border.GetThickness());
 }
 
 std::string Item::GetFxID() const {

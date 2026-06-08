@@ -24,7 +24,7 @@
 #define CPPFX_WARN(msg) std::cerr << "[CPPFX Warning] " << msg << "\n"
 #endif
 
-#define CPPFX_THROW(ex, msg) throw ex("In " + fxID + " " + ID + ": " + msg)
+#define CPPFX_THROW(ex, msg) throw ex("In " + fxID + " " + this->ID + ": " + msg)
 
 namespace CPPFX {
 

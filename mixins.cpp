@@ -88,7 +88,7 @@ float Circular::GetRadius() const {
 
 void Circular::SetRadius(float radius) {
     if (radius < 0.0f) {
-        throw std::invalid_argument("In " + fxID + " " + ID + ": Negative radius");
+        CPPFX_THROW(std::invalid_argument, "Negative radius.");
     }
     if (radius == 0.0f) {
         CPPFX_WARN("In " + fxID + ID + ": radius equals 0. Will not be visible and may break stuff.");
@@ -146,7 +146,7 @@ bool PersistentState::IsPressed() const {
 
 void Padded::SetPadding(float value) {
     if (value < 0.0f) {
-        throw std::invalid_argument("In " + fxID + " " + ID + ": Negative padding.");
+        CPPFX_THROW(std::invalid_argument, "Negative padding.");
     }
     padding = value;
 }
