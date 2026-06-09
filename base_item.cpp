@@ -102,6 +102,21 @@ void Item::SetWidth(float value) {
     width = value;
 }
 
+void Item::SetDimensions(float width, float height) {
+    SetWidth(width);
+    SetHeight(height);
+}
+
+void Item::SetDimensions(const Vector2& dimensions) {
+    SetWidth(dimensions.x);
+    SetHeight(dimensions.y);
+}
+
+void Item::SetDimensions(float value) {
+    SetWidth(value);
+    SetHeight(value);
+}
+
 void Item::SetPriority(int value) {
     if (value < 0) {
         CPPFX_THROW(std::invalid_argument, "Negative priority.");

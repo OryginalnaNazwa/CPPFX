@@ -208,18 +208,27 @@ public:
     virtual void SetY(float y);
     /**
      *  @brief Sets both x and y coordinates to the same value
+     *  @details Convenience wrapper over individual setters.
      *  @param xy coordinates
+     *  @see SetX
+     *  @see SetY
      */
     virtual void SetXY(float xy);
     /**
      *  @brief Sets both x and y coordinate of the item.
+     *  @details Convenience wrapper over individual setters.
      *  @param x new value to be set of x coordinate
      *  @param y new value to be set of y coordinate
+     *  @see SetX
+     *  @see SetY
      */
     virtual void SetXY(float x, float y);
     /**
      *  @brief Sets both x and y coordinate of the item.
+     *  @details Convenience wrapper over individual setters.
      *  @param xy pair of the new coordinates
+     *  @see SetX
+     *  @see SetY
      */
     virtual void SetXY(const Vector2& xy);
     /**
@@ -234,6 +243,31 @@ public:
      *  @throws std::invalid_argument If the value is negative.
      */
     virtual void SetWidth(float value);
+    /**
+     *  @brief Sets both width and height of the item.
+     *  @details Just calls the appropriate methods - convenience wrapper.
+     *  @param width new width
+     *  @param height new height
+     *  @see SetWidth
+     *  @see SetHeight
+     */
+    virtual void SetDimensions(float width, float height);
+    /**
+     *  @brief Sets both width and height of the item.
+     *  @details Just calls the appropriate methods - convenience wrapper.
+     *  @param dimensions new width and height (in this order)
+     *  @see SetWidth
+     *  @see SetHeight
+     */
+    virtual void SetDimensions(const Vector2& dimensions);
+    /**
+     *  @brief Sets both width and height of the item to the same value.
+     *  @details Just calls the appropriate methods - convenience wrapper.
+     *  @param value new value of both width and height
+     *  @see SetWidth
+     *  @see SetHeight
+     */
+    virtual void SetDimensions(float value);
     /**
      *  @brief Sets item's ID.
      *  @param id new ID to be set.

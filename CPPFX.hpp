@@ -44,12 +44,15 @@ namespace CPPFX { template <typename T> class List; }*/
 
 namespace CPPFX {
 
+#define CPPFX_THROW_GUI(ex, msg) throw ex(std::string("In GUI ") + this->ID + ": " + msg)
+
 /**
  * @class GUI
  * @brief Primary controller class for GUI elements.
  */
 class GUI {
 public:
+    std::string ID = ""; ///< for differentiating between different GUI instances.
 
     /**
      *  @brief Default constructor for GUI.
@@ -203,10 +206,10 @@ public:
     T* GetItem(const std::string& ID) {
         try {
             auto* ptr = dynamic_cast<T*>(Items.at(ID).get());
-            if (!ptr) throw std::runtime_error("Item with ID " + ID + " is not a " + typeid(T).name());
+            if (!ptr) CPPFX_THROW_GUI(std::runtime_error, "Item with the ID " + ID + " is not a " + typeid(T).name());
             return ptr;
         } catch (const std::out_of_range&) {
-            throw std::out_of_range("No item with ID " + ID + " exists");
+            CPPFX_THROW_GUI(std::out_of_range, "No item with ID " + ID + " exists");
         }
     }
     /**
@@ -306,6 +309,7 @@ public:
      *  @details Sorts the items before setting, if needed.
      *  @param ID the ID of the Item which priority will be changed.
      *  @throws std::out_of_range if item with the ID doesn't exist.
+     *  @warning warns if the item already has priority 0.
      */
     void SetHighestPriority(const std::string& ID);
     /**
@@ -313,6 +317,7 @@ public:
      *  @details Sorts the items before setting, if needed. If another item has priority of 0 already, this item will have new priority equal to it.
      *  @param ID the ID of the Item which priority will be changed.
      *  @throws std::out_of_range if item with the ID doesn't exist.
+     *  @warning warns if the item already has priority 0 or if other items already have priority 0.
      */
     void SetAboveHighestPriority(const std::string& ID);
     /**

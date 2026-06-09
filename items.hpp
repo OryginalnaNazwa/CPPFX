@@ -413,7 +413,7 @@ public:
 class AnchorPane : public Container {
 public:
 
-    AnchorPane() : Item("AnchorPane"), Container("AnchorPane", 500.0f, 500.0f), previousX(500.0f), previousY(500.0f), previousWidth(200.0f), previousHeight(200.0f) {}
+    AnchorPane() : Item("AnchorPane", 500.0f, 500.0f), Container("AnchorPane", 500.0f, 500.0f), previousX(0.0f), previousY(0.0f), previousWidth(500.0f), previousHeight(500.0f) {}
 
     void SetPositionsOfItems() override;
 
@@ -531,8 +531,16 @@ public:
     void SetToScreen() override;
     void SetToWorld() override;
 
+    /**
+     *  @brief Sets the current value.
+     *  @warning Warns if the value is set outside the specified range (UB).
+     */
     virtual void SetValue(float value);
     float GetValue() const;
+    /**
+     *  @brief Sets by how much will the value be incremented/decremented after a button press.
+     *  @warning Wars if the step is more than the difference between upper and lower bound.
+     */
     void SetStep(float step);
     float GetStep() const;
     void AllowWrap();
@@ -544,6 +552,7 @@ public:
      *  @brief Sets max value.
      *  @param value new value to be set
      *  @details Does NOT set hasMax. maxValue lesser than minValue is undefined behaviour.
+     *  @warning Warns if upper bound is smaller than lower bound.
      */
     void SetMaxValue(float value);
     /**
@@ -556,6 +565,7 @@ public:
      *  @brief Sets min value.
      *  @param value new value to be set
      *  @details Does NOT set hasMin. minValue greater than maxValue is undefined behaviour.
+     *  @warning Warns if lower bound is greater than upper bound.
      */
     void SetMinValue(float value);
     /**
@@ -820,6 +830,7 @@ public:
      *  @brief Sets new shape
      *  @param shape a string containing the name of the shape - {"DOTS", "RING", "CIRCLE"}
      *  @throws std::invalid_argument if the parameter is outside the available list
+     *  @warning Warns if you try to set shape to BAR.
      */
     virtual void SetShape(const std::string& shape);
     Shapes GetShape() const;
@@ -923,6 +934,7 @@ public:
      *  @brief Sets new shape
      *  @param shape a ProgressIndicator::SHAPE enum - {DOTS, RING, CIRCLE, BAR}
      *  @throws std::invalid_argument if the parameter is outside the available list
+     *  @warning Warns if you set shape to anything other than BAR.
      */
     void SetShape(const ProgressIndicator::Shapes& shape) override;
     /**
@@ -1245,8 +1257,24 @@ public:
     void IncreaseAngle(float change);
     float GetAngle() const;
 
+    /**
+     *  @brief Sets the end of the line.
+     *  @details Used only when the drawing method is set to pointToPoint.
+     *  @param x x coordinate of the end
+     *  @param y y coordinate of the end
+     *  @warning Gives a warning if the end point is the same as starting point.
+     */
     void SetEndPoint(float x, float y);
+    /**
+     *  @brief Sets the end of the line.
+     *  @details Used only when the drawing method is set to pointToPoint.
+     *  @param x x coordinate of the end
+     *  @param y y coordinate of the end
+     *  @warning Gives a warning if the end point is the same as starting point.
+     */
     void SetEndPoint(const Vector2& coordinates);
+    float GetEndX() const;
+    float GetEndY() const;
     Vector2 GetEndPoint() const;
 
     /**
