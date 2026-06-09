@@ -129,7 +129,7 @@ void GUI::CreateItemID(std::unique_ptr<Item>& item, const std::string& ID) {
                                     : item->GetFxID() + std::to_string(currentCount);
             item->SetID(AUTOMATIC_ID_PREFIX + newID);
         } catch (std::out_of_range& e) {
-            throw std::out_of_range("Invalid creation of item with the fxid " + item->GetFxID() + " while trying to give it id " + ID + "or " + item->GetID());
+            CPPFX_THROW_GUI(std::out_of_range, "Invalid creation of item with the fxid " + item->GetFxID() + " while trying to give it id " + ID + "or " + item->GetID());
             //this shouldn't happen, left it for debug of virtual inheritance
         }
 
@@ -225,7 +225,7 @@ void GUI::RemoveItem(const std::string& ID) {
         ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&ID](const Item* item) { return item->GetID() == ID; }),ItemsInDrawingOrder.end());
         Items.erase(ID);
     } else {
-        throw std::out_of_range("Item " + ID + " doesn't exist, cannot delete");
+        CPPFX_THROW_GUI(std::out_of_range, "Item " + ID + " doesn't exist, cannot delete");
     }
 }
 
@@ -238,10 +238,8 @@ void GUI::RemoveItem(Item*& item) {
             ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&item](const Item* i) { return i->GetID() == item->GetID(); }),ItemsInDrawingOrder.end());
             Items.erase(item->GetID());
             item = nullptr;
-        } else throw std::out_of_range("Cannot delete Item " + item->GetID() + ": doesn't exist in this GUI instance.");
-    } else {
-        throw std::invalid_argument("Cannot delete Item: doesn't exist");
-    }
+        } else CPPFX_THROW_GUI(std::out_of_range, "Item with the ID " + ID + " is not in the GUI.");
+    } else CPPFX_THROW_GUI(std::invalid_argument, "Cannot delete Item: doesn't exist");
 }
 
 bool GUI::IsIDTaken(const std::string& ID) const {
@@ -254,7 +252,7 @@ bool GUI::HasItem(const std::string& ID) const {
 
 bool GUI::IsItemContainer(const std::string& ID) const {
     if (!IsIDTaken(ID)) {
-        throw std::out_of_range("No item with " + ID + " found when trying to check whether it's a container.");
+        CPPFX_THROW_GUI(std::out_of_range, "No item with " + ID + " found when trying to check whether it's a container.");
     }
     return IsContainer(Items.at(ID)->GetFxID());
 }
@@ -386,7 +384,7 @@ void GUI::SetHighestPriority(const std::string& ID) {
     try {
         item = Items.at(ID).get();
     } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to highest");
+        CPPFX_THROW_GUI(std::out_of_range, "No item with the ID " + ID + " exists, cannot set it priority to highest");
     }
     if (item->GetPriority() != 0) {
         if (needsSorting) {
@@ -405,7 +403,7 @@ void GUI::SetAboveHighestPriority(const std::string& ID) {
     try {
         item = Items.at(ID).get();
     } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to highest - 1");
+        CPPFX_THROW_GUI(std::out_of_range, "No item with the ID " + ID + " exists, cannot set it priority to highest - 1");
     }
     if (item->GetPriority() != 0) {
         if (needsSorting) {
@@ -427,7 +425,7 @@ void GUI::SetLowestPriority(const std::string& ID) {
     try {
         item = Items.at(ID).get();
     } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to lowest");
+        CPPFX_THROW_GUI(std::out_of_range, "No item with the ID " + ID + " exists, cannot set it priority to lowest");
     }
     if (needsSorting) {
         SortOrder();
@@ -442,7 +440,7 @@ void GUI::SetBelowLowestPriority(const std::string& ID) {
     try {
         item = Items.at(ID).get();
     } catch (const std::out_of_range& e) {
-        throw std::out_of_range("No item with the ID " + ID + " exists, cannot set it priority to lowest + 1");
+        CPPFX_THROW_GUI(std::out_of_range, "No item with the ID " + ID + " exists, cannot set it priority to lowest + 1");
     }
     if (needsSorting) {
         SortOrder();
@@ -457,7 +455,7 @@ size_t GUI::GetTotalItemCount(const std::string& fxID) const {
     if (IsFxID(fxID)) {
         return ItemsCounter.at(fxID);
     } else {
-        throw std::invalid_argument("No item with internal ID " + fxID + " found. Check spelling.");
+        CPPFX_THROW_GUI(std::invalid_argument, "No item with internal ID " + fxID + " found. Check spelling.");
     }
 }
 

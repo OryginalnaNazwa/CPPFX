@@ -25,9 +25,6 @@ class TextItem : public virtual Item {
 public:
     Font font;
 
-    TextItem(const std::string& i) : Item(i), font(height / 4.0f), text(i), textMargin(10.0f) {}
-    TextItem(const std::string& i, float w, float h) : Item(i, w, h), font(h / 4.0f), text(i), textMargin(10.0f) {}
-
     /**
      *  @brief Expands the width and height to accommodate text.
      */
@@ -73,6 +70,9 @@ public:
     static const std::string GetClassID();
 
 protected:
+    TextItem(const std::string& i) : Item(i), font(height / 4.0f), text(i), textMargin(10.0f) {}
+    TextItem(const std::string& i, float w, float h) : Item(i, w, h), font(h / 4.0f), text(i), textMargin(10.0f) {}
+
     std::string text;
     float textMargin; ///<distance from limit to text.
 
@@ -92,9 +92,6 @@ protected:
 class Container : public virtual Item {
 public:
     Alignment alignment;
-
-    Container(const std::string& i) : Item(i) {colour.SetColour(BLANK); priority = 10;}
-    Container(const std::string& i, float w, float h) : Item(i, w, h) {colour.SetColour(BLANK); priority = 10;}
 
     /**
      *  @brief Adds item to the container.
@@ -158,6 +155,9 @@ public:
     static const std::string GetClassID();
 
 protected:
+    Container(const std::string& i) : Item(i) {colour.SetColour(BLANK); priority = 10;}
+    Container(const std::string& i, float w, float h) : Item(i, w, h) {colour.SetColour(BLANK); priority = 10;}
+
     std::map<std::string, Item*> Items;
     std::vector<Item*> ItemsInDrawingOrder;
 
@@ -173,9 +173,6 @@ protected:
 class Box : public Container, public virtual Padded {
 public:
 
-    Box(const std::string& i) : Padded(), Container(i)  {}
-    Box(const std::string& i, float w, float h) : Padded(), Container(i, w, h)  {}
-
     /**
      *  @brief Sets padding.
      *  @details Flags for rearrangement.
@@ -190,6 +187,9 @@ public:
      */
     static const std::string GetClassID();
 
+protected:
+    Box(const std::string& i) : Padded(), Container(i)  {}
+    Box(const std::string& i, float w, float h) : Padded(), Container(i, w, h)  {}
 };
 
 /**
@@ -200,9 +200,6 @@ public:
 class Chart : public virtual Item {
 public:
     Font font;
-
-
-    Chart (const std::string& i) : Item(i), font(height / 4.0f) {}
 
     void AddElement(const std::string& label, double value);
     void AddElement(double value);
@@ -226,6 +223,8 @@ public:
     static const std::string GetClassID();
 
 protected:
+    Chart (const std::string& i) : Item(i), font(height / 4.0f) {}
+
     std::vector<std::string> labels;
     std::vector<double> values;
 };
@@ -237,9 +236,6 @@ protected:
  */
 class Shape : public virtual Item {
 public:
-
-
-    Shape(const std::string& i) : Item(i) {}
 
     /**
      *  @brief Calculates area.
@@ -253,6 +249,9 @@ public:
      *  @note Pointless here, just a reminder to put it in inherited classes.
      */
     static const std::string GetClassID();
+
+protected:
+    Shape(const std::string& i) : Item(i) {}
 };
 
 }

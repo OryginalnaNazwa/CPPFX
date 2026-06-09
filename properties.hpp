@@ -18,15 +18,16 @@
 #define DARKGREY DARKGRAY
 #define LIGHTGREY LIGHTGRAY
 
+namespace CPPFX {
+
 #ifdef NDEBUG
 #define CPPFX_WARN(msg)
 #else
 #define CPPFX_WARN(msg) std::cerr << "[CPPFX Warning] " << msg << "\n"
 #endif
 
-#define CPPFX_THROW(ex, msg) throw ex("In " + fxID + " " + this->ID + ": " + msg)
-
-namespace CPPFX {
+#define CPPFX_THROW(ex, msg) throw ex(std::string("In ") + fxID + " " + this->ID + ": " + msg)
+#define CPPFX_THROW_NO_ITEM(ex, fxID, ID, msg) throw ex(std::string("In ") + fxID + " " + ID + ": " + msg)
 
 /**
  *  @class Colour
@@ -202,8 +203,13 @@ public:
      *  @brief Constructor for custom size.
      *  @details Sets colour to black.
      *  @param fS size of the font to be set.
+     *  @warning throws a warning if size is 0.
      */
-    Font(float fS) : Property("Font", BLACK), fontSize(fS) {}
+    Font(float fS) : Property("Font", BLACK), fontSize(fS) {
+        if (fS == 0.0f) {
+            CPPFX_WARN("Font size set to 0. It will not be visible.");
+        }
+    }
     /**
      *  @brief Constructor for custom colour.
      *  @details Sets font's size to 20.
@@ -215,8 +221,13 @@ public:
      *  @details Sets colour to black.
      *  @param fS size of the font to be set.
      *  @param c colour to be set.
+     *  @warning throws a warning if size is 0.
      */
-    Font(float fS, const Color& c) : Property("Font", c), fontSize(fS) {}
+    Font(float fS, const Color& c) : Property("Font", c), fontSize(fS) {
+        if (fS == 0.0f) {
+            CPPFX_WARN("Font size set to 0. It will not be visible.");
+        }
+    }
 
     /**
      *  @brief Sets font size.

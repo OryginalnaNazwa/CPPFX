@@ -21,18 +21,6 @@ class Circular : public virtual Item {
 public:
 
     /**
-     *  @brief Constructor for circular items.
-     *  @details Sets a custom border drawing method.
-     *  @note Rembember to put the border drawing first! It's just a solid circle.
-     *  @see CPPFX::Border in properties.h
-     */
-    Circular() : Item(), xyIsCentre(false) {
-        border.SetDrawingMethod([this](float x, float y, float w, float h){
-            DrawCircle(TranslateXToCentre(), TranslateYToCentre(), GetRadius() + border.GetThickness(), border.colour.GetColour());
-        });
-    }
-
-    /**
      *  @brief Checks whether the item was clicked.
      *  @details Uses circle collision check.
      */
@@ -137,6 +125,18 @@ public:
 
 
 protected:
+    /**
+     *  @brief Constructor for circular items.
+     *  @details Sets a custom border drawing method.
+     *  @note Rembember to put the border drawing first! It's just a solid circle.
+     *  @see CPPFX::Border in properties.h
+     */
+    Circular() : Item(), xyIsCentre(false) {
+        border.SetDrawingMethod([this](float x, float y, float w, float h){
+            DrawCircle(TranslateXToCentre(), TranslateYToCentre(), GetRadius() + border.GetThickness(), border.colour.GetColour());
+        });
+    }
+
     bool xyIsCentre; ///< whether the x,y coordinates represent the centre of the circle or the top-left corner
 };
 
@@ -146,11 +146,6 @@ protected:
 class PersistentState : public virtual Item {
 public:
     Colour pressedColour; ///< colour after press
-
-    /**
-     *  @brief Sets pressed colour to GREY (as darker default colour)
-     */
-    PersistentState() : Item(), pressed(false) {pressedColour.SetColour(GREY);}
 
     /**
      *  @brief Sets whether the item is pressed.
@@ -176,6 +171,11 @@ public:
     bool IsPressed() const;
 
 protected:
+    /**
+     *  @brief Sets pressed colour to GREY (as darker default colour)
+     */
+    PersistentState() : Item(), pressedColour(GREY), pressed(false) {}
+
     bool pressed; ///< whether the item is clicked.
 };
 
@@ -186,11 +186,6 @@ protected:
  */
 class Padded : public virtual Item {
 public:
-
-    /**
-     *  @brief Default padding is 10.
-     */
-    Padded() : Item(), padding(10.0f) {}
 
     /**
      *  @brief Sets padding.
@@ -204,6 +199,11 @@ public:
     float GetPadding() const;
 
 protected:
+    /**
+     *  @brief Default padding is 10.
+     */
+    Padded() : Item(), padding(10.0f) {}
+
     float padding; ///< distance between children
 };
 

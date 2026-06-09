@@ -198,45 +198,22 @@ const std::string Workspace::GetClassID() {
 }
 
 void AnchorPane::SetPositionsOfItems() {
+    float maxX = 0.0f, maxY = 0.0f;
     for (auto& item : ItemsInDrawingOrder) {
-        switch (alignment.GetAlignment()) {
-            case Alignment::Alignments::TOP_LEFT:
-                item->SetX(item->GetX() - previousX + xAnchor);
-                item->SetY(item->GetY() - previousY + yAnchor);
-                break;
-            case Alignment::Alignments::TOP_CENTRE:
-                item->SetX(item->GetX() - (previousX + previousWidth / 2.0f) + (xAnchor + width / 2.0f));
-                item->SetY(item->GetY() - previousY + yAnchor);
-                break;
-            case Alignment::Alignments::TOP_RIGHT:
-                item->SetX(item->GetX() - (previousX + previousWidth) + (xAnchor + width));
-                item->SetY(item->GetY() - previousY + yAnchor);
-                break;
-            case Alignment::Alignments::CENTRE_LEFT:
-                item->SetX(item->GetX() - previousX + xAnchor);
-                item->SetY(item->GetY() - (previousY + previousHeight / 2.0f) + (yAnchor + height / 2.0f));
-                break;
-            case Alignment::Alignments::CENTRE:
-                item->SetX(item->GetX() - (previousX + previousWidth / 2.0f) + (xAnchor + width / 2.0f));
-                item->SetY(item->GetY() - (previousY + previousHeight / 2.0f) + (yAnchor + height / 2.0f));
-                break;
-            case Alignment::Alignments::CENTRE_RIGHT:
-                item->SetX(item->GetX() - (previousX + previousWidth) + (xAnchor + width));
-                item->SetY(item->GetY() - (previousY + previousHeight / 2.0f) + (yAnchor + height / 2.0f));
-                break;
-            case Alignment::Alignments::BOTTOM_LEFT:
-                item->SetX(item->GetX() - previousX + xAnchor);
-                item->SetY(item->GetY() - (previousY + previousHeight) + (yAnchor + height));
-                break;
-            case Alignment::Alignments::BOTTOM_CENTRE:
-                item->SetX(item->GetX() - (previousX + previousWidth / 2.0f) + (xAnchor + width / 2.0f));
-                item->SetY(item->GetY() - (previousY + previousHeight) + (yAnchor + height));
-                break;
-            case Alignment::Alignments::BOTTOM_RIGHT:
-                item->SetX(item->GetX() - (previousX + previousWidth) + (xAnchor + width));
-                item->SetY(item->GetY() - (previousY + previousHeight) + (yAnchor + height));
-                break;
-        }
+        item->SetX(item->GetX() + xAnchor - previousX);
+        item->SetY(item->GetY() + yAnchor - previousY);
+        item->SetWidth(item->GetWidth() + previousWidth - width);
+        item->SetHeight(item->GetHeight() + previousHeight - height);
+        if (item->GetY() + item->GetHeight() > maxY) maxY = item->GetY() + item->GetHeight();
+        if (item->GetX() + item->GetWidth() > maxX) maxX = item->GetX() + item->GetWidth();
+    }
+    if (maxX > xAnchor + width) {
+        width = maxX - xAnchor;
+        previousWidth = width;
+    }
+    if (maxY > yAnchor + height) {
+        height = maxY - yAnchor;
+        previousHeight = height;
     }
 }
 
@@ -1405,16 +1382,19 @@ void Line::SetEndPoint(float x, float y) {
 }
 
 void Line::SetEndPoint(const Vector2& coordinates) {
-    if (coordinates.x == xAnchor && coordinates.y == yAnchor) {
-        CPPFX_WARN("In Line " + ID + ": new end coordinates are the same as the start coordinates. The line will not be visible.");
-    }
-    xEnd = coordinates.x;
-    yEnd = coordinates.y;
-    CalculateLength();
+    SetEndPoint(coordinates.x, coordinates.y);
 }
 
 void Line::CalculateLength() {
     width = CalculateMyArea();
+}
+
+float Line::GetEndX() const {
+    return xEnd;
+}
+
+float Line::GetEndY() const {
+    return yEnd;
 }
 
 Vector2 Line::GetEndPoint() const {
