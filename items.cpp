@@ -285,6 +285,177 @@ CheckBox::Shapes CheckBox::GetShape() const {
 std::string CheckBox::GetShapeString() const {
     return ShapeToString(shape);
 }
+// --- RadioGroup ---
+
+void RadioGroup::DrawMyself(float elapsedTime) const {
+    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+    border.DrawMyself(xAnchor, yAnchor, width, height);
+    if (vertical) {
+        float currentY = yAnchor;
+        for (const auto& [key, button] : buttons) {
+            button->SetY(currentY);
+            button->DrawMyself(elapsedTime);
+            currentY += button->GetTotalHeight() + padding;
+        }
+    } else {
+        float currentX = xAnchor;
+        for (const auto& [key, button] : buttons) {
+            button->SetX(currentX);
+            button->DrawMyself(elapsedTime);
+            currentX += button->GetTotalWidth() + padding;
+        }
+    }
+}
+
+void RadioGroup::DoFocusAction(float elapsedTime) {
+    return;
+}
+
+void RadioGroup::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
+    for (auto& [key, button] : buttons) {
+        if (button->WasIClicked(mousePosition)) {
+            UnpressButtons();
+            button->Press();
+            return;
+        }
+    }
+}
+
+void RadioGroup::AddButton(const std::string& label) {
+    if (label == "") {
+        CPPFX_WARN("If for some strange reason you want no label, use ' ' spaces.");
+        CPPFX_THROW(std::invalid_argument, "Cannot add button - empty label.");
+    }
+    if (IsLabelTaken(label)) {
+        CPPFX_THROW(std::invalid_argument, "Cannot add button - label " + label + " already taken.");
+    }
+
+    auto button = std::make_unique<RadioButton>();
+    button->SetID(label);
+    button->SetText(label);
+    if (buttons.empty()) button->Press();
+    buttons.insert({label, std::move(button)});
+}
+
+void RadioGroup::RemoveButton(const std::string& label) {
+    if (buttons.empty()) {
+        CPPFX_THROW(std::runtime_error, "Cannot remove button because there's none already.");
+    }
+    if (!IsLabelTaken(label)) {
+        CPPFX_THROW(std::out_of_range, "No button with label " + label + " found - cannot remove it.");
+    }
+
+    buttons.erase(label);
+}
+
+bool RadioGroup::IsButtonPressed(const std::string& label) const {
+    if (buttons.empty()) {
+        CPPFX_THROW(std::runtime_error, "Cannot check whether a button is pressed because there's none.");
+    }
+    if (!IsLabelTaken(label)) {
+        CPPFX_THROW(std::out_of_range, "No button with label " + label + " found - cannot check whether it's pressed.");
+    }
+
+    return buttons.at(label)->IsPressed();
+}
+
+std::string RadioGroup::WhichButtonIsCurrentlyPressed() const {
+    for (const auto& [key, button] : buttons) {
+        if (button->IsPressed()) return key;
+    }
+    CPPFX_THROW(std::runtime_error, "No pressed buttons found. Either there are no buttons or something went deeply wrong.");
+}
+
+void RadioGroup::PressButton(const std::string& label) {
+    if (buttons.empty()) {
+        CPPFX_THROW(std::runtime_error, "Cannot press a button because there's none.");
+    }
+    if (!IsLabelTaken(label)) {
+        CPPFX_THROW(std::out_of_range, "No button with label " + label + " found - cannot press.");
+    }
+
+    UnpressButtons();
+    buttons.at(label)->Press();
+}
+
+void RadioGroup::SetButtonsBackgroundColour(const Color& colour) {
+    for (auto& [key, button] : buttons) {
+        button->colour.SetColour(colour);
+    }
+}
+
+void RadioGroup::SetButtonsPressedColour(const Color& colour) {
+    for (auto& [key, button] : buttons) {
+        button->pressedColour.SetColour(colour);
+    }
+}
+
+void RadioGroup::SetButtonColours(const Color& backgroundColour, const Color& pressedColour) {
+    SetButtonsBackgroundColour(backgroundColour);
+    SetButtonsPressedColour(pressedColour);
+}
+
+void RadioGroup::SetLabelMargins(float margin) {
+    if (margin  < 0.0f) {
+        CPPFX_THROW(std::invalid_argument, "Cannot set buttons label margin to a negative value.");
+    }
+    if (buttons.empty()) {
+        CPPFX_THROW(std::runtime_error, "Cannot set buttons label margin because there's no buttons");
+    }
+
+    for (auto& [key, button] : buttons) {
+        button->SetLabelMargin(margin);
+    }
+}
+
+void RadioGroup::SetTextMargins(float margin) {
+    if (margin  < 0.0f) {
+        CPPFX_THROW(std::invalid_argument, "Cannot set buttons text margin to a negative value.");
+    }
+    if (buttons.empty()) {
+        CPPFX_THROW(std::runtime_error, "Cannot set buttons text margin because there's no buttons");
+    }
+
+    for (auto& [key, button] : buttons) {
+        button->SetTextMargin(margin);
+    }
+}
+
+void RadioGroup::SetButtonAlignment(Alignment::Alignments alignment) {
+    for (auto& [key, button] : buttons) {
+        button->alignment.SetAlignment(alignment);
+    }
+}
+
+void RadioGroup::SetToVertical() {
+    vertical = true;
+}
+
+void RadioGroup::SetToHorizontal() {
+    vertical = false;
+}
+
+void RadioGroup::SetVerticality(bool flag) {
+    vertical = flag;
+}
+
+bool RadioGroup::IsVertical() const {
+    return vertical;
+}
+
+const std::string RadioGroup::GetClassID() {
+    return "RadioGroup";
+}
+
+bool RadioGroup::IsLabelTaken(const std::string& label) const {
+    return buttons.contains(label);
+}
+
+void RadioGroup::UnpressButtons() {
+    for (auto& [key, button] : buttons) {
+        button->Unpress();
+    }
+}
 
 // --- Containers ---
 

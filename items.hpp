@@ -14,6 +14,7 @@
 #include "mixins.hpp"      // for Circular, PersistentState, Padded
 #include "properties.hpp"  // for Font, Colour, Border, GREY, Alignment, CPPFX...
 #include "raylib.h"      // for MeasureText, Vector2, DrawText, Camera2D
+#include <memory>       // for unique_ptr
 
 
 /*********************************************************************************
@@ -201,11 +202,129 @@ protected:
  *  @class RadioButton
  *  @brief Checkbox with default RADIO shape.
  *  @details Small convenience wrapper.
+ *  @see CheckBox
  */
-class RadioButton : public CheckBox {
+class RadioButton : public CheckBox  {
 public:
 
     RadioButton() : Item("CheckBox", 50.0f, 50.0f) {shape = RADIO;}
+};
+
+/**
+ *  @class RadioGroup
+ *  @brief Mutually exclusive group of RadioButtons
+ */
+class RadioGroup : public virtual Padded {
+public:
+
+    RadioGroup() : Item("RadioGroup"), Padded(), vertical(true) {colour.SetColour(BLANK);}
+
+    void DrawMyself(float elapsedTime) const override;
+    void DoFocusAction(float elapsedTime) override;
+    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+
+    /**
+     *  @brief Adds a button to the group.
+     *  @details Presses it if it's the first one.
+     *  @param label new button's label
+     *  @throws std::invalid_argument if label is empty or if label already exists
+     */
+    void AddButton(const std::string& label);
+    /**
+     *  @brief Removes button with specified label.
+     *  @param label label of the button to be deleted
+     *  @throws std::runtime_error if the are no buttons
+     *  @throws std::out_of_range if the button wasn't found
+     */
+    void RemoveButton(const std::string& label);
+
+    /**
+     *  @brief Presses the given button
+     *  @details Unpresses other buttons
+     *  @param label label of the button to be pressed
+     *  @throws std::runtime_error if the are no buttons
+     *  @throws std::out_of_range if the button wasn't found
+     */
+    void PressButton(const std::string& label);
+    /**
+     *  @brief Checks whether the given button is pressed.
+     *  @param label label of the button to be checked
+     *  @returns State of the given button
+     *  @throws std::runtime_error if the are no buttons
+     *  @throws std::out_of_range if the button wasn't found
+     */
+    bool IsButtonPressed(const std::string& label) const;
+    /**
+     *  @brief Checks which button is currently pressed
+     *  @returns Label of the currently pressed button.
+     *  @throws std::runtime_error if none was found
+     */
+    std::string WhichButtonIsCurrentlyPressed() const;
+
+    /**
+     *  @brief Sets primary colour of the buttons.
+     *  @param colour new colour
+     *  @see CheckBox
+     */
+    void SetButtonsBackgroundColour(const Color& colour);
+    /**
+     *  @brief Sets pressed colour of the buttons.
+     *  @param colour new colour
+     *  @see CheckBox::pressedColour
+     */
+    void SetButtonsPressedColour(const Color& colour);
+    /**
+     *  @brief Sets both colours of the buttons.
+     *  @details Convenience wrapper, just calls the two previous methods.
+     *  @see SetButtonsBackgroundColour
+     *  @see SetButtonsPressedColour
+     */
+    void SetButtonColours(const Color& backgroundColour, const Color& pressedColour);
+    /**
+     *  @brief Sets label margins of the buttons.
+     *  @param margin new value
+     *  @throws std::invalid_argument if margin is negative
+     *  @throws std::runtime_error if there are no buttons
+     *  @see CheckBox::labelMargin
+     */
+    void SetLabelMargins(float margin);
+    /**
+     *  @brief Sets text margins of the buttons.
+     *  @param margin new value
+     *  @throws std::invalid_argument if margin is negative
+     *  @throws std::runtime_error if there are no buttons
+     *  @see TextItem::textMargin
+     */
+    void SetTextMargins(float margin);
+    /**
+     *  @brief Sets buttons' alignment.
+     *  @param alignment new alignment.
+     *  @see CheckBox::alignment
+     */
+    void SetButtonAlignment(Alignment::Alignments alignment);
+
+    void SetToVertical();
+    void SetToHorizontal();
+    void SetVerticality(bool flag);
+    bool IsVertical() const;
+
+    /**
+     *  @brief Checks whether a button with such label already exists.
+     *  @param label label to be checked
+     *  @returns true if it exists
+     */
+    bool IsLabelTaken(const std::string& label) const;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
+
+private:
+    std::map<std::string, std::unique_ptr<RadioButton>> buttons; ///< radio buttons
+    bool vertical; ///< whether the buttons will be arranged vertically or horizontally
+
+    void UnpressButtons(); ///< unpresses all buttons in the group
 };
 
 /**

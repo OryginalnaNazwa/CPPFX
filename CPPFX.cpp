@@ -9,7 +9,7 @@
 using namespace CPPFX;
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
-    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "Chart", "PieChart", "Line", "Square", "Rectangle", "Circle"};
+    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "Chart", "PieChart", "Line", "Square", "Rectangle", "Circle"};
 
 const std::string GUI::AUTOMATIC_ID_PREFIX = "GUI_AUTO_";
 
@@ -213,6 +213,14 @@ Circle* GUI::AddCircle(const std::string& ID) {
     return AddItem<Circle>(ID);
 }
 
+RadioButton* GUI::AddRadioButton(const std::string& ID) {
+    return AddItem<RadioButton>(ID);
+}
+
+RadioGroup* GUI::AddRadioGroup(const std::string& ID) {
+    return AddItem<RadioGroup>(ID);
+}
+
 //--- Remover ---
 
 void GUI::RemoveItem(const std::string& ID) {
@@ -369,6 +377,14 @@ CPPFX::Rectangle* GUI::GetRectangle(const std::string& ID) {
 
 Circle* GUI::GetCircle(const std::string& ID) {
     return GetItem<Circle>(ID);
+}
+
+RadioButton* GUI::GetRadioButton(const std::string& ID) {
+    return GetItem<RadioButton>(ID);
+}
+
+RadioGroup* GUI::GetRadioGroup(const std::string& ID) {
+    return GetItem<RadioGroup>(ID);
 }
 
 //--- Priority helpers ---
