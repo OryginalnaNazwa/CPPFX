@@ -12,6 +12,7 @@
  **************************************************************************************/
 
 namespace CPPFX {
+class EditableSpinner; //forward declare for Embedded
 
 /**
  *  @brief Used for items in shape of a circle.
@@ -179,8 +180,6 @@ protected:
     bool pressed; ///< whether the item is clicked.
 };
 
-//class EmbeddedTextField;
-
 /**
  *  @brief Gives the padding functionality, used for spacing children inside an item.
  */
@@ -207,11 +206,51 @@ protected:
     float padding; ///< distance between children
 };
 
+/**
+ *  @class Embedded
+ *  @brief For embedded widgets forming composite widgets.
+ *  @details Hides unsafe Item methods into private. These aren't actually overrides, they just call the original method - it's done for explicit privateness only. Uses friends to limit boilerplate in the constructors using the methods made private.
+ *  @note Doesn't hide them fully actually, a bit of a C++ limitation (out of the solutions I found), these methods can still be called using Item:: prefix. But at that point you're actively trying to break things. It stops accidental misuse and that's important.
+ */
+class Embedded : public virtual Item {
+public:
+    friend class Spinner;
+    friend class EditableSpinner;
+    friend class Button;
+
+protected:
+
+    Embedded() {}
+
+private:
+    void SetX(float x) override { Item::SetX(x); }
+    void SetY(float y) override { Item::SetY(y); }
+    void SetXY(float x, float y) override { Item::SetXY(x, y); }
+    void SetXY(const Vector2& xy) override { Item::SetXY(xy); }
+    void SetXY(float xy) override { Item::SetXY(xy); }
+    void SetHeight(float value) override { Item::SetHeight(value); }
+    void SetWidth(float value) override { Item::SetWidth(value); }
+    void SetDimensions(float width, float height) override { Item::SetDimensions(width, height); }
+    void SetDimensions(const Vector2& dimensions) override { Item::SetDimensions(dimensions); }
+    void SetDimensions(float value) override { Item::SetDimensions(value); }
+    void SetToScreen() override { Item::SetToScreen(); }
+    void SetToWorld() override { Item::SetToWorld(); }
+    void ConsumeClicks() override { Item::ConsumeClicks(); }
+    void LetClicksThrough() override { Item::LetClicksThrough(); }
+    bool DoesEatClicks() const override { return Item::DoesEatClicks(); }
+    void SetID(const std::string& id) override { Item::SetID(id); }
+    std::string GetID() const override { return Item::GetID(); }
+    void SetPriority(int value) override { Item::SetPriority(value); }
+    void MoveUpPriority() override { Item::MoveUpPriority(); }
+    void MoveDownPriority() override { Item::MoveDownPriority(); }
+    size_t GetPriority() const override { return Item::GetPriority(); }
+};
+
 /*class DoesPromptText : public virtual Item {
 public:
 
     DoesPromptText() : promptText("") {}
-};*/
+};*/ //just one item does it (for now), no need to abstract it
 
 }
 

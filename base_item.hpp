@@ -174,16 +174,16 @@ public:
     /**
      *  @brief Makes the item consume clicks.
      */
-    void ConsumeClicks();
+    virtual void ConsumeClicks();
     /**
      *  @brief Makes the item let clicks through it and propagate.
      */
-    void LetClicksThrough();
+    virtual void LetClicksThrough();
     /**
      *  @brief Checks whether the item eats clicks.
      *  @returns true if eats clicks.
      */
-    bool DoesEatClicks() const;
+    virtual bool DoesEatClicks() const;
 
     /**
      *  @brief Launches on click.
@@ -273,22 +273,22 @@ public:
      *  @param id new ID to be set.
      *  @throws std::invalid_argument if the id is empty.
      */
-    void SetID(const std::string& id);
+    virtual void SetID(const std::string& id);
     /**
      *  @brief Sets the priority in the order of drawing of the item.
      *  @param value The new priority.
      *  @throws std::invalid_argument If the value is negative.
      */
-    void SetPriority(int value);
+    virtual void SetPriority(int value);
     /**
      *  @brief Increases order by one, decreasing the priority by one.
      *  @details If priority is 0, does nothing.
      */
-    void MoveUpPriority();
+    virtual void MoveUpPriority();
     /**
      *  @brief Decreases order by one, increasing the priority by one.
      */
-    void MoveDownPriority();
+    virtual void MoveDownPriority();
 
     /**
      *  @brief Returns x coordinate of the item.
@@ -332,12 +332,12 @@ public:
      *  @details Remember that larger number is lesser priority.
      *  @returns number representing priority
      */
-    size_t GetPriority() const;
+    virtual size_t GetPriority() const;
     /**
      *  @brief Returns the item's ID.
      *  @returns ID
      */
-    std::string GetID() const;
+    virtual std::string GetID() const;
 
     /**
      *  @brief Returns the internal library identificator of the item.

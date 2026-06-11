@@ -81,6 +81,12 @@ protected:
     std::string Truncate(const std::string& text) const override;
 };
 
+class EmbeddedTextField : public TextField, public virtual Embedded {
+public:
+
+    EmbeddedTextField() : Item("EmbeddedTextField"), Embedded(), TextField() {}
+};
+
 /**
  * @class Button
  * @brief A single click pushable item.
@@ -100,6 +106,12 @@ public:
      *  @see Item::GetClassID()
      */
     static const std::string GetClassID();
+};
+
+class EmbeddedButton : public Button, public virtual Embedded {
+public:
+
+    EmbeddedButton() : Item("EmbeddedButton"), Embedded(), Button() {}
 };
 
 /**
@@ -244,7 +256,7 @@ public:
     void InsertItem(const std::string& label, const T& value) {
         if (label == "") {
             CPPFX_WARN("Use space (' ') if you want to have it actually empty.");
-            throw std::invalid_argument("In dropdown " + ID + ": cannot add item with empty label.");
+            CPPFX_THROW(std::invalid_argument, "Cannot add item with empty label.");
         }
         values.insert({label,value});
     }
@@ -257,7 +269,7 @@ public:
     void RemoveItem(const std::string& label) {
         if (IsLabelTaken(label)) {
             values.erase(label);
-        } else throw std::out_of_range("In " + this->ID + ": No value with label " + label + " found.");
+        } else CPPFX_THROW(std::out_of_range, "No value with label " + label + " found - couldn't remove.");
     }
 
     /**
@@ -270,10 +282,10 @@ public:
      */
     void ChangeLabel(const std::string& oldLabel, const std::string& newLabel) {
         if (!IsLabelTaken(oldLabel)) {
-            throw std::out_of_range("In " + this->ID + ": No value with label " + oldLabel + " found - couldn't replace it.");
+            CPPFX_THROW(std::out_of_range, "No value with label " + oldLabel + " found - couldn't replace.");
         }
         if (IsLabelTaken(newLabel)) {
-            throw std::invalid_argument("In " + this->ID + ": " + newLabel + " already is in the dropdown.");
+            CPPFX_THROW(std::invalid_argument, newLabel + " already is in the dropdown.");
         }
         auto node = values.extract(oldLabel);
         node.key() = newLabel;
@@ -289,7 +301,7 @@ public:
     void ChangeValue(const std::string& label, const T& newValue) {
         if (IsLabelTaken(label)) {
             values.find(label)->second = newValue;
-        } else throw std::out_of_range("No key " + label + " found in dropdown " + ID);
+        } else CPPFX_THROW(std::out_of_range, "No key " + label + " found.");
     }
 
     /**
@@ -301,7 +313,7 @@ public:
     T GetValue(const std::string& label) const {
         if (IsLabelTaken(label)) {
             return values.at(label);
-        } else throw std::out_of_range("No key " + label + " found in dropdown " + ID);
+        } else throw CPPFX_THROW(std::out_of_range, "No key " + label + " found.");
     }
 
     T GetCurrentValue() const {
@@ -321,7 +333,7 @@ public:
         if (IsLabelTaken(label)) {
             currentLabel = label;
             currentValue = values.at(currentLabel);
-        } else throw std::out_of_range("No key " + label + " found in dropdown " + ID);
+        } else CPPFX_THROW(std::out_of_range, "No key " + label + " found.");
     }
 
     /**
@@ -504,8 +516,8 @@ public:
  */
 class Spinner : virtual public Item {
 public:
-    mutable Button incrementButton;
-    mutable Button decrementButton;
+    mutable EmbeddedButton incrementButton;
+    mutable EmbeddedButton decrementButton;
 
     Font font;
 
@@ -677,7 +689,7 @@ protected:
  */
 class EditableSpinner : virtual public Item, public Spinner {
 public:
-    mutable TextField editArea;
+    mutable EmbeddedTextField editArea;
 
     EditableSpinner() : Item("EditableSpinner"), Spinner("EditableSpinner") {
         editArea.SetX(xAnchor);
@@ -993,20 +1005,20 @@ public:
     }
     void RemoveItem(int index) {
         if (index < 0 || (size_t)(index) >= items.size()) {
-            throw std::out_of_range("In List " + this->ID + ": index beyond range at removal.");
+            throw CPPFX_THROW(std::out_of_range,"Index beyond range at removal.");
         }
         items.erase(items.begin() + index);
     }
     void ReplaceItem(int index, const T& item) {
         if (index < 0 || (size_t)(index) >= items.size()) {
-            throw std::out_of_range("In List " + this->ID + ": index beyond range at replacing.");
+            throw CPPFX_THROW(std::out_of_range,"Index beyond range at replacing.");
         }
         items[index] = item;
     }
 
     const T& GetItem(int index) const {
         if (index < 0 || (size_t)(index) >= items.size()) {
-            throw std::out_of_range("In List " + this->ID + ": index beyond range at getting.");
+            throw CPPFX_THROW(std::out_of_range,"Index beyond range at getting.");
         }
         return items[index];
     }
@@ -1095,7 +1107,7 @@ public:
                     }
                 }
             } else {
-               throw std::runtime_error("List " + this->ID + ": no display method set for a non-standard type.");
+               CPPFX_THROW(std::runtime_error, "No display method set for a non-standard type.");
             }
         }
     }
@@ -1151,7 +1163,7 @@ public:
             }
             return sum;
         }
-        throw std::runtime_error("In List " + this->ID + ": no display method set for a non-standard type - couldn't calculate width");
+        CPPFX_THROW(std::runtime_error, "No display method set for a non-standard type - couldn't calculate width.");
     }
     /**
      *  @brief Returns total height.
