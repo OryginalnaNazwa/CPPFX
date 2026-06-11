@@ -115,22 +115,50 @@ public:
 };
 
 /**
- * @class CheckBox
- * @brief A turn on - turn off button.
- * @details Width is the length of the box, not the total one. Total length is width + MeasureText(text) + textMargin + labelMargin. Has border. Has colour for pressed state and unpressed. Border includes label.
+ *  @class CheckBox
+ *  @brief A turn on - turn off button.
+ *  @details Width is the length of the box, not the total one. Total length is width + MeasureText(text) + textMargin + labelMargin.
+ *  Has border. Border includes label. Has border for the click area only.
+ *  Has alignment. Works based on two axes. Overrides the alignments accordingly.
+ *  Total height is height + textMargin + labelMargin + font's size.
+ *  Has shapes. All shapes but RADIO use colour for the drawn shape.
+ *  Pressed colour changes the background colour.
+ *  @note Probably works best for equal width and height, but X and TICK should work correctly nonetheless at least.
  */
 class CheckBox : public TextItem, public virtual PersistentState {
 public:
     Border clickBorder; ///< border solely around clickable area.
+    enum Shapes {
+        X,
+        TICK,
+        O,
+        RADIO,
+        // aliases
+        CROSS = X,
+        CHECK = TICK,
+        CIRCLE = O,
+        MARU = O,
+        GONGPYO = O
+    }; ///< the mark that will be display on pressed checkbox
+    Alignment alignment; ///< where will the label display
 
-    bool drawsX = true; //TODO add different shapes
-
-    CheckBox() : Item("CheckBox", 50.0f, 50.0f), PersistentState(), TextItem("CheckBox", 50.0f, 50.0f), labelMargin(10.0f) {font.SetFontSize(height / 2.0f);}
+    CheckBox() : Item("CheckBox", 50.0f, 50.0f), PersistentState(), TextItem("CheckBox", 50.0f, 50.0f), alignment(Alignment::RIGHT), labelMargin(10.0f) {font.SetFontSize(height / 2.0f);}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
 
+    /**
+     *  @brief Gets total width.
+     *  @details Counts the label.
+     *  @see Item::GetTotalWidth
+     */
     float GetTotalWidth() const override;
+    /**
+     *  @brief Gets total height.
+     *  @details Counts the label.
+     *  @see Item::GetTotalHeight
+     */
+    float GetTotalHeight() const override;
 
     /**
      *  @brief Sets the distance between the text and the box.
@@ -141,12 +169,43 @@ public:
     float GetLabelMargin() const;
 
     /**
+     *  @brief Sets new shape
+     *  @param shape a shape from the Shapes enum in CheckBox
+     *  @throws std::invalid_argument if the parameter is outside the available list
+     */
+    virtual void SetShape(const CheckBox::Shapes& shape);
+    /**
+     *  @brief Sets new shape
+     *  @param shape a string containing the name of the shape
+     *  @throws std::invalid_argument if the parameter is outside the available list
+     */
+    virtual void SetShape(const std::string& shape);
+    Shapes GetShape() const;
+    std::string GetShapeString() const;
+
+
+    /**
      *  @see Item::GetClassID()
      */
     static const std::string GetClassID();
 
-private:
+protected:
     float labelMargin; ///<distance between the box and the label text.
+    Shapes shape;
+
+    Shapes StringToShape(const std::string& shape) const;
+    std::string ShapeToString(const CheckBox::Shapes& shape) const;
+};
+
+/**
+ *  @class RadioButton
+ *  @brief Checkbox with default RADIO shape.
+ *  @details Small convenience wrapper.
+ */
+class RadioButton : public CheckBox {
+public:
+
+    RadioButton() : Item("CheckBox", 50.0f, 50.0f) {shape = RADIO;}
 };
 
 /**

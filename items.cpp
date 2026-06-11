@@ -134,18 +134,64 @@ const std::string Button::GetClassID() {
 // --- CheckBox ---
 
 void CheckBox::DrawMyself(float elapsedTime) const {
-    if (!pressed) {
-        DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    } else DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour());
+    if (shape != CheckBox::RADIO) {
+        if (!pressed) {
+            DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+        } else DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour());
+    } else {
+        DrawCircle(xAnchor + (width / 2.0f), yAnchor + (height / 2.0f), width / 2.0f, colour.GetColour());
+    }
+
 
     if (text != "") {
-       DrawText(text.c_str(), xAnchor + width + textMargin + labelMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+        if (alignment.IsRightAlignment()) {
+            DrawText(text.c_str(), xAnchor + width + textMargin + labelMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+        } else if (alignment.IsLeftAlignment()) {
+            DrawText(text.c_str(), xAnchor - textMargin - labelMargin - MeasureText(text.c_str(),
+                    font.GetFontSize()), yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+        } else if (alignment.IsBottomAlignment()) {
+            DrawText(text.c_str(), xAnchor + (width / 2.0f) - (MeasureText(text.c_str(), font.GetFontSize()) / 2.0f),
+                     yAnchor + height + textMargin + labelMargin, font.GetFontSize(), font.colour.GetColour());
+        } else {
+            DrawText(text.c_str(), xAnchor + (width / 2.0f) - (MeasureText(text.c_str(), font.GetFontSize()) / 2.0f),
+                     yAnchor - textMargin - labelMargin - font.GetFontSize(), font.GetFontSize(), font.colour.GetColour());
+        }
     }
-    border.DrawMyself(xAnchor, yAnchor, GetTotalWidth(), height);
+
+    if (alignment.IsRightAlignment()) {
+        border.DrawMyself(xAnchor, yAnchor, width + (2.0f * textMargin) + labelMargin + MeasureText(text.c_str(), font.GetFontSize()), height);
+    } else if (alignment.IsLeftAlignment()) {
+        border.DrawMyself(xAnchor - width - (2.0f * textMargin) - labelMargin - MeasureText(text.c_str(), font.GetFontSize()),
+                        yAnchor, width + (2.0f * textMargin) + labelMargin + MeasureText(text.c_str(), font.GetFontSize()), height);
+    } else if (alignment.IsTopAlignment()) {
+        float textSize = (float)(MeasureText(text.c_str(), font.GetFontSize()));
+        if (width > textSize) {
+            border.DrawMyself(xAnchor - ((textSize - width) / 2.0f) - textMargin, yAnchor - (2.0f * textMargin) - labelMargin - font.GetFontSize(),
+                               width + (2.0f * textMargin), height + (2.0f * textMargin) + labelMargin + font.GetFontSize());
+        } else border.DrawMyself(xAnchor - ((textSize - width) / 2.0f) - textMargin, yAnchor - (2.0f * textMargin) - labelMargin - font.GetFontSize(),
+                                textSize + (2.0f * textMargin), height + (2.0f * textMargin) + labelMargin + font.GetFontSize());
+    } else {
+        float textSize = (float)(MeasureText(text.c_str(), font.GetFontSize()));
+        if (width > textSize) {
+            border.DrawMyself(xAnchor - ((textSize - width) / 2.0f) - textMargin, yAnchor,
+                               width + (2.0f * textMargin), height + (2.0f * textMargin) + labelMargin + font.GetFontSize());
+        } else border.DrawMyself(xAnchor - ((textSize - width) / 2.0f) - textMargin, yAnchor,
+                                textSize + (2.0f * textMargin), height + (2.0f * textMargin) + labelMargin + font.GetFontSize());
+    }
     clickBorder.DrawMyself(xAnchor, yAnchor, width, height);
-    if (pressed && drawsX) { //TODO add other shapes options
-        DrawLineEx({xAnchor, yAnchor}, {xAnchor + width, yAnchor + height}, width / 10, colour.GetColour());
-        DrawLineEx({xAnchor, yAnchor + height}, {xAnchor + width, yAnchor}, width / 10, colour.GetColour());
+
+    if (pressed) { // draws shapes. Eyeballed numeric values, but looks good. Can stay.
+        if (shape == CheckBox::X) {
+            DrawLineEx({xAnchor + (width * 0.1f), yAnchor + (height * 0.1f)}, {xAnchor + (0.9f * width), yAnchor + (0.9f * height)}, width / 10.0f, colour.GetColour());
+            DrawLineEx({xAnchor + (width * 0.1f), yAnchor + (0.9f * height)}, {xAnchor + (0.9f * width), yAnchor + (0.1f * height)}, width / 10.0f, colour.GetColour());
+        } else if (shape == CheckBox::TICK) {
+            DrawLineEx({xAnchor + (width * 0.1f), yAnchor + (height * 0.5f)}, {xAnchor + (width * 0.4f), yAnchor + (height * 0.85f)}, width / 10.0f, colour.GetColour());
+            DrawLineEx({xAnchor + (width * 0.4f), yAnchor + (height * 0.85f)}, {xAnchor + (width * 0.9f), yAnchor + (height * 0.15f)}, width / 10.0f, colour.GetColour());
+        } else if (shape == CheckBox::O) {
+            DrawRing({xAnchor + (width / 2.0f), yAnchor + (height / 2.0f)}, 0.8f * (width / 2.0f), 0.9f * width / 2.0f, 0.0f, 360.0f, 32, colour.GetColour());
+        } else if (shape == CheckBox::RADIO) {
+            DrawCircle(xAnchor + (width / 2.0f), yAnchor + (height / 2.0f), width / 4.0f, pressedColour.GetColour());
+        }
     }
 }
 
@@ -169,11 +215,75 @@ float CheckBox::GetLabelMargin() const {
 }
 
 float CheckBox::GetTotalWidth() const {
-    return Item::GetTotalWidth() + clickBorder.GetThickness() + labelMargin + (2.0f * textMargin) + (float)(MeasureText(text.c_str(), font.GetFontSize()));
+    if (alignment.IsRightAlignment() || alignment.IsLeftAlignment()) {
+        return Item::GetTotalWidth() + clickBorder.GetThickness() + labelMargin + (2.0f * textMargin) + (float)(MeasureText(text.c_str(), font.GetFontSize()));
+    }
+    float textLength = (float)(MeasureText(text.c_str(), font.GetFontSize()));
+    if (textLength > width) {
+        return textLength + (2.0f * textMargin);
+    }
+    return Item::GetTotalWidth() + clickBorder.GetThickness();
+}
+
+float CheckBox::GetTotalHeight() const {
+    if (alignment.IsTopAlignment() || alignment.IsBottomAlignment()) {
+        return Item::GetTotalHeight() + clickBorder.GetThickness() + labelMargin + (2.0f * textMargin) + font.GetFontSize();
+    }
+    return Item::GetTotalWidth() + clickBorder.GetThickness();
 }
 
 const std::string CheckBox::GetClassID() {
     return "CheckBox";
+}
+
+void CheckBox::SetShape(const CheckBox::Shapes& shape) {
+    try {
+        ShapeToString(shape);
+    } catch (const std::invalid_argument&) {
+        CPPFX_THROW(std::invalid_argument, "Invalid shape - cannot set shape.");
+    }
+    this->shape = shape;
+}
+
+CheckBox::Shapes CheckBox::StringToShape(const std::string& shape) const {
+    static const std::unordered_map<std::string, CheckBox::Shapes> stringMap = {
+        {"X", CheckBox::Shapes::X}, {"CROSS", CheckBox::Shapes::X},
+        {"TICK", CheckBox::Shapes::TICK}, {"CHECK", CheckBox::Shapes::TICK},
+        {"O", CheckBox::Shapes::O}, {"CIRCLE", CheckBox::Shapes::O}, {"MARU", CheckBox::Shapes::O}, {"GONGPYO", CheckBox::Shapes::O},
+        {"RADIO", CheckBox::Shapes::RADIO}
+    };
+
+    std::string normal = shape;
+    std::transform(normal.begin(), normal.end(), normal.begin(), ::toupper);
+
+    auto it = stringMap.find(normal);
+    if (it != stringMap.end()) return it->second;
+    CPPFX_THROW(std::invalid_argument, "Invalid shape (" + shape + ")");
+}
+
+std::string CheckBox::ShapeToString(const CheckBox::Shapes& shape) const {
+    static const std::unordered_map<CheckBox::Shapes, std::string> shapeMap = {
+        {CheckBox::Shapes::X,    "X"},
+        {CheckBox::Shapes::TICK, "TICK"},
+        {CheckBox::Shapes::O,    "O"},
+        {CheckBox::Shapes::RADIO,    "RADIO"}
+    };
+
+    auto it = shapeMap.find(shape);
+    if (it != shapeMap.end()) return it->second;
+    CPPFX_THROW(std::invalid_argument, "Invalid shape");
+}
+
+void CheckBox::SetShape(const std::string& shape) {
+    this->shape = StringToShape(shape);
+}
+
+CheckBox::Shapes CheckBox::GetShape() const {
+    return shape;
+}
+
+std::string CheckBox::GetShapeString() const {
+    return ShapeToString(shape);
 }
 
 // --- Containers ---
@@ -942,10 +1052,10 @@ void ProgressIndicator::DoFocusAction(float elapsedTime) {
 
 void ProgressIndicator::SetShape(const ProgressIndicator::Shapes& shape) {
     if (shape != ProgressIndicator::Shapes::RING && shape != ProgressIndicator::Shapes::DOTS && shape != ProgressIndicator::Shapes::CIRCLE ) {
-        if (shape == ProgressIndicator::BAR) {
+        if (shape == ProgressIndicator::Shapes::BAR) {
             CPPFX_WARN("If you want a progress bar, use ProgressBar instead.");
         }
-        CPPFX_THROW(std::invalid_argument, "Invalid shape (" + ShapeToString(shape) + ") - cannot set shape.");
+        CPPFX_THROW(std::invalid_argument, "Invalid shape - cannot set shape.");
     }
     this->shape = shape;
 }
@@ -957,18 +1067,28 @@ ProgressIndicator::Shapes ProgressIndicator::StringToShape(const std::string& sh
         {"DOTS", ProgressIndicator::Shapes::DOTS},
         {"BAR", ProgressIndicator::Shapes::BAR}
     };
-    auto it = shapeMap.find(shape);
+
+    std::string normal = shape;
+    std::transform(normal.begin(), normal.end(), normal.begin(), ::toupper);
+
+    auto it = shapeMap.find(normal);
     if (it != shapeMap.end()) return it->second;
+
     CPPFX_THROW(std::invalid_argument, "Invalid shape (" + shape + ")");
 }
 
 std::string ProgressIndicator::ShapeToString(const ProgressIndicator::Shapes& shape) const {
-    switch (shape) {
-        case ProgressIndicator::Shapes::RING: return "RING";
-        case ProgressIndicator::Shapes::CIRCLE:  return "CIRCLE";
-        case ProgressIndicator::Shapes::DOTS: return "DOTS";
-        default: CPPFX_THROW(std::invalid_argument, "Invalid shape (" + ShapeToString(shape) + ")");
-    }
+    static const std::unordered_map<ProgressIndicator::Shapes, std::string> stringMap = {
+        {ProgressIndicator::Shapes::RING,"RING"},
+        {ProgressIndicator::Shapes::CIRCLE, "CIRCLE"},
+        {ProgressIndicator::Shapes::DOTS, "DOTS"},
+        {ProgressIndicator::Shapes::BAR, "BAR"}
+    };
+
+    auto it = stringMap.find(shape);
+    if (it != stringMap.end()) return it->second;
+
+    CPPFX_THROW(std::invalid_argument, "Invalid shape)");
 }
 
 void ProgressIndicator::SetShape(const std::string& shape) {
@@ -1049,7 +1169,7 @@ void ProgressBar::SetShape(const ProgressIndicator::Shapes& shape) {
         if (shape != BAR) {
             CPPFX_WARN("ProgressBar should work at base shapes, but it's not recommended. Use ProgressIndicator instead and ProgressBar for bars only.");
         }
-        CPPFX_THROW(std::invalid_argument, "Invalid shape (" + ShapeToString(shape) + ") - cannot set shape.");
+        CPPFX_THROW(std::invalid_argument, "Invalid shape - cannot set shape.");
     }
     this->shape = shape;
 }
@@ -1060,7 +1180,7 @@ std::string ProgressBar::ShapeToString(const ProgressIndicator::Shapes& shape) c
         case ProgressIndicator::Shapes::CIRCLE:  return "CIRCLE";
         case ProgressIndicator::Shapes::DOTS: return "DOTS";
         case ProgressIndicator::Shapes::BAR: return "BAR";
-        default: CPPFX_THROW(std::invalid_argument, "Invalid shape (" + ShapeToString(shape) + ")");
+        default: CPPFX_THROW(std::invalid_argument, "Invalid shape");
     }
 }
 
