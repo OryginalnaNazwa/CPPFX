@@ -222,6 +222,7 @@ public:
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+    void DoPassiveAction(float elapsedTime) override;
 
     /**
      *  @brief Adds a button to the group.
@@ -316,13 +317,25 @@ public:
     bool IsLabelTaken(const std::string& label) const;
 
     /**
+     *  @brief Orders buttons around
+     *  @details Gets called automatically on the first frame after getting dirty.
+     */
+    void SetButtonsPositions();
+
+    /**
      *  @see Item::GetClassID()
      */
     static const std::string GetClassID();
 
+    void SetX(float x) override; ///< flags for ordering
+    void SetY(float y) override; ///< flags for ordering
+
 private:
-    std::map<std::string, std::unique_ptr<RadioButton>> buttons; ///< radio buttons
+    std::unordered_map<std::string, std::unique_ptr<RadioButton>> buttons; ///< radio buttons
+    std::vector<RadioButton*> buttonsInDrawingOrder;
+
     bool vertical; ///< whether the buttons will be arranged vertically or horizontally
+    bool needsOrdering = false; ///< lazy ordering
 
     void UnpressButtons(); ///< unpresses all buttons in the group
 };

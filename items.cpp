@@ -290,20 +290,8 @@ std::string CheckBox::GetShapeString() const {
 void RadioGroup::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     border.DrawMyself(xAnchor, yAnchor, width, height);
-    if (vertical) {
-        float currentY = yAnchor;
-        for (const auto& [key, button] : buttons) {
-            button->SetY(currentY);
-            button->DrawMyself(elapsedTime);
-            currentY += button->GetTotalHeight() + padding;
-        }
-    } else {
-        float currentX = xAnchor;
-        for (const auto& [key, button] : buttons) {
-            button->SetX(currentX);
-            button->DrawMyself(elapsedTime);
-            currentX += button->GetTotalWidth() + padding;
-        }
+    for (const auto& button : buttonsInDrawingOrder) {
+        button->DrawMyself(elapsedTime);
     }
 }
 
@@ -321,6 +309,12 @@ void RadioGroup::DoFocusAction(float elapsedTime, const Vector2& mousePosition) 
     }
 }
 
+void RadioGroup::DoPassiveAction(float elapsedTime) {
+    if (needsOrdering) {
+        SetButtonsPositions();
+    }
+}
+
 void RadioGroup::AddButton(const std::string& label) {
     if (label == "") {
         CPPFX_WARN("If for some strange reason you want no label, use ' ' spaces.");
@@ -334,7 +328,9 @@ void RadioGroup::AddButton(const std::string& label) {
     button->SetID(label);
     button->SetText(label);
     if (buttons.empty()) button->Press();
+    buttonsInDrawingOrder.push_back(button.get());
     buttons.insert({label, std::move(button)});
+    needsOrdering = true;
 }
 
 void RadioGroup::RemoveButton(const std::string& label) {
@@ -346,6 +342,7 @@ void RadioGroup::RemoveButton(const std::string& label) {
     }
 
     buttons.erase(label);
+    needsOrdering = true;
 }
 
 bool RadioGroup::IsButtonPressed(const std::string& label) const {
@@ -406,6 +403,7 @@ void RadioGroup::SetLabelMargins(float margin) {
     for (auto& [key, button] : buttons) {
         button->SetLabelMargin(margin);
     }
+    needsOrdering = true;
 }
 
 void RadioGroup::SetTextMargins(float margin) {
@@ -419,24 +417,29 @@ void RadioGroup::SetTextMargins(float margin) {
     for (auto& [key, button] : buttons) {
         button->SetTextMargin(margin);
     }
+    needsOrdering = true;
 }
 
 void RadioGroup::SetButtonAlignment(Alignment::Alignments alignment) {
     for (auto& [key, button] : buttons) {
         button->alignment.SetAlignment(alignment);
     }
+    needsOrdering = true;
 }
 
 void RadioGroup::SetToVertical() {
     vertical = true;
+    needsOrdering = true;
 }
 
 void RadioGroup::SetToHorizontal() {
     vertical = false;
+    needsOrdering = true;
 }
 
 void RadioGroup::SetVerticality(bool flag) {
     vertical = flag;
+    needsOrdering = true;
 }
 
 bool RadioGroup::IsVertical() const {
@@ -455,6 +458,33 @@ void RadioGroup::UnpressButtons() {
     for (auto& [key, button] : buttons) {
         button->Unpress();
     }
+}
+
+void RadioGroup::SetX(float x) {
+    Item::SetX(x);
+    needsOrdering = true;
+}
+
+void RadioGroup::SetY(float y) {
+    Item::SetY(y);
+    needsOrdering = true;
+}
+
+void RadioGroup::SetButtonsPositions() {
+    if (vertical) {
+        float currentY = yAnchor;
+        for (const auto& button : buttonsInDrawingOrder) {
+            button->SetY(currentY);
+            currentY += button->GetTotalHeight() + padding;
+        }
+    } else {
+        float currentX = xAnchor;
+        for (const auto& button : buttonsInDrawingOrder) {
+            button->SetX(currentX);
+            currentX += button->GetTotalWidth() + padding;
+        }
+    }
+    needsOrdering = false;
 }
 
 // --- Containers ---
