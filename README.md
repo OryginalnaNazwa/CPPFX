@@ -62,7 +62,9 @@ Check out the examples provided in the Examples folder for more.
 ## Widget list
 - Label
 - TextField
+- PasswordField
 - Button
+- PressedButton
 - VBox
 - HBox
 - Workspace
@@ -71,12 +73,11 @@ Check out the examples provided in the Examples folder for more.
 - EditableSpinner
 - ProgressIndicator
 - ProgressBar
-- PasswordField
 - Dropdown
-- Checkbox
+- Checkbox (RadioButton)
+- RadioGroup
 - List
 - PieChart
-- PressedButton
 - Line
 - Square
 - Rectangle
