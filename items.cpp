@@ -469,22 +469,186 @@ void RadioGroup::SetY(float y) {
     Item::SetY(y);
     needsOrdering = true;
 }
-
+/*
 void RadioGroup::SetButtonsPositions() {
+    size_t perGroup = buttons.size() / groups;
+    size_t groupsTotal = groups;
+    if (buttons.size() % groups != 0) {
+        groupsTotal++;
+    }
+
     if (vertical) {
-        float currentY = yAnchor;
+        float currentY = yAnchor + buttonMargin;
+        size_t currentGroup = 0, currentButton = 1;
         for (const auto& button : buttonsInDrawingOrder) {
+            button->SetX(xAnchor + buttonMargin + (currentGroup * (buttonsInDrawingOrder[0]->GetTotalWidth() + padding + buttonMargin)));
             button->SetY(currentY);
             currentY += button->GetTotalHeight() + padding;
+            if (currentButton == perGroup) {
+                currentButton = 1;
+                currentGroup++;
+                currentY = yAnchor + buttonMargin;
+            }
+            currentButton++;
         }
     } else {
-        float currentX = xAnchor;
+        float currentX = xAnchor + buttonMargin;
+        size_t currentGroup = 0, currentButton = 1;
         for (const auto& button : buttonsInDrawingOrder) {
+            button->SetY(yAnchor + buttonMargin + (currentGroup * (buttonsInDrawingOrder[0]->GetTotalWidth() + padding + buttonMargin)));
             button->SetX(currentX);
             currentX += button->GetTotalWidth() + padding;
+            if (currentButton == perGroup) {
+                currentButton = 1;
+                currentGroup++;
+                currentX = xAnchor + buttonMargin;
+            }
+            currentButton++;
         }
     }
+    ExpandToButtons();
     needsOrdering = false;
+}*/
+void RadioGroup::SetButtonsPositions() {
+    if (buttonsInDrawingOrder.empty()) return;
+
+    size_t perGroup = buttons.size() / groups;
+    size_t remainder = buttons.size() % groups;
+
+    if (vertical) {
+        std::vector<float> columnWidths(groups, 0.0f);
+        size_t currentGroup = 0, currentButton = 1;
+        for (const auto& button : buttonsInDrawingOrder) {
+            columnWidths[currentGroup] = std::max(columnWidths[currentGroup], button->GetTotalWidth());
+            size_t thisColumnSize = (currentGroup < remainder) ? perGroup + 1 : perGroup;
+            if (currentButton == thisColumnSize) {
+                currentButton = 1;
+                currentGroup++;
+            } else currentButton++;
+        }
+
+        std::vector<float> columnX(groups, 0.0f);
+        columnX[0] = xAnchor + buttonMargin;
+        for (size_t c = 1; c < groups; c++) {
+            columnX[c] = columnX[c-1] + columnWidths[c-1] + padding + buttonMargin;
+        }
+
+        currentGroup = 0; currentButton = 1;
+        float currentY = yAnchor + buttonMargin;
+        for (const auto& button : buttonsInDrawingOrder) {
+            button->SetX(columnX[currentGroup]);
+            button->SetY(currentY);
+            currentY += button->GetTotalHeight() + padding;
+            size_t thisColumnSize = (currentGroup < remainder) ? perGroup + 1 : perGroup;
+            if (currentButton == thisColumnSize) {
+                currentButton = 1;
+                currentGroup++;
+                currentY = yAnchor + buttonMargin;
+            } else currentButton++;
+        }
+
+    } else {
+        std::vector<float> rowHeights(groups, 0.0f);
+        size_t currentGroup = 0, currentButton = 1;
+        for (const auto& button : buttonsInDrawingOrder) {
+            rowHeights[currentGroup] = std::max(rowHeights[currentGroup], button->GetTotalHeight());
+            size_t thisRowSize = (currentGroup < remainder) ? perGroup + 1 : perGroup;
+            if (currentButton == thisRowSize) {
+                currentButton = 1;
+                currentGroup++;
+            } else currentButton++;
+        }
+
+        std::vector<float> rowY(groups, 0.0f);
+        rowY[0] = yAnchor + buttonMargin;
+        for (size_t r = 1; r < groups; r++) {
+            rowY[r] = rowY[r-1] + rowHeights[r-1] + padding + buttonMargin;
+        }
+
+        currentGroup = 0; currentButton = 1;
+        float currentX = xAnchor + buttonMargin;
+        for (const auto& button : buttonsInDrawingOrder) {
+            button->SetX(currentX);
+            button->SetY(rowY[currentGroup]);
+            currentX += button->GetTotalWidth() + padding;
+            size_t thisRowSize = (currentGroup < remainder) ? perGroup + 1 : perGroup;
+            if (currentButton == thisRowSize) {
+                currentButton = 1;
+                currentGroup++;
+                currentX = xAnchor + buttonMargin;
+            } else currentButton++;
+        }
+    }
+
+    ExpandToButtons();
+    needsOrdering = false;
+}
+
+void RadioGroup::ExpandToButtons() {
+    float maxX = -9999.9f, maxY = -9999.9f;
+    for (const auto& [key, button] : buttons) {
+        if (button->GetX() + button->GetTotalWidth() > maxX) maxX = button->GetX() + button->GetTotalWidth();
+        if (button->GetY() + button->GetTotalHeight() > maxY) maxY = button->GetY() + button->GetTotalHeight();
+    }
+    if (maxX > xAnchor + width) width = maxX - xAnchor + buttonMargin;
+    if (maxY > yAnchor + height) height = maxY - yAnchor + buttonMargin;
+}
+
+void RadioGroup::FitToButtons() {
+    float maxX = -9999.9f, maxY = -9999.9f;
+    for (const auto& [key, button] : buttons) {
+        if (button->GetX() + button->GetTotalWidth() > maxX) maxX = button->GetX() + button->GetTotalWidth();
+        if (button->GetY() + button->GetTotalHeight() > maxY) maxY = button->GetY() + button->GetTotalHeight();
+    }
+    width = maxX - xAnchor + buttonMargin;
+    height = maxY - yAnchor + buttonMargin;
+}
+
+void RadioGroup::SetButtonMargin(float distance) {
+    if (distance < 0.0f) {
+        CPPFX_THROW(std::invalid_argument, "Cannot set button margin to a negative value.");
+    }
+    buttonMargin = distance;
+}
+
+float RadioGroup::GetButtonMargin() const {
+    return buttonMargin;
+}
+
+void RadioGroup::SetGroupsNumber(int number) {
+    if (number < 1) {
+        CPPFX_THROW(std::invalid_argument, "There's no way to have less than 1 group.");
+    }
+    groups = (size_t)(number);
+    needsOrdering = true;
+}
+
+void RadioGroup::SetColumnsNumber(int number) {
+    try {
+        SetGroupsNumber(number);
+    } catch (const std::invalid_argument&) {
+        CPPFX_THROW(std::invalid_argument, "There's no way to have less than 1 column.");
+    }
+}
+
+void RadioGroup::SetRowsNumber(int number) {
+    try {
+        SetGroupsNumber(number);
+    } catch (const std::invalid_argument&) {
+        CPPFX_THROW(std::invalid_argument, "There's no way to have less than 1 row.");
+    }
+}
+
+size_t RadioGroup::GetGroupsNumber() const {
+    return groups;
+}
+
+size_t RadioGroup::GetColumnsNumber() const {
+    return GetGroupsNumber();
+}
+
+size_t RadioGroup::GetRowsNumber() const {
+    return GetGroupsNumber();
 }
 
 // --- Containers ---

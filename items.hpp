@@ -143,7 +143,8 @@ public:
     }; ///< the mark that will be display on pressed checkbox
     Alignment alignment; ///< where will the label display
 
-    CheckBox() : Item("CheckBox", 50.0f, 50.0f), PersistentState(), TextItem("CheckBox", 50.0f, 50.0f), alignment(Alignment::RIGHT), labelMargin(10.0f) {font.SetFontSize(height / 2.0f);}
+    CheckBox() : Item("CheckBox", 50.0f, 50.0f), PersistentState(), TextItem("CheckBox", 50.0f, 50.0f), alignment(Alignment::RIGHT), labelMargin(10.0f), shape(CheckBox::X)
+                {font.SetFontSize(height / 2.0f);}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -217,7 +218,7 @@ public:
 class RadioGroup : public virtual Padded {
 public:
 
-    RadioGroup() : Item("RadioGroup"), Padded(), vertical(true) {colour.SetColour(BLANK);}
+    RadioGroup() : Item("RadioGroup"), Padded(), vertical(true), buttonMargin(5), groups(1), needsOrdering(false) {colour.SetColour(BLANK);}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -321,6 +322,24 @@ public:
      *  @details Gets called automatically on the first frame after getting dirty.
      */
     void SetButtonsPositions();
+    /**
+     *  @brief Expands width and height to fit the buttons.
+     *  @details Called automatically in SetButtonsPositions.
+     *  @see SetButtonsPositions
+     */
+    void ExpandToButtons();
+    /**
+     *  @brief Expands or shrinks width and height to fit the buttons.
+     */
+    void FitToButtons();
+
+    /**
+     *  @brief Sets the distance between button and the limits of the widget.
+     *  @param distance the new value
+     *  @throws std::invalid_argument if distance is negative
+     */
+    void SetButtonMargin(float distance);
+    float GetButtonMargin() const;
 
     /**
      *  @see Item::GetClassID()
@@ -330,12 +349,48 @@ public:
     void SetX(float x) override; ///< flags for ordering
     void SetY(float y) override; ///< flags for ordering
 
+    /**
+     *  @brief Sets the number of groups the buttons will be divided into.
+     *  @param number the new number of columns or rows
+     *  @throws std::invalid_argument if the number is lesser than 1
+     */
+    void SetGroupsNumber(int number);
+    /**
+     *  @brief Sets the number of columns the buttons will be divided into.
+     *  @details Wrapper over groups, solely for convenience. Does the same.
+     *  @see SetGroupsNumber
+     */
+    void SetColumnsNumber(int number);
+    /**
+     *  @brief Sets the number of rows the buttons will be divided into.
+     *  @details Wrapper over groups, solely for convenience. Does the same.
+     *  @see SetGroupsNumber
+     */
+    void SetRowsNumber(int number);
+    /**
+     *  @returns The number of groups the buttons will be divided into.
+     */
+    size_t GetGroupsNumber() const;
+    /**
+     *  @details @details Wrapper over groups, solely for convenience. Does the same.
+     *  @returns The number of columns the buttons will be divided into.
+     */
+    size_t GetColumnsNumber() const;
+    /**
+     *  @details @details Wrapper over groups, solely for convenience. Does the same.
+     *  @returns The number of rows the buttons will be divided into.
+     */
+    size_t GetRowsNumber() const;
+
 private:
     std::unordered_map<std::string, std::unique_ptr<RadioButton>> buttons; ///< radio buttons
     std::vector<RadioButton*> buttonsInDrawingOrder;
 
     bool vertical; ///< whether the buttons will be arranged vertically or horizontally
-    bool needsOrdering = false; ///< lazy ordering
+    float buttonMargin; ///< distance from border to buttons (both x and y)
+    size_t groups; ///< into how many groups will the buttons be divided (columns/rows)
+
+    bool needsOrdering; ///< lazy ordering
 
     void UnpressButtons(); ///< unpresses all buttons in the group
 };
