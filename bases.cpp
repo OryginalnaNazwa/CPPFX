@@ -158,6 +158,26 @@ void Container::DoFocusAction(float elapsedTime) {
     return;
 }
 
+void Container::ExpandToChildren() {
+    float maxX = -9999.9f, maxY = -9999.9f;
+    for (const auto& [key, item] : Items) {
+        if (item->GetX() + item->GetTotalWidth() > maxX) maxX = item->GetX() + item->GetTotalWidth();
+        if (item->GetY() + item->GetTotalHeight() > maxY) maxY = item->GetY() + item->GetTotalHeight();
+    }
+    if (maxX > xAnchor + width) width = maxX - xAnchor;
+    if (maxY > yAnchor + height) height = maxY - yAnchor;
+}
+
+void Container::FitToChildren() {
+    float maxX = -9999.9f, maxY = -9999.9f;
+    for (const auto& [key, item] : Items) {
+        if (item->GetX() + item->GetTotalWidth() > maxX) maxX = item->GetX() + item->GetTotalWidth();
+        if (item->GetY() + item->GetTotalHeight() > maxY) maxY = item->GetY() + item->GetTotalHeight();
+    }
+    width = maxX - xAnchor;
+    height = maxY - yAnchor;
+}
+
 const std::string Container::GetClassID() {
     return "Container";
 }

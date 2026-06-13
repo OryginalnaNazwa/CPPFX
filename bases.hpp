@@ -149,6 +149,16 @@ public:
     bool IsIDTaken(const std::string& ID) const;
 
     /**
+     *  @brief Grows width and height to fit children.
+     *  @details Automatically called while setting positions of items.
+     */
+    void ExpandToChildren();
+    /**
+     *  @brief Grows or shrinks width and height to fit children.
+     */
+    void FitToChildren();
+
+    /**
      *  @see Item::GetClassID()
      *  @note Pointless here, just a reminder to put it in inherited classes.
      */

@@ -285,6 +285,7 @@ CheckBox::Shapes CheckBox::GetShape() const {
 std::string CheckBox::GetShapeString() const {
     return ShapeToString(shape);
 }
+
 // --- RadioGroup ---
 
 void RadioGroup::DrawMyself(float elapsedTime) const {
@@ -469,46 +470,7 @@ void RadioGroup::SetY(float y) {
     Item::SetY(y);
     needsOrdering = true;
 }
-/*
-void RadioGroup::SetButtonsPositions() {
-    size_t perGroup = buttons.size() / groups;
-    size_t groupsTotal = groups;
-    if (buttons.size() % groups != 0) {
-        groupsTotal++;
-    }
 
-    if (vertical) {
-        float currentY = yAnchor + buttonMargin;
-        size_t currentGroup = 0, currentButton = 1;
-        for (const auto& button : buttonsInDrawingOrder) {
-            button->SetX(xAnchor + buttonMargin + (currentGroup * (buttonsInDrawingOrder[0]->GetTotalWidth() + padding + buttonMargin)));
-            button->SetY(currentY);
-            currentY += button->GetTotalHeight() + padding;
-            if (currentButton == perGroup) {
-                currentButton = 1;
-                currentGroup++;
-                currentY = yAnchor + buttonMargin;
-            }
-            currentButton++;
-        }
-    } else {
-        float currentX = xAnchor + buttonMargin;
-        size_t currentGroup = 0, currentButton = 1;
-        for (const auto& button : buttonsInDrawingOrder) {
-            button->SetY(yAnchor + buttonMargin + (currentGroup * (buttonsInDrawingOrder[0]->GetTotalWidth() + padding + buttonMargin)));
-            button->SetX(currentX);
-            currentX += button->GetTotalWidth() + padding;
-            if (currentButton == perGroup) {
-                currentButton = 1;
-                currentGroup++;
-                currentX = xAnchor + buttonMargin;
-            }
-            currentButton++;
-        }
-    }
-    ExpandToButtons();
-    needsOrdering = false;
-}*/
 void RadioGroup::SetButtonsPositions() {
     if (buttonsInDrawingOrder.empty()) return;
 
@@ -736,64 +698,20 @@ const std::string AnchorPane::GetClassID() {
 }
 
 void VBox::SetPositionsOfItems() {
-    /*float currentPadding = padding;
+    float currentY = 0.0f;
     for (auto& item : ItemsInDrawingOrder) {
-        item->SetX(xAnchor);
-        item->SetY(yAnchor + currentPadding);
-        currentPadding += padding + item->height;
-    }*/
-    float startX = xAnchor, startY = yAnchor;
-    switch (alignment.GetAlignment()) {
-        case Alignment::Alignments::TOP_LEFT:
-            startX = xAnchor; startY = yAnchor; break;
-        case Alignment::Alignments::TOP_CENTRE:
-            startX = xAnchor + (width / 2.0f); startY = yAnchor; break;
-        case Alignment::Alignments::TOP_RIGHT:
-            startX = xAnchor + width; startY = yAnchor; break;
-        case Alignment::Alignments::CENTRE_LEFT:
-            startX = xAnchor; startY = yAnchor + (height / 2.0f); break;
-        case Alignment::Alignments::CENTRE:
-            startX = xAnchor + (width / 2.0f); startY = yAnchor + (height / 2.0f); break;
-        case Alignment::Alignments::CENTRE_RIGHT:
-            startX = xAnchor + width; startY = yAnchor + (height / 2.0f); break;
-        case Alignment::Alignments::BOTTOM_LEFT:
-            startX = xAnchor; startY = yAnchor + height; break;
-        case Alignment::Alignments::BOTTOM_CENTRE:
-            startX = xAnchor + (width / 2.0f); startY = yAnchor + height; break;
-        case Alignment::Alignments::BOTTOM_RIGHT:
-            startX = xAnchor + width; startY = yAnchor + height; break;
-    }
-    float currentY = startY;
-    float itemOffsetX = 0, itemOffsetY = 0;
-    for (auto& item : ItemsInDrawingOrder) {
-        if (alignment.IsRightAlignment()) {
-            itemOffsetX = -item->GetTotalWidth();
-            itemOffsetY = 0;
-        } else if (alignment.IsCentreAlignment()) {
-            itemOffsetX = -item->GetTotalWidth() / 2.0f;
-            itemOffsetY = 0;
-        } else if (alignment.IsBottomAlignment()) {
-            itemOffsetY = -item->GetTotalHeight();
-        } else {
-            itemOffsetY = 0;
-            itemOffsetX = 0;
-        }
-        item->SetX(startX + itemOffsetX); //TODO Look into it
-
-        item->SetY(currentY + itemOffsetY);
+        item->SetX(alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
+        item->SetY(currentY + alignment.GetAlignedY(yAnchor, item->GetTotalHeight(), height));
 
         currentY += padding + item->GetTotalHeight();
-        if (currentY > yAnchor + height) {
-            height = currentY - yAnchor;
-        }
     }
+    ExpandToChildren();
 }
 
 float VBox::GetTotalHeight() const {
-    float heightSum = 0;
+    float heightSum = 0.0f;
     for (auto& child : Items) {
-        heightSum += child.second->GetTotalHeight();
-        heightSum += padding;
+        heightSum += child.second->GetTotalHeight() + padding;
     }
     return heightSum;
 }
@@ -803,50 +721,20 @@ const std::string VBox::GetClassID() {
 }
 
 void HBox::SetPositionsOfItems() {
-    /*float currentPadding = padding;
+    float currentX = 0.0f;
     for (auto& item : ItemsInDrawingOrder) {
-        item->SetY(yAnchor);
-        item->SetX(xAnchor + currentPadding);
-        currentPadding += padding + item->width;
-    }*/
-    float startX = xAnchor, startY = yAnchor;
-    switch (alignment.GetAlignment()) {
-        case Alignment::Alignments::TOP_LEFT:
-            startX = xAnchor; startY = yAnchor; break;
-        case Alignment::Alignments::TOP_CENTRE:
-            startX = xAnchor + (width / 2.0f); startY = yAnchor; break;
-        case Alignment::Alignments::TOP_RIGHT:
-            startX = xAnchor + width; startY = yAnchor; break;
-        case Alignment::Alignments::CENTRE_LEFT:
-            startX = xAnchor; startY = yAnchor + (height / 2.0f); break;
-        case Alignment::Alignments::CENTRE:
-            startX = xAnchor + (width / 2.0f); startY = yAnchor + (height / 2.0f); break;
-        case Alignment::Alignments::CENTRE_RIGHT:
-            startX = xAnchor + width; startY = yAnchor + (height / 2.0f); break;
-        case Alignment::Alignments::BOTTOM_LEFT:
-            startX = xAnchor; startY = yAnchor + height; break;
-        case Alignment::Alignments::BOTTOM_CENTRE:
-            startX = xAnchor + (width / 2.0f); startY = yAnchor + height; break;
-        case Alignment::Alignments::BOTTOM_RIGHT:
-            startX = xAnchor + width; startY = yAnchor + height; break;
-    }
+        item->SetX(currentX + alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
+        item->SetY(alignment.GetAlignedY(yAnchor, item->GetTotalHeight(), height));
 
-    float currentX = startX;
-    for (auto& item : ItemsInDrawingOrder) { //TODO Make it work properly
-        item->SetX(currentX);
-        item->SetY(startY);
         currentX += padding + item->GetTotalWidth();
-        if (currentX > xAnchor + width) {
-            width = currentX - xAnchor;
-        }
     }
+    ExpandToChildren();
 }
 
 float HBox::GetTotalWidth() const {
     float widthSum = 0.0f;
     for (auto& child : Items) {
-        widthSum += child.second->GetTotalWidth();
-        widthSum += padding;
+        widthSum += child.second->GetTotalWidth() + padding;
     }
     return widthSum;
 }
