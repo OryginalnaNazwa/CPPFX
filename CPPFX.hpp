@@ -45,6 +45,12 @@ namespace CPPFX { class RadioGroup; }*/
 
 namespace CPPFX {
 
+#define CPPFX_VERSION_MAJOR 0
+#define CPPFX_VERSION_MINOR 5
+#define CPPFX_VERSION_PATCH 0
+#define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
+extern const char* CPPFX_VERSION_STRING;
+
 #define CPPFX_THROW_GUI(ex, msg) throw ex(std::string("In GUI ") + this->ID + ": " + msg)
 
 /**

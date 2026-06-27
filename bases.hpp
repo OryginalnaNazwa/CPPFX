@@ -125,23 +125,23 @@ public:
      */
     void SafeRemoveItem(const Item* item);
 
-    virtual void SetX(float x);
-    virtual void SetY(float y);
-    virtual void SetWidth(float value);
-    virtual void SetHeight(float value);
+    virtual void SetX(float x) override;
+    virtual void SetY(float y) override;
+    virtual void SetWidth(float value) override;
+    virtual void SetHeight(float value) override;
 
-    virtual void MakeInvisible();
-    virtual void MakeVisible();
-    virtual void SetVisible(bool flag);
-    virtual void MakeActive();
-    virtual void MakeInactive();
-    virtual void SetInactive(bool flag);
-    virtual void Show();
-    virtual void Hide();
-    virtual void ConsumeClicks();
-    virtual void LetClicksThrough();
-    virtual void SetToWorld();
-    virtual void SetToScreen();
+    virtual void MakeInvisible() override;
+    virtual void MakeVisible() override;
+    virtual void SetVisible(bool flag) override;
+    virtual void MakeActive() override;
+    virtual void MakeInactive() override;
+    virtual void SetInactive(bool flag) override;
+    virtual void Show() override;
+    virtual void Hide() override;
+    virtual void ConsumeClicks() override;
+    virtual void LetClicksThrough() override;
+    virtual void SetToWorld() override;
+    virtual void SetToScreen() override;
 
     /**
      *  @brief Arranges the items.

@@ -111,21 +111,21 @@ public:
     /**
      *  @brief Makes the item inactive.
      */
-    void MakeInactive();
+    virtual void MakeInactive();
     /**
      *  @brief Makes the item active.
      */
-    void MakeActive();
+    virtual void MakeActive();
     /**
      *  @brief Sets the item's activity state.
      *  @param flag true - inactive, false - active
      */
-    void SetInactive(bool flag);
+    virtual void SetInactive(bool flag);
     /**
      *  @brief Checks whether the item is inactive.
      *  @returns true if inactive
      */
-    bool IsInactive() const;
+    virtual bool IsInactive() const;
 
     /**
      *  @brief Sets the coordinates' system of the item to World.
@@ -139,37 +139,37 @@ public:
      *  @brief Checks whether the current coordinates' system of the item is Screen based.
      *  @returns true if screen based.
      */
-    bool IsScreenBased() const;
+    virtual bool IsScreenBased() const;
 
     /**
      *  @brief Makes the item invisible.
      */
-    void MakeInvisible();
+    virtual void MakeInvisible();
     /**
      *  @brief Makes the item visible.
      */
-    void MakeVisible();
+    virtual void MakeVisible();
     /**
      *  @brief Sets the item's visibility.
      *  @param flag true - visible.
      */
-    void SetVisible(bool flag);
+    virtual void SetVisible(bool flag);
     /**
      *  @brief Checks whether the item is visible.
      *  @returns true if visible.
      */
-    bool IsVisible() const;
+    virtual bool IsVisible() const;
 
     /**
      *  @brief Makes the item invisible and not interactable.
      *  @details Sets both inactive and invisible to false.
      */
-    void Hide();
+    virtual void Hide();
     /**
      *  @brief Makes the item visible and interactable.
      *  @details Sets both inactive and invisible to true.
      */
-    void Show();
+    virtual void Show();
 
     /**
      *  @brief Makes the item consume clicks.

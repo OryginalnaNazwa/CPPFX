@@ -185,7 +185,9 @@ void Container::SetToWorld() {
 void Container::SetToScreen() {
     Item::SetToScreen();
     for (auto& [key, item] : Items) {
-        item->SetToScreen();
+        if (IsContainer(item->GetFxID())) {
+            dynamic_cast<Container*>(item)->Container::SetToScreen();
+        } else item->SetToScreen();
     }
 }
 
