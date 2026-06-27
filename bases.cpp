@@ -185,9 +185,7 @@ void Container::SetToWorld() {
 void Container::SetToScreen() {
     Item::SetToScreen();
     for (auto& [key, item] : Items) {
-        if (IsContainer(item->GetFxID())) {
-            dynamic_cast<Container*>(item)->Container::SetToScreen();
-        } else item->SetToScreen();
+        item->SetToScreen();
     }
 }
 
@@ -201,7 +199,6 @@ void Container::AddItem(Item* item) {
     } else {
         CPPFX_THROW(std::invalid_argument, "Item already in container - cannot add item.");
     }
-    needsSorting = true;
     needsOrdering = true;
 }
 
@@ -249,17 +246,7 @@ bool Container::IsIDTaken(const std::string& ID) const {
     return Items.contains(ID);
 }
 
-void Container::SortOrder() {
-    std::sort(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [](const Item* a, const Item* b) {
-        return a->GetPriority() > b->GetPriority();
-    });
-    needsSorting = false;
-}
-
 void Container::DoPassiveAction(float elapsedTime) {
-    if (needsSorting) {
-        SortOrder();
-    }
     if (needsOrdering) {
         SetPositionsOfItems();
         needsOrdering = false; // needs to be here, SetPositionsOfItems is fully virtual.

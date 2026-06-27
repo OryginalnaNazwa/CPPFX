@@ -163,12 +163,6 @@ public:
     virtual void DoFocusAction(float elapsedTime) override; ///< nothing, defocuses itself.
 
     /**
-     *  @brief Sorts the drawing order by priority.
-     *  @details Called automatically on the first frame after getting dirty.
-     */
-    void SortOrder();
-
-    /**
      *  @brief Checks whether the item of this ID is already a child of the container.
      *  @param ID ID of the item to be checked.
      *  @returns true if the item already is in the container.
@@ -198,7 +192,6 @@ protected:
     std::unordered_map<std::string, Item*> Items;
     std::vector<Item*> ItemsInDrawingOrder;
 
-    bool needsSorting = false; ///< dirty sord of z-order
     bool needsOrdering = false; ///< dirty arrangement of children
 
 

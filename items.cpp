@@ -686,7 +686,7 @@ const std::string AnchorPane::GetClassID() {
 
 void VBox::SetPositionsOfItems() {
     float currentY = 0.0f;
-    for (auto& [key, item] : Items) {
+    for (auto& item : ItemsInDrawingOrder) {
         item->SetX(alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
         item->SetY(currentY + alignment.GetAlignedY(yAnchor, item->GetTotalHeight(), height));
 
@@ -713,7 +713,7 @@ const std::string VBox::GetClassID() {
 
 void HBox::SetPositionsOfItems() {
     float currentX = 0.0f;
-    for (auto& [key, item] : Items) {
+    for (auto& item : ItemsInDrawingOrder) {
         item->SetX(currentX + alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
         item->SetY(alignment.GetAlignedY(yAnchor, item->GetTotalHeight(), height));
 
