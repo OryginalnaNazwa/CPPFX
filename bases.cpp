@@ -73,6 +73,122 @@ const std::string TextItem::GetClassID() {
 
 //--- Container ---
 
+const std::unordered_set<std::string> Container::CONTAINERS = {"AnchorPane", "VBox", "HBox", "Workspace"};
+
+bool Container::IsContainer(const std::string& fxID) const {
+    return CONTAINERS.contains(fxID);
+}
+
+void Container::DoNotOrder() {
+    needsOrdering = false;
+}
+
+void Container::Order() {
+    needsOrdering = true;
+}
+
+void Container::SetX(float x) {
+    Item::SetX(x);
+    needsOrdering = true;
+}
+void Container::SetY(float y) {
+    Item::SetY(y);
+    needsOrdering = true;
+}
+
+void Container::SetWidth(float value) {
+    Item::SetWidth(value);
+    needsOrdering = true;
+}
+
+void Container::SetHeight(float value) {
+    Item::SetHeight(value);
+    needsOrdering = true;
+}
+
+void Container::MakeInvisible() {
+    Item::MakeInvisible();
+    for (auto& [key, item] : Items) {
+        item->MakeInvisible();
+    }
+}
+
+void Container::MakeVisible() {
+    Item::MakeVisible();
+    for (auto& [key, item] : Items) {
+        item->MakeVisible();
+    }
+}
+
+void Container::MakeActive() {
+    Item::MakeActive();
+    for (auto& [key, item] : Items) {
+        item->MakeActive();
+    }
+}
+
+void Container::MakeInactive() {
+    Item::MakeInactive();
+    for (auto& [key, item] : Items) {
+        item->MakeInactive();
+    }
+}
+
+void Container::Show() {
+    Item::Show();
+    for (auto& [key, item] : Items) {
+        item->Show();
+    }
+}
+
+void Container::Hide() {
+    Item::Hide();
+    for (auto& [key, item] : Items) {
+        item->Hide();
+    }
+}
+
+void Container::SetVisible(bool flag) {
+    Item::SetVisible(flag);
+    for (auto& [key, item] : Items) {
+        item->SetVisible(flag);
+    }
+}
+
+void Container::SetInactive(bool flag) {
+    Item::SetInactive(flag);
+    for (auto& [key, item] : Items) {
+        item->SetInactive(flag);
+    }
+}
+
+void Container::ConsumeClicks() {
+    Item::ConsumeClicks();
+    for (auto& [key, item] : Items) {
+        item->ConsumeClicks();
+    }
+}
+void Container::LetClicksThrough() {
+    Item::LetClicksThrough();
+    for (auto& [key, item] : Items) {
+        item->LetClicksThrough();
+    }
+}
+
+void Container::SetToWorld() {
+    Item::SetToWorld();
+    for (auto& [key, item] : Items) {
+        item->SetToWorld();
+    }
+}
+
+void Container::SetToScreen() {
+    Item::SetToScreen();
+    for (auto& [key, item] : Items) {
+        item->SetToScreen();
+    }
+}
+
 void Container::AddItem(Item* item) {
     if (!item) {
         CPPFX_THROW(std::invalid_argument, "Null pointer - cannot add item.");

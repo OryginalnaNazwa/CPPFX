@@ -11,8 +11,9 @@ using namespace CPPFX;
 void Label::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
-        float textWidth = (float)(MeasureText(text.c_str(), font.GetFontSize()));
-        DrawText(text.c_str(), alignment.GetAlignedX(xAnchor + textMargin, textWidth, width - textMargin), alignment.GetAlignedY(yAnchor, font.GetFontSize(), height),
+        std::string truncated = Truncate(text);
+        float textWidth = (float)(MeasureText(truncated.c_str(), font.GetFontSize()));
+        DrawText(truncated.c_str(), alignment.GetAlignedX(xAnchor + textMargin, textWidth, width - (2 * textMargin)), alignment.GetAlignedY(yAnchor, font.GetFontSize(), height),
                     font.GetFontSize(), font.colour.GetColour());
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);
@@ -627,6 +628,9 @@ void Workspace::SetPositionsOfItems() {
         } else if (item->GetY() > this->yAnchor + this->height) {
             item->SetY(this->yAnchor + this->height - item->GetHeight());
         }
+        if (IsContainer(item->GetFxID())) {
+            dynamic_cast<Container*>(item)->Order();
+        }
     }
 }
 
@@ -643,6 +647,9 @@ void AnchorPane::SetPositionsOfItems() {
         item->SetHeight(item->GetHeight() + previousHeight - height);
         if (item->GetY() + item->GetHeight() > maxY) maxY = item->GetY() + item->GetHeight();
         if (item->GetX() + item->GetWidth() > maxX) maxX = item->GetX() + item->GetWidth();
+        if (IsContainer(item->GetFxID())) {
+            dynamic_cast<Container*>(item)->Order();
+        }
     }
     if (maxX > xAnchor + width) {
         width = maxX - xAnchor;
@@ -655,42 +662,22 @@ void AnchorPane::SetPositionsOfItems() {
 }
 
 void AnchorPane::SetX(float x) {
-    if (!Items.empty()) {
-        needsOrdering = true;
-    }
     previousX = xAnchor;
-    xAnchor = x;
+    Container::SetX(x);
 }
 void AnchorPane::SetY(float y) {
-    if (!Items.empty()) {
-        needsOrdering = true;
-    }
     previousY = yAnchor;
-    yAnchor = y;
+    Container::SetY(y);
 }
 
 void AnchorPane::SetHeight(float value) {
-    if (value < 0.0f) {
-        throw std::invalid_argument("In item " + ID + ": Negative height.");
-    } else {
-        if (!Items.empty()) {
-            needsOrdering = true;
-        }
-        previousHeight = height;
-        height = value;
-    }
+    previousHeight = height;
+    Container::SetHeight(value);
 }
 
 void AnchorPane::SetWidth(float value) {
-    if (value < 0.0f) {
-        throw std::invalid_argument("In item " + ID + ": Negative width.");
-    } else {
-        if (!Items.empty()) {
-           needsOrdering = true;
-        }
-        previousWidth = width;
-        width = value;
-    }
+    previousWidth = width;
+    Container::SetWidth(value);
 }
 
 const std::string AnchorPane::GetClassID() {
@@ -699,9 +686,13 @@ const std::string AnchorPane::GetClassID() {
 
 void VBox::SetPositionsOfItems() {
     float currentY = 0.0f;
-    for (auto& item : ItemsInDrawingOrder) {
+    for (auto& [key, item] : Items) {
         item->SetX(alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
         item->SetY(currentY + alignment.GetAlignedY(yAnchor, item->GetTotalHeight(), height));
+
+        if (IsContainer(item->GetFxID())) {
+            dynamic_cast<Container*>(item)->Order();
+        }
 
         currentY += padding + item->GetTotalHeight();
     }
@@ -722,11 +713,14 @@ const std::string VBox::GetClassID() {
 
 void HBox::SetPositionsOfItems() {
     float currentX = 0.0f;
-    for (auto& item : ItemsInDrawingOrder) {
+    for (auto& [key, item] : Items) {
         item->SetX(currentX + alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
         item->SetY(alignment.GetAlignedY(yAnchor, item->GetTotalHeight(), height));
 
         currentX += padding + item->GetTotalWidth();
+        if (IsContainer(item->GetFxID())) {
+            dynamic_cast<Container*>(item)->Order();
+        }
     }
     ExpandToChildren();
 }

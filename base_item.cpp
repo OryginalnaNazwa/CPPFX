@@ -164,13 +164,13 @@ void Item::SetVisible(bool flag) {
 }
 
 void Item::Hide() {
-    inactive = true;
-    visible = false;
+    MakeInvisible();
+    MakeInactive();
 }
 
 void Item::Show() {
-    inactive = false;
-    visible = true;
+    MakeActive();
+    MakeVisible();
 }
 
 void Item::SetToWorld() {

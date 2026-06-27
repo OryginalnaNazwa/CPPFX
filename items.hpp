@@ -57,8 +57,8 @@ class TextField : public TextItem {
 public:
     Font promptFont; ///< mostly here for colour, but maybe you want other font for your prompt text, why not
 
-    TextField() : Item("TextField"), TextItem("TextField"), promptFont(height / 4, GREY), promptText("") {}
-    TextField(const std::string& i) : Item("TextField"), TextItem(i), promptFont(height / 4, GREY), promptText("") {}
+    TextField() : Item("TextField"), TextItem("TextField"), promptFont(height / 4.0f, GREY), promptText("") {}
+    TextField(const std::string& i) : Item("TextField"), TextItem(i), promptFont(height / 4.0f, GREY), promptText("") {}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -218,7 +218,7 @@ public:
 class RadioGroup : public virtual Padded {
 public:
 
-    RadioGroup() : Item("RadioGroup"), Padded(), vertical(true), buttonMargin(5), groups(1), needsOrdering(false) {colour.SetColour(BLANK);}
+    RadioGroup() : Item("RadioGroup"), Padded(), vertical(true), buttonMargin(5.0f), groups(1), needsOrdering(false) {colour.SetColour(BLANK);}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
