@@ -1493,11 +1493,58 @@ public:
      */
     void SetLength(float length);
     float GetLength() const;
-    void SetWidth(float value) override; /// overrides into Length.
-    void SetHeight(float value) override; /// overrides into Length.
-    float GetWidth() const override; /// overrides into Length.
-    float GetHeight() const override; /// overrides into Length.
+    /**
+     *  @brief Sets the width of the line.
+     *  @details In angle and length mode, sets the length directly.
+     *  In point to point mode, moves the end point horizontally,
+     *  setting the horizontal leg of the right triangle formed by the line.
+     *  @param value new value
+     *  @throws std::invalid_argument if value is negative
+     *  @see SetLength
+     *  @see SetEndPoint
+     */
+    void SetWidth(float value) override;
+
+    /**
+     *  @brief Sets the height of the line.
+     *  @details In angle and length mode, sets the length directly.
+     *  In point to point mode, moves the end point vertically,
+     *  setting the vertical leg of the right triangle formed by the line.
+     *  @param value new value
+     *  @throws std::invalid_argument if value is negative
+     *  @see SetLength
+     *  @see SetEndPoint
+     */
+    void SetHeight(float value) override;
+
+    /**
+     *  @brief Returns the horizontal extent of the line.
+     *  @details In point to point mode, returns the absolute horizontal distance between start and end points.
+     *  In angle and length mode, returns the horizontal component of the length vector.
+     *  @returns Horizontal leg of the bounding triangle.
+     */
+    float GetWidth() const override;
+
+    /**
+     *  @brief Returns the vertical extent of the line.
+     *  @details In point to point mode, returns the absolute vertical distance between start and end points.
+     *  In angle and length mode, returns the vertical component of the length vector.
+     *  @returns Vertical leg of the bounding triangle.
+     */
+    float GetHeight() const override;
+
+    /**
+     *  @brief Returns the total height of the line's bounding box.
+     *  @details GetHeight plus thickness, accounting for the physical space the line occupies.
+     *  @see GetHeight
+     */
     float GetTotalHeight() const override;
+
+    /**
+     *  @brief Returns the total width of the line's bounding box.
+     *  @details GetWidth plus thickness, accounting for the physical space the line occupies.
+     *  @see GetWidth
+     */
     float GetTotalWidth() const override;
 
     /**

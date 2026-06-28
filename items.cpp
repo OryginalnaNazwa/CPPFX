@@ -643,8 +643,8 @@ void AnchorPane::SetPositionsOfItems() {
     for (auto& item : ItemsInDrawingOrder) {
         item->SetX(item->GetX() + xAnchor - previousX);
         item->SetY(item->GetY() + yAnchor - previousY);
-        item->SetWidth(item->GetWidth() + previousWidth - width);
-        item->SetHeight(item->GetHeight() + previousHeight - height);
+        //item->SetWidth(item->GetWidth() + previousWidth - width);
+        //item->SetHeight(item->GetHeight() + previousHeight - height);
         if (item->GetY() + item->GetHeight() > maxY) maxY = item->GetY() + item->GetHeight();
         if (item->GetX() + item->GetWidth() > maxX) maxX = item->GetX() + item->GetWidth();
         if (IsContainer(item->GetFxID())) {
@@ -659,6 +659,9 @@ void AnchorPane::SetPositionsOfItems() {
         height = maxY - yAnchor;
         previousHeight = height;
     }
+    previousX = xAnchor;
+    previousY = yAnchor;
+    needsOrdering = false;
 }
 
 void AnchorPane::SetX(float x) {
@@ -1680,7 +1683,10 @@ void Line::DrawMyself(float elapsedTime) const {
     if (pointToPoint) {
         DrawLineEx({xAnchor, yAnchor}, {xEnd, yEnd}, thickness, colour.GetColour());
     } else {
-        DrawLineEx({xAnchor, yAnchor}, {xAnchor + (float)(sin(angle * DEG2RAD) * width), yAnchor - ((float)(cos(angle * DEG2RAD)) * width)}, thickness, colour.GetColour());
+        DrawLineEx({xAnchor, yAnchor},
+                   {xAnchor + std::cos(angle * DEG2RAD) * width,
+                    yAnchor + std::sin(angle * DEG2RAD) * width},
+                    thickness, colour.GetColour());
     }
 }
 
@@ -1696,27 +1702,51 @@ float Line::GetLength() const {
 }
 
 void Line::SetWidth(float value) {
-    SetLength(value);
+    if (pointToPoint) {
+        xEnd = xAnchor + value; // set horizontal cathetus
+    } else {
+        SetLength(value); // in a&l mode, width means length
+    }
 }
 
 void Line::SetHeight(float value) {
-    SetLength(value);
+    if (pointToPoint) {
+        yEnd = yAnchor + value; // set vertical cathetus
+    } else {
+        SetLength(value);
+    }
 }
 
 float Line::GetWidth() const {
-    return GetLength();
+    if (pointToPoint) {
+        return std::abs(xEnd - xAnchor);
+    } else {
+        return std::abs(std::cos(angle * DEG2RAD) * width);
+    }
 }
 
 float Line::GetHeight() const {
-    return GetLength();
+    if (pointToPoint) {
+        return std::abs(yEnd - yAnchor);
+    } else {
+        return std::abs(std::sin(angle * DEG2RAD) * width);
+    }
 }
 
 float Line::GetTotalHeight() const {
-    return GetLength();
+    if (pointToPoint) {
+        return std::abs(yEnd - yAnchor) + thickness;
+    } else {
+        return std::abs(std::sin(angle * DEG2RAD) * width) + thickness;
+    }
 }
 
 float Line::GetTotalWidth() const {
-    return GetLength();
+    if (pointToPoint) {
+        return std::abs(xEnd - xAnchor) + thickness;
+    } else {
+        return std::abs(std::cos(angle * DEG2RAD) * width) + thickness;
+    }
 }
 
 void Line::SetAngle(float angle) {
