@@ -559,7 +559,7 @@ public:
     T GetValue(const std::string& label) const {
         if (IsLabelTaken(label)) {
             return values.at(label);
-        } else throw CPPFX_THROW(std::out_of_range, "No key " + label + " found.");
+        } else CPPFX_THROW(std::out_of_range, "No key " + label + " found.");
     }
 
     T GetCurrentValue() const {

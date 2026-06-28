@@ -65,7 +65,7 @@ public:
     /**
      *  @brief Sets colour using its value.
      *  @param colour colour's value - {R, G, B} or Raylib's defines.
-     *  @details Accepts also RGB values. Resolves to the string of the value as a name.
+     *  @details Accepts also RGB values.
      */
     void SetColour(Color colour);
 

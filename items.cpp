@@ -3,6 +3,7 @@
 #include <numeric>        // for accumulate
 #include <unordered_map>  // for unordered_map, operator==, _Node_const_iter...
 #include <utility>        // for pair
+#include <numeric>        // for numeric_limits
 
 using namespace CPPFX;
 
@@ -162,7 +163,7 @@ void CheckBox::DrawMyself(float elapsedTime) const {
     if (alignment.IsRightAlignment()) {
         border.DrawMyself(xAnchor, yAnchor, width + (2.0f * textMargin) + labelMargin + MeasureText(text.c_str(), font.GetFontSize()), height);
     } else if (alignment.IsLeftAlignment()) {
-        border.DrawMyself(xAnchor - width - (2.0f * textMargin) - labelMargin - MeasureText(text.c_str(), font.GetFontSize()),
+        border.DrawMyself(xAnchor - (2.0f * textMargin) - labelMargin - MeasureText(text.c_str(), font.GetFontSize()),
                         yAnchor, width + (2.0f * textMargin) + labelMargin + MeasureText(text.c_str(), font.GetFontSize()), height);
     } else if (alignment.IsTopAlignment()) {
         float textSize = (float)(MeasureText(text.c_str(), font.GetFontSize()));
@@ -230,7 +231,7 @@ float CheckBox::GetTotalHeight() const {
     if (alignment.IsTopAlignment() || alignment.IsBottomAlignment()) {
         return Item::GetTotalHeight() + clickBorder.GetThickness() + labelMargin + (2.0f * textMargin) + font.GetFontSize();
     }
-    return Item::GetTotalWidth() + clickBorder.GetThickness();
+    return Item::GetTotalHeight() + clickBorder.GetThickness();
 }
 
 const std::string CheckBox::GetClassID() {
@@ -343,6 +344,11 @@ void RadioGroup::RemoveButton(const std::string& label) {
         CPPFX_THROW(std::out_of_range, "No button with label " + label + " found - cannot remove it.");
     }
 
+    if (buttons.size() > 1 && buttons.at(label)->IsPressed()) {
+        buttonsInDrawingOrder[0]->Press();
+    }
+    buttonsInDrawingOrder.erase(std::remove_if(buttonsInDrawingOrder.begin(), buttonsInDrawingOrder.end(),
+                                               [&label](const RadioButton* button) { return button->GetID() == label; }), buttonsInDrawingOrder.end());
     buttons.erase(label);
     needsOrdering = true;
 }
@@ -548,7 +554,7 @@ void RadioGroup::SetButtonsPositions() {
 }
 
 void RadioGroup::ExpandToButtons() {
-    float maxX = -9999.9f, maxY = -9999.9f;
+    float maxX = std::numeric_limits<float>::lowest(), maxY = std::numeric_limits<float>::lowest();
     for (const auto& [key, button] : buttons) {
         if (button->GetX() + button->GetTotalWidth() > maxX) maxX = button->GetX() + button->GetTotalWidth();
         if (button->GetY() + button->GetTotalHeight() > maxY) maxY = button->GetY() + button->GetTotalHeight();
@@ -558,7 +564,7 @@ void RadioGroup::ExpandToButtons() {
 }
 
 void RadioGroup::FitToButtons() {
-    float maxX = -9999.9f, maxY = -9999.9f;
+    float maxX = std::numeric_limits<float>::lowest(), maxY = std::numeric_limits<float>::lowest();
     for (const auto& [key, button] : buttons) {
         if (button->GetX() + button->GetTotalWidth() > maxX) maxX = button->GetX() + button->GetTotalWidth();
         if (button->GetY() + button->GetTotalHeight() > maxY) maxY = button->GetY() + button->GetTotalHeight();
@@ -639,11 +645,11 @@ const std::string Workspace::GetClassID() {
 }
 
 void AnchorPane::SetPositionsOfItems() {
-    float maxX = 0.0f, maxY = 0.0f;
+    float maxX = std::numeric_limits<float>::lowest(), maxY = std::numeric_limits<float>::lowest();
     for (auto& item : ItemsInDrawingOrder) {
         item->SetX(item->GetX() + xAnchor - previousX);
         item->SetY(item->GetY() + yAnchor - previousY);
-        //item->SetWidth(item->GetWidth() + previousWidth - width);
+        //item->SetWidth(item->GetWidth() + previousWidth - width); //TODO resizing items (toggable by a flag)
         //item->SetHeight(item->GetHeight() + previousHeight - height);
         if (item->GetY() + item->GetHeight() > maxY) maxY = item->GetY() + item->GetHeight();
         if (item->GetX() + item->GetWidth() > maxX) maxX = item->GetX() + item->GetWidth();
@@ -687,7 +693,7 @@ const std::string AnchorPane::GetClassID() {
     return "AnchorPane";
 }
 
-void VBox::SetPositionsOfItems() {
+void VBox::SetPositionsOfItems() { //TODO Fix CENTRE alignment
     float currentY = 0.0f;
     for (auto& item : ItemsInDrawingOrder) {
         item->SetX(alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
@@ -714,7 +720,7 @@ const std::string VBox::GetClassID() {
     return "VBox";
 }
 
-void HBox::SetPositionsOfItems() {
+void HBox::SetPositionsOfItems() { //TODO Fix CENTRE alignment
     float currentX = 0.0f;
     for (auto& item : ItemsInDrawingOrder) {
         item->SetX(currentX + alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
@@ -1222,7 +1228,7 @@ void PasswordField::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
-            DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), GREY);
+            DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), promptFont.colour.GetColour());
         }
     } else {
         std::string password(text.size(), mask);
@@ -1676,7 +1682,10 @@ const std::string PieChart::GetClassID() {
 
 // --- Line ---
 float Line::CalculateMyArea() const {
-    return sqrt(pow((xEnd - xAnchor), 2) + pow((yEnd - yAnchor), 2));
+    if (pointToPoint) {
+        return sqrt(pow((xEnd - xAnchor), 2) + pow((yEnd - yAnchor), 2));
+    }
+    return GetLength();
 }
 
 void Line::DrawMyself(float elapsedTime) const {
@@ -1850,11 +1859,11 @@ void CPPFX::Square::SetHeight(float value) {
 }
 
 float CPPFX::Square::GetHeight() const {
-    return GetWidth();
+    return Item::GetWidth();
 }
 
 float CPPFX::Square::GetTotalHeight() const {
-    return GetWidth();
+    return Item::GetTotalWidth();
 }
 
 const std::string CPPFX::Square::GetClassID() {

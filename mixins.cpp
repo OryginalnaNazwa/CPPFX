@@ -91,7 +91,7 @@ void Circular::SetRadius(float radius) {
         CPPFX_THROW(std::invalid_argument, "Negative radius.");
     }
     if (radius == 0.0f) {
-        CPPFX_WARN("In " + fxID + ID + ": radius equals 0. Will not be visible and may break stuff.");
+        CPPFX_WARN("In " + fxID + " " + ID + ": radius equals 0. Will not be visible and may break stuff.");
     }
     SetWidth(radius * 2.0f);
 }

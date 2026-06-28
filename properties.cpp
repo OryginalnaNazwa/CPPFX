@@ -90,7 +90,7 @@ std::string Colour::ColourToString(Color c) {
     /*// Fallback: hex string for custom colours
     char buf[10];
     snprintf(buf, sizeof(buf), "#%02X%02X%02X%02X", c.r, c.g, c.b, c.a);
-    return std::string(buf);*/ // fllback would be nice, but it'd need to be supported everywhere else.
+    return std::string(buf);*/ // fallback would be nice, but it'd need to be supported everywhere else.
 }
 
 void Colour::SetColour(const std::string& col) {
@@ -103,7 +103,7 @@ void Colour::SetColour(const std::string& col) {
 
 void Colour::SetColour(Color col) {
     value   = col;
-    name    = ColourToString(col); // resolves to name or hex fallback
+    name    = ColourToString(col);
 }
 
 std::string Colour::GetColourString() const {

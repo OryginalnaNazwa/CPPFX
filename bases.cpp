@@ -3,6 +3,7 @@
 #include <compare>    // for operator<
 #include <iterator>   // for distance
 #include <stdexcept>  // for out_of_range, invalid_argument
+#include <numeric>    // for numberic_limits
 
 using namespace CPPFX;
 
@@ -264,7 +265,7 @@ void Container::DoFocusAction(float elapsedTime) {
 }
 
 void Container::ExpandToChildren() {
-    float maxX = -9999.9f, maxY = -9999.9f;
+    float maxX = std::numeric_limits<float>::lowest(), maxY = std::numeric_limits<float>::lowest();
     for (const auto& [key, item] : Items) {
         if (item->GetX() + item->GetTotalWidth() > maxX) maxX = item->GetX() + item->GetTotalWidth();
         if (item->GetY() + item->GetTotalHeight() > maxY) maxY = item->GetY() + item->GetTotalHeight();
@@ -274,7 +275,7 @@ void Container::ExpandToChildren() {
 }
 
 void Container::FitToChildren() {
-    float maxX = -9999.9f, maxY = -9999.9f;
+    float maxX = std::numeric_limits<float>::lowest(), maxY = std::numeric_limits<float>::lowest();
     for (const auto& [key, item] : Items) {
         if (item->GetX() + item->GetTotalWidth() > maxX) maxX = item->GetX() + item->GetTotalWidth();
         if (item->GetY() + item->GetTotalHeight() > maxY) maxY = item->GetY() + item->GetTotalHeight();

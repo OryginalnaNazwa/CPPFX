@@ -8,7 +8,7 @@
 
 using namespace CPPFX;
 
-extern const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.7.0"; //sanity check for version
+extern const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.7.1"; //sanity check for version
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
     "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "Chart", "PieChart", "Line", "Square", "Rectangle", "Circle"};
