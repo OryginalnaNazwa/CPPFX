@@ -436,23 +436,6 @@ public:
         } else return Item::WasIClicked(mousePosition);
     }
 
-    bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const override {
-        float height = this->height * camera.zoom;
-        float width = this->width * camera.zoom;
-
-        if (focused) {
-            if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y >= yAnchor && mousePosition.y <= yAnchor + ((values.size() + 1) * height)) {
-                return true;
-            }
-            return false;
-        } else {
-            if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y >= yAnchor && mousePosition.y <= yAnchor + height) {
-                return true;
-            }
-            return false;
-        }
-    }
-
     void DoFocusAction(float elapsedTime) override {
         return;
     }
@@ -473,22 +456,6 @@ public:
             return;
         }
         if (!Item::WasIClicked(mousePosition)) {
-            Defocus();
-        }
-    }
-
-    void DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) override {
-        float height = this->height * camera.zoom;
-
-        if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + (width * camera.zoom) && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
-            int index = (mousePosition.y - (yAnchor + height)) / height;
-            auto it = std::next(values.begin(), index);
-            currentLabel = it->first;
-            currentValue = it->second;
-            focused = false;
-            return;
-        }
-        if (!WasIClicked(mousePosition, camera)) {
             Defocus();
         }
     }
@@ -726,6 +693,9 @@ public:
      */
     float GetTotalHeight() const override;
 
+    float GetChildrenTotalLength() const override;
+    float GetItemsTotalHeight() const;
+
     /**
      *  @see Item::GetClassID()
      */
@@ -748,6 +718,9 @@ public:
      *  @details (widths + padding) * number of items, roughly
      */
     float GetTotalWidth() const override;
+
+    float GetChildrenTotalLength() const override;
+    float GetItemsTotalWidth() const;
 
     /**
      *  @see Item::GetClassID()
@@ -779,12 +752,9 @@ public:
     }
 
     void DrawMyself(float elapsedTime) const override;
-    void DrawMyself(float elapsedTime, const Camera2D& camera) const override;
     void DoFocusAction(float elapsedTime) override;
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
-    void DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) override;
     bool WasIClicked(const Vector2& mousePosition) const override;
-    bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const override;
 
     void SetToScreen() override;
     void SetToWorld() override;
@@ -950,10 +920,8 @@ public:
     }
 
     void DrawMyself(float elapsedTime) const override;
-    void DrawMyself(float elapsedTime, const Camera2D& camera) const override;
     void DoFocusAction(float elapsedTime) override;
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
-    void DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) override;
     void Defocus() override;
 
     void SetToScreen() override;

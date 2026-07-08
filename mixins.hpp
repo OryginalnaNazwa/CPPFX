@@ -26,11 +26,6 @@ public:
      *  @details Uses circle collision check.
      */
     virtual bool WasIClicked(const Vector2& mousePosition) const override;
-    /**
-     *  @brief Checks whether the item was clicked in screen space.
-     *  @details Uses circle collision check.
-     */
-    virtual bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const override;
 
     /**
      *  @brief Sets x,y as the centre of the circle.

@@ -11,13 +11,6 @@ bool Circular::WasIClicked(const Vector2& mousePosition) const {
     return false;
 }
 
-bool Circular::WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const {
-    float radius = GetRadius() * camera.zoom;
-
-    if (CheckCollisionPointCircle(mousePosition, {TranslateXToCentre(), TranslateYToCentre()}, radius)) return true;
-    return false;
-}
-
 void Circular::MakeRadiusBased() {
     xyIsCentre = true;
 }

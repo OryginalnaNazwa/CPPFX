@@ -216,6 +216,11 @@ public:
     void SetPadding(float value) override;
 
     /**
+     *  @brief Returns the sum of appropriate dimensions of the contents.
+     */
+    virtual float GetChildrenTotalLength() const = 0;
+
+    /**
      *  @see Item::GetClassID()
      *  @note Pointless here, just a reminder to put it in inherited classes.
      */

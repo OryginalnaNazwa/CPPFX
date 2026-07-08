@@ -693,7 +693,7 @@ const std::string AnchorPane::GetClassID() {
     return "AnchorPane";
 }
 
-void VBox::SetPositionsOfItems() { //TODO Fix CENTRE alignment
+void VBox::SetPositionsOfItems() {
     float currentY = 0.0f;
     for (auto& item : ItemsInDrawingOrder) {
         item->SetX(alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
@@ -709,21 +709,35 @@ void VBox::SetPositionsOfItems() { //TODO Fix CENTRE alignment
 }
 
 float VBox::GetTotalHeight() const {
-    float heightSum = 0.0f;
-    for (auto& child : Items) {
-        heightSum += child.second->GetTotalHeight() + padding;
+    float heightSum = GetChildrenTotalLength();
+    if (height > heightSum) {
+        return height;
     }
     return heightSum;
+}
+
+float VBox::GetChildrenTotalLength() const  {
+    float heightSum = 0.0f;
+    for (const auto& child : ItemsInDrawingOrder) {
+        heightSum += child->GetTotalHeight() + padding;
+    }
+    return heightSum;
+}
+
+float VBox::GetItemsTotalHeight() const {
+    return GetChildrenTotalLength();
 }
 
 const std::string VBox::GetClassID() {
     return "VBox";
 }
 
-void HBox::SetPositionsOfItems() { //TODO Fix CENTRE alignment
+void HBox::SetPositionsOfItems() {
     float currentX = 0.0f;
     for (auto& item : ItemsInDrawingOrder) {
-        item->SetX(currentX + alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
+        if (alignment.IsCentreAlignment()) {
+            item->SetX(currentX + alignment.GetAlignedX(xAnchor - currentX, item->GetTotalWidth(), GetTotalWidth() - currentX));
+        } else item->SetX(currentX + alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
         item->SetY(alignment.GetAlignedY(yAnchor, item->GetTotalHeight(), height));
 
         currentX += padding + item->GetTotalWidth();
@@ -735,11 +749,23 @@ void HBox::SetPositionsOfItems() { //TODO Fix CENTRE alignment
 }
 
 float HBox::GetTotalWidth() const {
-    float widthSum = 0.0f;
-    for (auto& child : Items) {
-        widthSum += child.second->GetTotalWidth() + padding;
+    float widthSum = GetChildrenTotalLength();
+    if (width > widthSum) {
+        return width;
     }
     return widthSum;
+}
+
+float HBox::GetChildrenTotalLength() const {
+    float widthSum = 0.0f;
+    for (const auto& child : ItemsInDrawingOrder) {
+        widthSum += child->GetTotalWidth() + padding;
+    }
+    return widthSum;
+}
+
+float HBox::GetItemsTotalWidth() const {
+    return GetChildrenTotalLength();
 }
 
 const std::string HBox::GetClassID() {
@@ -759,31 +785,6 @@ void Spinner::DrawMyself(float elapsedTime) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Spinner::DrawMyself(float elapsedTime, const Camera2D& camera) const {
-    float xAnchor = camera.target.x + this->xAnchor / camera.zoom;
-    float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
-
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    DrawText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value), xAnchor + valueMargin,
-                yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
-
-    //shift the buttons to where they should be
-    const float savedButtonX = incrementButton.GetX();
-    const float savedIncButtonY = incrementButton.GetY(), savedDecButtonY = decrementButton.GetY();
-    incrementButton.SetX(this->xAnchor + width * camera.zoom);
-    decrementButton.SetX(this->xAnchor + width * camera.zoom);
-    incrementButton.SetY(this->yAnchor);
-    decrementButton.SetY(this->yAnchor + (height / 2.0f) * camera.zoom);
-    incrementButton.Item::DrawMyself(elapsedTime, camera);
-    decrementButton.Item::DrawMyself(elapsedTime, camera);
-    incrementButton.SetX(savedButtonX);
-    decrementButton.SetX(savedButtonX);
-    incrementButton.SetY(savedIncButtonY);
-    decrementButton.SetY(savedDecButtonY);
-
-    border.DrawMyself(xAnchor, yAnchor, width, height);
-}
-
 void Spinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.Focus();
@@ -796,33 +797,6 @@ void Spinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
     incrementButton.DoFocusAction(elapsedTime);
 }
 
-void Spinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) {
-    //shift the buttons to where they should be, translation happens in WasIClicked
-    const float savedButtonX = incrementButton.GetX(), savedButtonHeight = incrementButton.GetHeight();
-    const float savedDecButtonY = decrementButton.GetY();
-    incrementButton.SetX(this->xAnchor + width * camera.zoom);
-    decrementButton.SetX(this->xAnchor + width * camera.zoom);
-    decrementButton.SetY(this->yAnchor + savedButtonHeight * camera.zoom);
-    incrementButton.SetHeight(savedButtonHeight * camera.zoom);
-    decrementButton.SetHeight(savedButtonHeight * camera.zoom);
-
-    if (incrementButton.WasIClicked(mousePosition, camera)) {
-        incrementButton.Focus();
-        if (incrementButton.onClick) incrementButton.onClick();
-    } else if (decrementButton.WasIClicked(mousePosition, camera)) {
-        decrementButton.Focus();
-        if (decrementButton.onClick) decrementButton.onClick();
-    }
-    incrementButton.SetX(savedButtonX);
-    decrementButton.SetX(savedButtonX);
-    decrementButton.SetY(savedDecButtonY);
-    incrementButton.SetHeight(savedButtonHeight);
-    decrementButton.SetHeight(savedButtonHeight);
-
-    decrementButton.Item::DoFocusAction(elapsedTime, camera);
-    incrementButton.Item::DoFocusAction(elapsedTime, camera);
-}
-
 void Spinner::DoFocusAction(float elapsedTime) {
     incrementButton.DoFocusAction(elapsedTime);
     decrementButton.DoFocusAction(elapsedTime);
@@ -831,16 +805,6 @@ void Spinner::DoFocusAction(float elapsedTime) {
 bool Spinner::WasIClicked(const Vector2& mousePosition) const {
     float xClick = mousePosition.x, yClick = mousePosition.y;
     if (xClick >= xAnchor && xClick <= (xAnchor + width + incrementButton.GetWidth()) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
-        return true;
-    }
-    return false;
-}
-
-bool Spinner::WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const {
-    float scaledHeight = height * camera.zoom;
-    float scaledWidth = (width + incrementButton.GetWidth()) * camera.zoom;
-    int xClick = mousePosition.x, yClick = mousePosition.y;
-    if (xClick >= xAnchor && xClick <= (xAnchor + scaledWidth) && yClick >= yAnchor && yClick <= (yAnchor + scaledHeight)) {
         return true;
     }
     return false;
@@ -1053,33 +1017,9 @@ void EditableSpinner::SetValue(float value) {
 
 void EditableSpinner::DrawMyself(float elapsedTime) const {
     editArea.DrawMyself(elapsedTime);
+    editArea.border.DrawMyself(xAnchor, yAnchor, width, height);
     incrementButton.DrawMyself(elapsedTime);
     decrementButton.DrawMyself(elapsedTime);
-
-    border.DrawMyself(xAnchor, yAnchor, width + incrementButton.GetWidth() + editArea.border.GetThickness(), height);
-}
-
-void EditableSpinner::DrawMyself(float elapsedTime, const Camera2D& camera) const {
-    float xAnchor = camera.target.x + this->xAnchor / camera.zoom;
-    float yAnchor = camera.target.y + this->yAnchor / camera.zoom;
-
-    editArea.Item::DrawMyself(elapsedTime, camera);
-    editArea.border.DrawMyself(xAnchor, yAnchor, width, height);
-    //shift the buttons to where they should be
-    const float savedButtonX = incrementButton.GetX();
-    const float savedIncButtonY = incrementButton.GetY(), savedDecButtonY = decrementButton.GetY();
-    incrementButton.SetX(this->xAnchor + width * camera.zoom);
-    decrementButton.SetX(this->xAnchor + width * camera.zoom);
-    incrementButton.SetY(this->yAnchor);
-    decrementButton.SetY(this->yAnchor + (height / 2.0f) * camera.zoom);
-
-    incrementButton.Item::DrawMyself(elapsedTime, camera);
-    decrementButton.Item::DrawMyself(elapsedTime, camera);
-
-    incrementButton.SetX(savedButtonX);
-    decrementButton.SetX(savedButtonX);
-    incrementButton.SetY(savedIncButtonY);
-    decrementButton.SetY(savedDecButtonY);
 
     border.DrawMyself(xAnchor, yAnchor, width + incrementButton.GetWidth() + editArea.border.GetThickness(), height);
 }
@@ -1111,51 +1051,6 @@ void EditableSpinner::DoFocusAction(float elapsedTime, const Vector2& mousePosit
     decrementButton.DoFocusAction(elapsedTime);
     incrementButton.DoFocusAction(elapsedTime);
     editArea.DoFocusAction(elapsedTime);
-}
-
-void EditableSpinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) {
-    //shift the buttons to where they should be, translation happens in WasIClicked
-    const float savedButtonX = incrementButton.GetX(), savedButtonHeight = incrementButton.GetHeight();
-    const float savedDecButtonY = decrementButton.GetY();
-    incrementButton.SetX(this->xAnchor + width * camera.zoom);
-    decrementButton.SetX(this->xAnchor + width * camera.zoom);
-    decrementButton.SetY(this->yAnchor + savedButtonHeight * camera.zoom);
-    incrementButton.SetHeight(savedButtonHeight * camera.zoom);
-    decrementButton.SetHeight(savedButtonHeight * camera.zoom);
-
-    if (incrementButton.WasIClicked(mousePosition, camera)) {
-        incrementButton.Focus();
-        if (incrementButton.onClick) incrementButton.onClick();
-        editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
-        editArea.Defocus();
-    } else if (decrementButton.WasIClicked(mousePosition, camera)) {
-        decrementButton.Focus();
-        editArea.Defocus();
-        if (decrementButton.onClick) decrementButton.onClick();
-        editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
-    } else if (editArea.WasIClicked(mousePosition, camera)) {
-        editArea.Focus();
-        editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
-    } else {
-        if (editArea.IsFocused()) {
-            try {
-                value = std::stof(editArea.GetText());
-            } catch (const std::invalid_argument&) {
-                //do nothing. Doesn't change the value.
-            }
-            editArea.Defocus();
-        }
-    }
-
-    incrementButton.SetX(savedButtonX);
-    decrementButton.SetX(savedButtonX);
-    decrementButton.SetY(savedDecButtonY);
-    incrementButton.SetHeight(savedButtonHeight);
-    decrementButton.SetHeight(savedButtonHeight);
-
-    decrementButton.Item::DoFocusAction(elapsedTime, camera);
-    incrementButton.Item::DoFocusAction(elapsedTime, camera);
-    editArea.Item::DoFocusAction(elapsedTime, camera);
 }
 
 void EditableSpinner::DoFocusAction(float elapsedTime) {

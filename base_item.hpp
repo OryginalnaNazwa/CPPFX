@@ -42,44 +42,22 @@ public:
      */
     virtual void DrawMyself(float elapsedTime) const = 0;
     /**
-     *  @brief Draws the item in screen coordinates.
-     *  @param elapsedTime total elapsed time of all frames
-     */
-    virtual void DrawMyself(float elapsedTime, const Camera2D& camera) const;
-    /**
-     *  @brief Checks whether the item was clicked in screen coordinates.
+     *  @brief Checks whether the item was clicked.
      *  @details Checks whether the mouse position is within the area of the item.
      *  @param mousePosition position of mouse during the click
      *  @returns true if was clicked.
      */
-    virtual bool WasIClicked(const Vector2& mousePosition) const; //screen
-    /**
-     *  @brief Checks whether the item was clicked in world coordinates.
-     *  @details Checks whether the mouse position is within the area of the item.
-     *  @param mousePosition position of mouse during the click
-     *  @returns true if was clicked.
-     */
-    virtual bool WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const; //world
+    virtual bool WasIClicked(const Vector2& mousePosition) const;
     /**
      *  @brief Action done every frame in world coordinates.
      *  @param elapsedTime total elapsed time of all frames
      */
     virtual void DoPassiveAction(float elapsedTime);
     /**
-     *  @brief Action done every frame in screen coordinates.
-     *  @param elapsedTime total elapsed time of all frames
-     */
-    virtual void DoPassiveAction(float elapsedTime, const Camera2D& camera);
-    /**
      *  @brief Action done while the item is focused in world coordinates.
      *  @param elapsedTime Frame time
      */
     virtual void DoFocusAction(float elapsedTime) = 0;
-    /**
-     *  @brief Action done while the item is focused in screen coordinates.
-     *  @param elapsedTime Frame time
-     */
-    virtual void DoFocusAction(float elapsedTime, const Camera2D& camera);
     /**
      *  @brief Action done while the item is focused and it depends on mouse click in world coordinates.
      *  @details Defaults to the previous DoFocusAction().
@@ -87,13 +65,6 @@ public:
      *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
      */
     virtual void DoFocusAction(float elapsedTime, const Vector2& mousePosition);
-    /**
-     *  @brief Action done while the item is focused and it depends on mouse click in screen coordinates.
-     *  @details Defaults to the previous DoFocusAction().
-     *  @param elapsedTime Frame time
-     *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
-     */
-    virtual void DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera);
     /**
      *  @brief Sets focused to false.
      */
@@ -356,8 +327,8 @@ public:
 
 protected:
     std::string ID; ///< ID used by the user, variable.
-    mutable float xAnchor; ///< top left x coordinate. Mutable for screen coordinate translation
-    mutable float yAnchor; ///< top left y coordinate. Mutable for screen coordinate translation
+    float xAnchor; ///< top left x coordinate. Mutable for screen coordinate translation
+    float yAnchor; ///< top left y coordinate. Mutable for screen coordinate translation
     float height; ///< vertical length of the item
     float width; ///< horizontal length of the item
 

@@ -6,25 +6,6 @@ using namespace CPPFX;
 
 // --- Item ---
 
-void Item::DrawMyself(float elapsedTime, const Camera2D& camera) const {
-    float savedX = xAnchor, savedY = yAnchor;
-    xAnchor = camera.target.x + (xAnchor - camera.offset.x) / camera.zoom; // this is very ugly. Probably needs a rework with internal draw taking actual parameters.
-    yAnchor = camera.target.y + (yAnchor - camera.offset.y) / camera.zoom;
-    DrawMyself(elapsedTime);
-    xAnchor = savedX;
-    yAnchor = savedY;
-}
-
-bool Item::WasIClicked(const Vector2& mousePosition, const Camera2D& camera) const {
-    float height = this->height * camera.zoom; // works. Not sure why. Praise the Omnissiah.
-    float width = this->width * camera.zoom;
-    float xClick = mousePosition.x, yClick = mousePosition.y;
-    if (xClick >= xAnchor && xClick <= (xAnchor + width) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
-        return true;
-    }
-    return false;
-}
-
 bool Item::WasIClicked(const Vector2& mousePosition) const {
     float xClick = mousePosition.x, yClick = mousePosition.y;
     if (xClick >= xAnchor && xClick <= (xAnchor + width) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
@@ -37,20 +18,8 @@ void Item::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
     return DoFocusAction(elapsedTime);
 }
 
-void Item::DoFocusAction(float elapsedTime, const Vector2& mousePosition, const Camera2D& camera) {
-    return DoFocusAction(elapsedTime, mousePosition);
-}
-
-void Item::DoFocusAction(float elapsedTime, const Camera2D& camera) {
-    return DoFocusAction(elapsedTime);
-}
-
 void Item::DoPassiveAction(float elapsedTime) {
     return;
-}
-
-void Item::DoPassiveAction(float elapsedTime, const Camera2D& camera) {
-    return DoPassiveAction(elapsedTime);
 }
 
 // --- Helpers ---

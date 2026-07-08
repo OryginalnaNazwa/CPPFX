@@ -8,7 +8,7 @@
 
 using namespace CPPFX;
 
-extern const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.7.1"; //sanity check for version
+const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.8.0"; //sanity check for version
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
     "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "Chart", "PieChart", "Line", "Square", "Rectangle", "Circle"};
@@ -40,7 +40,7 @@ void GUI::onMouseClick(const Vector2& mousePos, const Camera2D& camera) {
     for (auto it = ItemsInDrawingOrder.rbegin(); it != ItemsInDrawingOrder.rend(); ++it) {
         Item* item = *it;
         if (!item->IsInactive())  {
-            if (((screenBased || item->IsScreenBased()) && item->WasIClicked(mousePos, camera)) || ((!screenBased && !item->IsScreenBased()) && item->WasIClicked(GetScreenToWorld2D(mousePos, camera)))) {
+            if (((screenBased || item->IsScreenBased()) && item->WasIClicked(mousePos)) || ((!screenBased && !item->IsScreenBased()) && item->WasIClicked(GetScreenToWorld2D(mousePos, camera)))) {
                 if (!item->IsFocused()) {
                     DefocusItems();
                     item->Focus();
@@ -59,7 +59,9 @@ void GUI::DrawUI(const Camera2D& camera) const {
     for (auto& item : ItemsInDrawingOrder) {
         if (item->IsVisible()) {
             if (screenBased || item->IsScreenBased()) {
-                item->DrawMyself(elapsedTime, camera);
+                EndMode2D();
+                item->DrawMyself(elapsedTime);
+                BeginMode2D(camera);
             } else item->DrawMyself(elapsedTime);
         }
     }
@@ -69,24 +71,21 @@ void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
     for (auto& item : ItemsInDrawingOrder) {
         if (!item->IsInactive()) {
             if (screenBased || item->IsScreenBased()) {
-                item->DoPassiveAction(elapsedTime, camera);
-                if (item->WasIClicked(mousePos, camera)) {
+                if (item->WasIClicked(mousePos)) {
                     if (item->onHover) {
                         item->onHover();
                     }
                 }
             } else {
-                item->DoPassiveAction(elapsedTime);
                 if (item->WasIClicked(GetScreenToWorld2D(mousePos, camera))) {
                     if (item->onHover) {
                         item->onHover();
                     }
                 }
             }
+            item->DoPassiveAction(elapsedTime);
             if (item->IsFocused()) {
-                if (screenBased || item->IsScreenBased()) {
-                    item->DoFocusAction(elapsedTime, camera);
-                } else item->DoFocusAction(elapsedTime);
+                item->DoFocusAction(elapsedTime);
             }
         }
     }
@@ -95,14 +94,10 @@ void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
 void GUI::DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera) {
     for (auto& item : ItemsInDrawingOrder) {
         if (!item->IsInactive()) {
-            if (screenBased || item->IsScreenBased()) {
-                item->DoPassiveAction(elapsedTime, camera);
-            } else {
-                item->DoPassiveAction(elapsedTime);
-            }
+            item->DoPassiveAction(elapsedTime);
             if (item->IsFocused()) {
                 if (screenBased || item->IsScreenBased()) {
-                    item->DoFocusAction(elapsedTime, mousePos, camera);
+                    item->DoFocusAction(elapsedTime, mousePos);
                 } else item->DoFocusAction(elapsedTime, GetScreenToWorld2D(mousePos, camera));
             }
         }
