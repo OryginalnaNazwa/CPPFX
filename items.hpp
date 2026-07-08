@@ -1658,6 +1658,97 @@ public:
     static const std::string GetClassID();
 };
 
+// --- Sprite ---
+
+/**
+ *  @class Sprite
+ *  @brief A 2D texture
+ *  @details Wrapper over raylib's Texture2D. Colour is the tint over texture - defaults to WHITE for that reason.
+ *  @see Texture2D
+ */
+class Sprite : public Item {
+public:
+
+    Sprite() : texture{0}, filePath(""), rotation(0.0f), scale(1.0f), textureHasBeenLoaded(false) {colour.SetColour(WHITE);}
+
+    ~Sprite() {::UnloadTexture(texture);}
+
+    /**
+     *  @brief Draws the texture.
+     *  @details Wrapper over DrawTextureEx
+     *  @see ::DrawTextureEx
+     */
+    void DrawMyself(float elapsedTime) const override;
+    void DoFocusAction(float elapsedTime) override;
+
+    /**
+     *  @brief Sets the file path for later loading.
+     *  @param path path to the file; file name
+     *  @throws std::invalid_argument if path is empty
+     */
+    void SetFilePath(const std::string& path);
+    std::string GetFilePath() const;
+    void ClearFilePath();
+
+    /**
+     *  @brief Loads the texture from the stored path.
+     *  @details Wrapper over raylib's LoadTexture.
+     *  @see ::LoadTexture
+     *  @throws std::runtime_error if the path is empty or if the texture did not load properly.
+     */
+    void LoadTexture();
+    /**
+     *  @brief Loads the texture from the parameter
+     *  @details Wrapper over raylib's LoadTexture. Doesn't update the stored path.
+     *  @param fileName path to the file
+     *  @see ::LoadTexture
+     *  @throws std::invalid_argument if fileName is empty
+     *  @throws std::runtime_error if the texture did not load properly.
+     */
+    void LoadTexture(const std::string& fileName);
+    /**
+     *  @brief Unloads the texture
+     *  @details Wrapper over raylib's UnloadTexture. Safe even with empty textures.
+     *  @see ::UnloadTexture()
+     */
+    void UnloadTexture();
+    /**
+     *  @brief Checks if the texture has loaded correctly.
+     *  @details Wrapper over raylib's IsTextureValid.
+     *  @returns true if is valid
+     *  @see ::IsTextureValid()
+     */
+    bool IsTextureValid() const;
+
+    void SetRotation(float rotation);
+    float GetRotation() const;
+
+    /**
+     *  @brief Sets the scale of the texture (shrinks or enlarges it).
+     *  @param scale new scale
+     *  @throws std::invalid_argument if scale is 0
+     */
+    void SetScale(float scale);
+    float GetScale() const;
+
+    /**
+     *  @brief Sets the texture by another texture.
+     *  @param texture new texture to be copied to this one.
+     *  @throws std::invalid_argument if the new texture has not loaded properly.
+     */
+    void SetTexture(const Texture2D& texture);
+    Texture2D GetTexture() const;
+    void ClearTexture();
+
+private:
+    Texture2D texture;
+    std::string filePath;
+    float rotation;
+    float scale;
+
+    bool textureHasBeenLoaded;
+};
+
 }
 
 #endif // ITEMS_H

@@ -1794,3 +1794,103 @@ float CPPFX::Circle::CalculateMyArea() const {
 const std::string Circle::GetClassID() {
     return "Circle";
 }
+
+// --- Sprite ---
+
+void Sprite::DrawMyself(float elapsedTime) const {
+    if (!textureHasBeenLoaded) {
+        return;
+    }
+    DrawTextureEx(texture, Vector2{xAnchor, yAnchor}, rotation, scale, colour.GetColour());
+}
+
+void Sprite::DoFocusAction(float elapsedTime) {
+    return;
+}
+
+void Sprite::SetFilePath(const std::string& path) {
+    if (path.empty()) {
+        CPPFX_THROW(std::invalid_argument, "The file name is empty.");
+    }
+    filePath = path;
+}
+
+std::string Sprite::GetFilePath() const {
+    return filePath;
+}
+
+void Sprite::ClearFilePath() {
+    filePath = "";
+}
+
+void Sprite::LoadTexture() {
+    if (filePath.empty()) {
+        CPPFX_THROW(std::runtime_error, "No file path set.");
+    }
+
+    texture = ::LoadTexture(filePath.c_str());
+
+    if (!::IsTextureValid(texture)) {
+        CPPFX_THROW(std::runtime_error, "Texture at " + filePath + " did not load correctly.");
+    }
+    textureHasBeenLoaded = true;
+}
+
+void Sprite::LoadTexture(const std::string& fileName) {
+    if (fileName.empty()) {
+        CPPFX_THROW(std::invalid_argument, "The file name is empty.");
+    }
+
+    texture = ::LoadTexture(fileName.c_str());
+
+    if (!::IsTextureValid(texture)) {
+        CPPFX_THROW(std::runtime_error, "Texture at " + fileName + " did not load correctly.");
+    }
+    textureHasBeenLoaded = true;
+}
+
+void Sprite::UnloadTexture() {
+    ::UnloadTexture(texture);
+    textureHasBeenLoaded = false;
+}
+
+bool Sprite::IsTextureValid() const {
+    return ::IsTextureValid(texture);
+}
+
+void Sprite::SetRotation(float rotation) {
+    this->rotation = rotation;
+}
+
+float Sprite::GetRotation() const {
+    return rotation;
+}
+
+void Sprite::SetScale(float scale) {
+    if (scale == 0.0f) {
+        CPPFX_THROW(std::invalid_argument, "Scale cannot be 0.");
+    }
+
+    this->scale = scale;
+}
+
+float Sprite::GetScale() const {
+    return scale;
+}
+
+void Sprite::SetTexture(const Texture2D& texture) {
+    if (!::IsTextureValid(texture)) {
+        CPPFX_THROW(std::invalid_argument, "New texture was not loaded correctly.");
+    }
+    this->texture = texture;
+    textureHasBeenLoaded = true;
+}
+
+Texture2D Sprite::GetTexture() const {
+    return texture;
+}
+
+void Sprite::ClearTexture() {
+    texture = {0};
+    textureHasBeenLoaded = false;
+}
