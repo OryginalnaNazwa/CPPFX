@@ -8,7 +8,7 @@
 
 using namespace CPPFX;
 
-const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.9.0"; //sanity check for version
+const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.9.1"; //sanity check for version
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
     "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "Chart", "PieChart", "Line", "Square", "Rectangle", "Circle"};
@@ -243,7 +243,7 @@ void GUI::RemoveItem(Item*& item) {
             ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&item](const Item* i) { return i->GetID() == item->GetID(); }),ItemsInDrawingOrder.end());
             Items.erase(item->GetID());
             item = nullptr;
-        } else CPPFX_THROW_GUI(std::out_of_range, "Item with the ID " + ID + " is not in the GUI.");
+        } else CPPFX_THROW_GUI(std::out_of_range, "Item with the ID " + item->GetID() + " is not in the GUI.");
     } else CPPFX_THROW_GUI(std::invalid_argument, "Cannot delete Item: doesn't exist");
 }
 
