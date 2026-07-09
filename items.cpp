@@ -1480,6 +1480,9 @@ void PieChart::DoFocusAction(float elapsedTime) {
 }
 
 void PieChart::DrawMyself(float elapsedTime) const {
+    if (values.empty()) {
+        return;
+    }
     double sum = std::accumulate(values.begin(), values.end(), 0.0);
     std::vector<Color> colours = {BLUE, RED, GREEN, PINK, BROWN, DARKGREEN, PURPLE}; //TODO Add user colours
 
