@@ -1,5 +1,6 @@
 # CPPFX
 A retained mode GUI library for raylib, inspired by JavaFX, written in C++.
+v.0.9.2
 
 ## Based on raylib
 https://www.raylib.com/
@@ -44,9 +45,11 @@ int main() {
   while (!WindowShouldClose()) {
     BeginDrawing();
     ClearBackground(RAYWHITE);
+    BeginMode2D(camera); // this is required if you are going to mix screen based and world based widgets in one GUI instance. Otherwise you can skip it.
 
     gui.DoUI(camera); //this renders items in the gui and handles interaction;
 
+    EndMode2D();
     EndDrawing();
   }
   

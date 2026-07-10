@@ -133,12 +133,16 @@ public:
 
     /**
      *  @brief Makes the item invisible and not interactable.
-     *  @details Sets both inactive and invisible to false.
+     *  @details Calls MakeInvisible and MakeInactive.
+     *  @see Item::MakeInvisible
+     *  @see Item::MakeInactive
      */
     virtual void Hide();
     /**
      *  @brief Makes the item visible and interactable.
-     *  @details Sets both inactive and invisible to true.
+     *  @details Calls MakeVisible and MakeActive.
+     *  @see Item::MakeVisible
+     *  @see Item::MakeActive
      */
     virtual void Show();
 

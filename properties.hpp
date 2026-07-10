@@ -64,7 +64,7 @@ public:
     void SetColour(const std::string& colour);
     /**
      *  @brief Sets colour using its value.
-     *  @param colour colour's value - {R, G, B} or Raylib's defines.
+     *  @param colour colour's value - {R, G, B} or Raylib's defines. Only raylib colours are accepted.
      *  @details Accepts also RGB values.
      */
     void SetColour(Color colour);
@@ -266,7 +266,12 @@ public:
         BOTTOM = BOTTOM_CENTRE,
         DOWN = BOTTOM_CENTRE,
         UNDER = BOTTOM_CENTRE,
-        MIDDLE = CENTRE
+        MIDDLE = CENTRE,
+        TOP_CENTER = TOP_CENTRE,
+        CENTER_LEFT = CENTRE_LEFT,
+        CENTER = CENTRE,
+        BOTTOM_CENTER = BOTTOM_CENTRE,
+        CENTER_RIGHT = CENTRE_RIGHT
     }; ///< alignments matrix
 
     /**

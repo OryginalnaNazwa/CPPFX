@@ -35,7 +35,8 @@ namespace CPPFX { class VBox; }
 namespace CPPFX { class Workspace; }
 namespace CPPFX { template <typename T> class DropDown; }
 namespace CPPFX { template <typename T> class List; }
-namespace CPPFX { class RadioGroup; }*/
+namespace CPPFX { class RadioGroup; }
+namespace CPPFX { class Sprite; }*/
 #include "items.hpp" // for items. Needs it, otherwise you'd need to link more files than just this one.
 
 /******************************************************************************
@@ -47,7 +48,7 @@ namespace CPPFX {
 
 #define CPPFX_VERSION_MAJOR 0
 #define CPPFX_VERSION_MINOR 9
-#define CPPFX_VERSION_PATCH 1
+#define CPPFX_VERSION_PATCH 2
 #define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
 extern const char* CPPFX_VERSION_STRING;
 
@@ -192,6 +193,10 @@ public:
      *  @copydoc AddTextField
      */
     RadioGroup* AddRadioGroup(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
+    Sprite* AddSprite(const std::string& ID = "");
 
     /**
      *  @brief Removes an item.
@@ -326,6 +331,10 @@ public:
      *  @copydoc GetTextField
      */
     RadioGroup* GetRadioGroup(const std::string& ID);
+    /**
+     *  @copydoc GetTextField
+     */
+    Sprite* GetSprite(const std::string& ID);
 
     /**
      *  @brief Sets the item's priority to highest available.

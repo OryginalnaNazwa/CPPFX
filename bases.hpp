@@ -172,10 +172,12 @@ public:
     /**
      *  @brief Grows width and height to fit children.
      *  @details Automatically called while setting positions of items.
+     *  @throws std::runtime_error If there are no children.
      */
     void ExpandToChildren();
     /**
      *  @brief Grows or shrinks width and height to fit children.
+     *  @throws std::runtime_error If there are no children.
      */
     void FitToChildren();
 

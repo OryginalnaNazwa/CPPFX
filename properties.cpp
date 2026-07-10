@@ -187,14 +187,14 @@ std::string Alignment::GetAlignmentString() const {
 
 Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment_string) const {
     static const std::unordered_map<std::string, Alignments> map = {
-        {"TOP_CENTRE", TOP_CENTRE}, {"TOP", TOP_CENTRE}, {"ABOVE", TOP_CENTRE}, {"UP", TOP_CENTRE},
+        {"TOP_CENTRE", TOP_CENTRE}, {"TOP_CENTER", TOP_CENTRE}, {"TOP", TOP_CENTRE}, {"ABOVE", TOP_CENTRE}, {"UP", TOP_CENTRE},
         {"TOP_LEFT",   TOP_LEFT},
         {"TOP_RIGHT",  TOP_RIGHT},
-        {"CENTRE_LEFT", CENTRE_LEFT}, {"LEFT", CENTRE_LEFT},
-        {"CENTRE",      CENTRE},      {"MIDDLE", CENTRE},
-        {"CENTRE_RIGHT", CENTRE_RIGHT}, {"RIGHT", CENTRE_RIGHT},
+        {"CENTRE_LEFT",  CENTRE_LEFT}, {"CENTER_LEFT", CENTRE_LEFT}, {"LEFT", CENTRE_LEFT},
+        {"CENTRE",       CENTRE}, {"CENTER", CENTRE}, {"MIDDLE", CENTRE},
+        {"CENTRE_RIGHT", CENTRE_RIGHT}, {"CENTER_RIGHT", CENTRE_RIGHT}, {"RIGHT", CENTRE_RIGHT},
         {"BOTTOM_LEFT",   BOTTOM_LEFT},
-        {"BOTTOM_CENTRE", BOTTOM_CENTRE}, {"BOTTOM", BOTTOM_CENTRE}, {"DOWN", BOTTOM_CENTRE}, {"UNDER", BOTTOM_CENTRE},
+        {"BOTTOM_CENTRE", BOTTOM_CENTRE}, {"BOTTOM_CENTER", BOTTOM_CENTRE}, {"BOTTOM", BOTTOM_CENTRE}, {"DOWN", BOTTOM_CENTRE}, {"UNDER", BOTTOM_CENTRE},
         {"BOTTOM_RIGHT",  BOTTOM_RIGHT},
     };
 

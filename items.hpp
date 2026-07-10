@@ -202,7 +202,7 @@ protected:
 /**
  *  @class RadioButton
  *  @brief Checkbox with default RADIO shape.
- *  @details Small convenience wrapper.
+ *  @details Small convenience wrapper. For mutual exclusiveness, see RadioGroup.
  *  @see CheckBox
  */
 class RadioButton : public CheckBox  {
@@ -325,11 +325,13 @@ public:
     /**
      *  @brief Expands width and height to fit the buttons.
      *  @details Called automatically in SetButtonsPositions.
+     *  @throws std::runtime_error if there are no buttons.
      *  @see SetButtonsPositions
      */
     void ExpandToButtons();
     /**
      *  @brief Expands or shrinks width and height to fit the buttons.
+     *  @throws std::runtime_error if there are no buttons.
      */
     void FitToButtons();
 
@@ -922,6 +924,10 @@ public:
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+    /**
+     *  @brief Defocuses and loads value.
+     *  @details Retains old value at invalid input. Puts in max float value at out of range error. Clamps the value to bounds.
+     */
     void Defocus() override;
 
     void SetToScreen() override;
@@ -1232,7 +1238,7 @@ public:
 
     const T& GetItem(int index) const {
         if (index < 0 || (size_t)(index) >= items.size()) {
-            throw CPPFX_THROW(std::out_of_range,"Index beyond range at getting.");
+            CPPFX_THROW(std::out_of_range,"Index beyond range at getting.");
         }
         return items[index];
     }
@@ -1669,7 +1675,7 @@ public:
 class Sprite : public Item {
 public:
 
-    Sprite() : texture{0}, filePath(""), rotation(0.0f), scale(1.0f), textureHasBeenLoaded(false) {colour.SetColour(WHITE);}
+    Sprite() : Item("Sprite"), texture{0}, filePath(""), rotation(0.0f), scale(1.0f), textureHasBeenLoaded(false) {colour.SetColour(WHITE);}
 
     ~Sprite() {::UnloadTexture(texture);}
 

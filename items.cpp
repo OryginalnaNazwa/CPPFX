@@ -554,6 +554,8 @@ void RadioGroup::SetButtonsPositions() {
 }
 
 void RadioGroup::ExpandToButtons() {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "No buttons to expand to.");
+
     float maxX = std::numeric_limits<float>::lowest(), maxY = std::numeric_limits<float>::lowest();
     for (const auto& [key, button] : buttons) {
         if (button->GetX() + button->GetTotalWidth() > maxX) maxX = button->GetX() + button->GetTotalWidth();
@@ -564,6 +566,8 @@ void RadioGroup::ExpandToButtons() {
 }
 
 void RadioGroup::FitToButtons() {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "No buttons to fit to.");
+
     float maxX = std::numeric_limits<float>::lowest(), maxY = std::numeric_limits<float>::lowest();
     for (const auto& [key, button] : buttons) {
         if (button->GetX() + button->GetTotalWidth() > maxX) maxX = button->GetX() + button->GetTotalWidth();
@@ -1011,7 +1015,7 @@ const std::string Spinner::GetClassID() {
 // --- EditableSpinner ---
 
 void EditableSpinner::SetValue(float value) {
-    this->value = value;
+    Spinner::SetValue(value);
     editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
 }
 
@@ -1044,6 +1048,13 @@ void EditableSpinner::DoFocusAction(float elapsedTime, const Vector2& mousePosit
                 value = std::stof(editArea.GetText());
             } catch (const std::invalid_argument&) {
                 //do nothing. Doesn't change the value.
+            } catch (const std::out_of_range&) {
+                value = std::numeric_limits<float>::max();
+            }
+            if (hasMax && value >= maxValue) {
+                value = maxValue;
+            } else if (hasMin && value <= minValue) {
+                value = minValue;
             }
             editArea.Defocus();
         }
@@ -1099,6 +1110,13 @@ void EditableSpinner::Defocus() {
         value = std::stof(editArea.GetText());
     } catch (const std::invalid_argument&) {
         return; //no need to reset the value if it didn't change
+    } catch (const std::out_of_range&) {
+        value = std::numeric_limits<float>::max();
+    }
+    if (hasMax && value >= maxValue) {
+        value = maxValue;
+    } else if (hasMin && value <= minValue) {
+        value = minValue;
     }
     editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
 }
@@ -1532,7 +1550,7 @@ void PieChart::DrawMyself(float elapsedTime) const {
                 DrawText(label.c_str(), TranslateXToCentre() + (GetRadius()  * cos(textAngle * DEG2RAD)) - (MeasureText(label.c_str(), font.GetFontSize()) / 2.0f) + xShift,
                         TranslateYToCentre() + (GetRadius() * sin(textAngle * DEG2RAD)) + yShift, font.GetFontSize(), font.colour.GetColour());
             } else {
-                std::string elementText = std::to_string(element);
+                std::string elementText = element == (int)(element) ? TextFormat("%d", (int)(element)) : TextFormat("%.2f", element);
                 DrawText(elementText.c_str(), TranslateXToCentre() + (GetRadius()  * cos(textAngle * DEG2RAD)) - (MeasureText(elementText.c_str(), font.GetFontSize()) / 2.0f) + xShift,
                         TranslateYToCentre() + (GetRadius() * sin(textAngle * DEG2RAD)) + yShift, font.GetFontSize(), font.colour.GetColour());
             }

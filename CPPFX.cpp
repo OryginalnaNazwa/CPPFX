@@ -8,10 +8,10 @@
 
 using namespace CPPFX;
 
-const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.9.1"; //sanity check for version
+const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.9.2"; //sanity check for version
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
-    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "Chart", "PieChart", "Line", "Square", "Rectangle", "Circle"};
+    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "Chart", "PieChart", "Line", "Square", "Rectangle", "Circle", "Sprite"};
 
 const std::string GUI::AUTOMATIC_ID_PREFIX = "GUI_AUTO_";
 
@@ -59,7 +59,7 @@ void GUI::DrawUI(const Camera2D& camera) const {
     for (auto& item : ItemsInDrawingOrder) {
         if (item->IsVisible()) {
             if (screenBased || item->IsScreenBased()) {
-                EndMode2D();
+                EndMode2D(); // THIS WILL CRASH IF THE MODE HAS NOT BEEN BEGUN EARLIER!!!
                 item->DrawMyself(elapsedTime);
                 BeginMode2D(camera);
             } else item->DrawMyself(elapsedTime);
@@ -216,6 +216,10 @@ RadioButton* GUI::AddRadioButton(const std::string& ID) {
 
 RadioGroup* GUI::AddRadioGroup(const std::string& ID) {
     return AddItem<RadioGroup>(ID);
+}
+
+Sprite* GUI::AddSprite(const std::string& ID) {
+    return AddItem<Sprite>(ID);
 }
 
 //--- Remover ---
@@ -382,6 +386,10 @@ RadioButton* GUI::GetRadioButton(const std::string& ID) {
 
 RadioGroup* GUI::GetRadioGroup(const std::string& ID) {
     return GetItem<RadioGroup>(ID);
+}
+
+Sprite* GUI::GetSprite(const std::string& ID) {
+    return GetItem<Sprite>(ID);
 }
 
 //--- Priority helpers ---
