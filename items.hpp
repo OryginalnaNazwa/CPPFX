@@ -57,8 +57,8 @@ class TextField : public TextItem {
 public:
     Font promptFont; ///< mostly here for colour, but maybe you want other font for your prompt text, why not
 
-    TextField() : Item("TextField"), TextItem("TextField"), promptFont(height / 4.0f, GREY), promptText("") {}
-    TextField(const std::string& i) : Item("TextField"), TextItem(i), promptFont(height / 4.0f, GREY), promptText("") {}
+    TextField() : Item("TextField"), TextItem("TextField"), promptFont(height / 4.0f, GREY), promptText("Text goes here...") {ClearText();}
+    TextField(const std::string& i) : Item("TextField"), TextItem(i), promptFont(height / 4.0f, GREY), promptText("Text goes here...") {ClearText();}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -406,8 +406,24 @@ private:
 template <typename T>
 class DropDown : public TextItem {
 public:
+    /**
+     *  @brief Possible sorting/ordering methods
+     */
+    enum ORDER {
+        insertion,
+        reverseInsertion,
+        alphabetic,
+        alphabeticCaseInsensitive,
+        reverseAlphabetic,
+        reverseAlphabeticCaseInsensitive,
+        natural, ///< item10 < item9 (as in, higher in the dropdown)
+        reverseNatural,
+        naturalCaseInsensitive,
+        reverseNaturalCaseInsensitive,
+        custom
+    };
 
-    DropDown() : Item("DropDown"), TextItem("DropDown"), currentLabel("") {}
+    DropDown() : Item("DropDown"), TextItem("DropDown"), order(insertion), currentLabel("") {}
 
     void DrawMyself(float elapsedTime) const override {
         DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
@@ -420,7 +436,7 @@ public:
         if (focused) {
             float yCurrent = yAnchor + height;
             DrawLineEx({xAnchor, yCurrent}, {xAnchor + width, yCurrent}, 10, BLACK);
-            for (auto& [label, value] : values) { //TODO make insertion and other orders available
+            for (auto& label : valuesInOrder) {
                 DrawLineEx({xAnchor, yCurrent}, {xAnchor + width, yCurrent}, 5, BLACK);
                 DrawRectangle(xAnchor, yCurrent, width, height, colour.GetColour());
                 DrawText(Truncate(label).c_str(), xAnchor + textMargin, yCurrent + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
@@ -443,18 +459,27 @@ public:
     }
 
     void DoPassiveAction(float elapsedTime) override {
+        if (dirty) {
+            Sort();
+            dirty = false;
+        }
         if (currentLabel == "" && !values.empty()) {
-            SetCurrent(values.begin()->first);
+            SetCurrent(valuesInOrder[0]);
         }
     }
 
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override {
         if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
+            if (valuesInOrder.size() == 0) {
+                Defocus();
+                return;
+            }
             int index = (mousePosition.y - (yAnchor + height)) / height;
-            auto it = std::next(values.begin(), index);
-            currentLabel = it->first;
-            currentValue = it->second;
-            focused = false;
+            index = std::clamp(index, 0, (int)(valuesInOrder.size() - 1));
+            std::string label = valuesInOrder.at(index);
+            currentLabel = label;
+            currentValue = values.at(label);
+            Defocus();
             return;
         }
         if (!Item::WasIClicked(mousePosition)) {
@@ -466,14 +491,21 @@ public:
      *  @brief Inserts the value into the dropdown.
      *  @param label name under which the value will be displayed
      *  @param value the new value
-     *  @throws std::invalid_argument if the label is empty.
+     *  @throws std::invalid_argument if the label is empty
+     *  @throws std::out_of_range if the label is taken.
      */
     void InsertItem(const std::string& label, const T& value) {
         if (label == "") {
             CPPFX_WARN("Use space (' ') if you want to have it actually empty.");
             CPPFX_THROW(std::invalid_argument, "Cannot add item with empty label.");
         }
+        if (IsLabelTaken(label)) {
+            CPPFX_THROW(std::out_of_range, "Label already taken - cannot add a new item with the label " + label);
+        }
         values.insert({label,value});
+        valuesInOrder.push_back(label);
+        insertionOrder.push_back(label);
+        if (order != insertion) dirty = true;
     }
 
     /**
@@ -484,6 +516,12 @@ public:
     void RemoveItem(const std::string& label) {
         if (IsLabelTaken(label)) {
             values.erase(label);
+            valuesInOrder.erase(std::remove_if(valuesInOrder.begin(), valuesInOrder.end(),[&label](const std::string& lab) { return label == lab; }),valuesInOrder.end());
+            insertionOrder.erase(std::remove_if(insertionOrder.begin(), insertionOrder.end(),[&label](const std::string& lab) { return label == lab; }),insertionOrder.end());
+            if (currentLabel == label) {
+                currentLabel = "";
+                currentValue = T{};
+            }
         } else CPPFX_THROW(std::out_of_range, "No value with label " + label + " found - couldn't remove.");
     }
 
@@ -505,6 +543,20 @@ public:
         auto node = values.extract(oldLabel);
         node.key() = newLabel;
         values.insert(std::move(node));
+        for (auto& label : valuesInOrder) {
+            if (label == oldLabel) {
+                label = newLabel;
+                break;
+            }
+        }
+        for (auto& label : insertionOrder) {
+            if (label == oldLabel) {
+                label = newLabel;
+                break;
+            }
+        }
+        if (currentLabel == oldLabel) currentLabel = newLabel;
+        dirty = true;
     }
 
     /**
@@ -531,12 +583,29 @@ public:
         } else CPPFX_THROW(std::out_of_range, "No key " + label + " found.");
     }
 
+    /**
+     *  @brief Returns the currently picked value.
+     *  @throws std::runtime_error if there is no current value.
+     */
     T GetCurrentValue() const {
+        if (currentLabel == "") {
+            CPPFX_THROW(std::runtime_error, "No current value");
+        }
         return currentValue;
     }
 
     std::string GetCurrentLabel() const {
+        if (currentLabel == "") {
+            CPPFX_THROW(std::runtime_error, "No current label");
+        }
         return currentLabel;
+    }
+
+    std::pair<std::string, T> GetCurrent() const {
+        if (currentLabel == "") {
+            CPPFX_THROW(std::runtime_error, "No current pick");
+        }
+        return {currentLabel, currentValue};
     }
 
     /**
@@ -599,6 +668,51 @@ public:
         return height * (values.size() + 1);
     }
 
+    const std::vector<std::string>& GetLabelsInOrder() const {
+        return valuesInOrder;
+    }
+
+    void Sort() {
+        if (order == ORDER::insertion || order == ORDER::reverseInsertion) {
+            valuesInOrder = insertionOrder;
+            if (order == ORDER::reverseInsertion)
+                std::reverse(valuesInOrder.begin(), valuesInOrder.end());
+            return;
+        }
+
+        std::function<bool(const std::string&, const std::string&)> cmp;
+        bool rev = false;
+
+        switch (order) {
+            case ORDER::alphabetic:                       cmp = std::less<std::string>{}; break;
+            case ORDER::reverseAlphabetic:                cmp = std::less<std::string>{}; rev = true; break;
+            case ORDER::alphabeticCaseInsensitive:        cmp = CaseInsensitiveLess; break;
+            case ORDER::reverseAlphabeticCaseInsensitive: cmp = CaseInsensitiveLess; rev = true; break;
+            case ORDER::natural:                          cmp = NaturalLess; break;
+            case ORDER::reverseNatural:                   cmp = NaturalLess; rev = true; break;
+            case ORDER::naturalCaseInsensitive:           cmp = NaturalLessCaseInsensitive; break;
+            case ORDER::reverseNaturalCaseInsensitive:    cmp = NaturalLessCaseInsensitive; rev = true; break;
+            case ORDER::custom:                           cmp = customSort; if (customSort) { CPPFX_THROW(std::runtime_error, "No custom sorting method set"); }
+            default: return;
+        }
+
+        std::stable_sort(valuesInOrder.begin(), valuesInOrder.end(), cmp);
+        if (rev) std::reverse(valuesInOrder.begin(), valuesInOrder.end());
+    }
+
+    void SetOrder(DropDown::ORDER orderType) {
+        order = orderType;
+        dirty = true;
+    }
+
+    DropDown::ORDER GetOrder() const {
+        return order;
+    }
+
+    void SetCustomSort(const std::function<bool(const std::string&, const std::string&)>& custom) {
+        customSort = custom;
+    }
+
     /**
      *  @see Item::GetClassID()
      */
@@ -607,10 +721,83 @@ public:
     }
 
 private:
-    std::map<std::string, T> values;
+    std::unordered_map<std::string, T> values;
+    std::vector<std::string> valuesInOrder;
+    std::vector<std::string> insertionOrder;
+    ORDER order;
     std::string currentLabel;
     T currentValue;
+    bool dirty = false;
+    std::function<bool(const std::string&, const std::string&)> customSort;
 
+    static bool NaturalLess(const std::string& a, const std::string& b) {
+        size_t i = 0, j = 0;
+        while (i < a.size() && j < b.size()) {
+            if (std::isdigit((unsigned char)a[i]) && std::isdigit((unsigned char)b[j])) {
+                // skip leading zeros
+                size_t iStart = i, jStart = j;
+                while (i < a.size() && a[i] == '0') ++i;
+                while (j < b.size() && b[j] == '0') ++j;
+
+                size_t iNum = i, jNum = j;
+                while (i < a.size() && std::isdigit((unsigned char)a[i])) ++i;
+                while (j < b.size() && std::isdigit((unsigned char)b[j])) ++j;
+
+                size_t iLen = i - iNum, jLen = j - jNum;
+                if (iLen != jLen) return iLen < jLen;          // fewer digits = smaller
+                int cmp = a.compare(iNum, iLen, b, jNum, jLen); // same length: lexical works
+                if (cmp != 0) return cmp < 0;
+
+                // equal numerically: fewer leading zeros sorts first, as a tiebreak
+                if ((iNum - iStart) != (jNum - jStart)) {
+                    return (iNum - iStart) < (jNum - jStart);
+                }
+            } else {
+                if (a[i] != b[j]) return a[i] < b[j];
+                ++i; ++j;
+            }
+        }
+        return (a.size() - i) < (b.size() - j);
+    }
+
+    static bool NaturalLessCaseInsensitive(const std::string& a, const std::string& b) {
+        size_t i = 0, j = 0;
+        while (i < a.size() && j < b.size()) {
+            if (std::isdigit((unsigned char)a[i]) && std::isdigit((unsigned char)b[j])) {
+                // skip leading zeros
+                size_t iStart = i, jStart = j;
+                while (i < a.size() && a[i] == '0') ++i;
+                while (j < b.size() && b[j] == '0') ++j;
+
+                size_t iNum = i, jNum = j;
+                while (i < a.size() && std::isdigit((unsigned char)a[i])) ++i;
+                while (j < b.size() && std::isdigit((unsigned char)b[j])) ++j;
+
+                size_t iLen = i - iNum, jLen = j - jNum;
+                if (iLen != jLen) return iLen < jLen;          // fewer digits = smaller
+                int cmp = a.compare(iNum, iLen, b, jNum, jLen); // same length: lexical works
+                if (cmp != 0) return cmp < 0;
+
+                // equal numerically: fewer leading zeros sorts first, as a tiebreak
+                if ((iNum - iStart) != (jNum - jStart)) {
+                    return (iNum - iStart) < (jNum - jStart);
+                }
+            } else {
+                auto lowa = std::tolower((unsigned char)(a[i])), lowb = std::tolower((unsigned char)(b[j]));
+                if (lowa != lowb) return lowa < lowb;
+                ++i; ++j;
+            }
+        }
+        return (a.size() - i) < (b.size() - j);
+    }
+
+    static bool CaseInsensitiveLess(const std::string& a, const std::string& b) {
+        return std::lexicographical_compare(
+            a.begin(), a.end(), b.begin(), b.end(),
+            [](unsigned char c1, unsigned char c2) {
+                return std::tolower(c1) < std::tolower(c2);
+            });
+    }
 };
 
 // --- Containers ---
