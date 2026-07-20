@@ -2,7 +2,7 @@
 #define CPPFX_H
 
 #include <stddef.h>       // for size_t
-#include <map>            // for map
+#include <unordered_map> // for unordered_map
 #include <memory>         // for allocator, unique_ptr, make_unique
 #include <stdexcept>      // for out_of_range, runtime_error
 #include <string>         // for string, basic_string, operator+, char_traits
@@ -48,7 +48,7 @@ namespace CPPFX {
 
 #define CPPFX_VERSION_MAJOR 0
 #define CPPFX_VERSION_MINOR 10
-#define CPPFX_VERSION_PATCH 2
+#define CPPFX_VERSION_PATCH 1
 #define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
 extern const char* CPPFX_VERSION_STRING;
 
@@ -480,10 +480,10 @@ public:
 private:
     bool screenBased; /// global flag for whether the items are drawn in world or screen coordinates
 
-    std::map<std::string, std::unique_ptr<Item>> Items; /// lookup map by ID
+    std::unordered_map<std::string, std::unique_ptr<Item>> Items; /// lookup map by ID
     std::vector<Item*> ItemsInDrawingOrder; /// items in reverse priority order — back is the highest priority. Which is indeed the correct drawing order
 
-    std::map<std::string, size_t> ItemsCounter; /// each new created item increments its counter. Used for auto IDs.
+    std::unordered_map<std::string, size_t> ItemsCounter; /// each new created item increments its counter. Used for auto IDs.
 
     float elapsedTime = 0.0f; /// total elapsed time of all frames
     bool needsSorting = false; /// lazy sort
