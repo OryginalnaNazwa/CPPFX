@@ -14,11 +14,11 @@
  *  @details And also some helpers.
  ******************************************************************/
 
+namespace CPPFX {
+
 #define GREY GRAY //a hack to make British spelling work with Raylib colours.
 #define DARKGREY DARKGRAY
 #define LIGHTGREY LIGHTGRAY
-
-namespace CPPFX {
 
 #ifdef NDEBUG
 #define CPPFX_WARN(msg)
@@ -65,7 +65,6 @@ public:
     /**
      *  @brief Sets colour using its value.
      *  @param colour colour's value - {R, G, B} or Raylib's defines. Only raylib colours are accepted.
-     *  @details Accepts also RGB values.
      */
     void SetColour(Color colour);
 

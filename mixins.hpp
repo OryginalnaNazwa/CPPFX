@@ -215,7 +215,7 @@ public:
 
 protected:
 
-    Embedded() {}
+    Embedded() : Item() {}
 
 private:
     void SetX(float x) override { Item::SetX(x); }

@@ -48,7 +48,7 @@ namespace CPPFX {
 
 #define CPPFX_VERSION_MAJOR 0
 #define CPPFX_VERSION_MINOR 10
-#define CPPFX_VERSION_PATCH 1
+#define CPPFX_VERSION_PATCH 2
 #define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
 extern const char* CPPFX_VERSION_STRING;
 
@@ -508,6 +508,7 @@ private:
      *  @details The default ID follows a pattern: GUI_AUTO_ + fxID + (number of items with the fxID + 1).
      *  @param item unique pointer to the newly created item.
      *  @param ID ID to be given to the new item. If empty, defaults.
+     *  @throws std::invalid_argument on duplicate IDs
      */
     void CreateItemID(std::unique_ptr<Item>& item, const std::string& ID = "");
 

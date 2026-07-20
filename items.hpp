@@ -215,7 +215,7 @@ public:
  *  @class RadioGroup
  *  @brief Mutually exclusive group of RadioButtons
  */
-class RadioGroup : public virtual Padded {
+class RadioGroup : public virtual Item, public virtual Padded {
 public:
 
     RadioGroup() : Item("RadioGroup"), Padded(), vertical(true), buttonMargin(5.0f), groups(1), needsOrdering(false) {colour.SetColour(BLANK);}
@@ -692,7 +692,7 @@ public:
             case ORDER::reverseNatural:                   cmp = NaturalLess; rev = true; break;
             case ORDER::naturalCaseInsensitive:           cmp = NaturalLessCaseInsensitive; break;
             case ORDER::reverseNaturalCaseInsensitive:    cmp = NaturalLessCaseInsensitive; rev = true; break;
-            case ORDER::custom:                           cmp = customSort; if (customSort) { CPPFX_THROW(std::runtime_error, "No custom sorting method set"); }
+            case ORDER::custom:                           cmp = customSort; if (!customSort) { CPPFX_THROW(std::runtime_error, "No custom sorting method set"); }
             default: return;
         }
 
@@ -1412,13 +1412,13 @@ public:
     }
     void RemoveItem(int index) {
         if (index < 0 || (size_t)(index) >= items.size()) {
-            throw CPPFX_THROW(std::out_of_range,"Index beyond range at removal.");
+            CPPFX_THROW(std::out_of_range,"Index beyond range at removal.");
         }
         items.erase(items.begin() + index);
     }
     void ReplaceItem(int index, const T& item) {
         if (index < 0 || (size_t)(index) >= items.size()) {
-            throw CPPFX_THROW(std::out_of_range,"Index beyond range at replacing.");
+            CPPFX_THROW(std::out_of_range,"Index beyond range at replacing.");
         }
         items[index] = item;
     }
@@ -1864,7 +1864,9 @@ public:
 
     Sprite() : Item("Sprite"), texture{0}, filePath(""), rotation(0.0f), scale(1.0f), textureHasBeenLoaded(false) {colour.SetColour(WHITE);}
 
-    ~Sprite() {::UnloadTexture(texture);}
+    ~Sprite() {
+        if (textureHasBeenLoaded) {::UnloadTexture(texture);}
+    }
 
     /**
      *  @brief Draws the texture.

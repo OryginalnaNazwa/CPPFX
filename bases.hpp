@@ -2,7 +2,8 @@
 #define BASES_H
 
 #include <stddef.h>      // for size_t
-#include <map>           // for map
+#include <unordered_map> // for unordered_map
+#include <unordered_set> // for unordered_set
 #include <string>        // for string
 #include <vector>        // for vector
 #include "base_item.hpp"   // for Item

@@ -8,10 +8,10 @@
 
 using namespace CPPFX;
 
-const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.10.1"; //sanity check for version
+const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.10.2"; //sanity check for version
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
-    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "Chart", "PieChart", "Line", "Square", "Rectangle", "Circle", "Sprite"};
+    "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "PieChart", "Line", "Square", "Rectangle", "Circle", "Sprite"};
 
 const std::string GUI::AUTOMATIC_ID_PREFIX = "GUI_AUTO_";
 
@@ -130,7 +130,13 @@ void GUI::CreateItemID(std::unique_ptr<Item>& item, const std::string& ID) {
             //this shouldn't happen, left it for debug of virtual inheritance
         }
 
-    } else item->SetID(ID);
+    } else {
+        if (IsIDTaken(ID)) {
+            CPPFX_THROW_GUI(std::invalid_argument, "ID " + ID + "already taken.");
+        }
+        item->SetID(ID);
+    }
+
     ItemsCounter[item->GetFxID()]++;
 }
 
@@ -241,8 +247,10 @@ void GUI::RemoveItem(const std::string& ID) {
 void GUI::RemoveItem(Item*& item) {
     if (item) {
         if (IsIDTaken(item->GetID())) {
-            if (IsContainer(item->GetFxID())) {
-                GetContainer(item->GetID())->SafeRemoveItem(item);
+            for (auto& [key, it] : Items) {
+                if (IsContainer(it->GetFxID())) {
+                    GetContainer(it->GetID())->SafeRemoveItem(item);
+                }
             }
             ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&item](const Item* i) { return i->GetID() == item->GetID(); }),ItemsInDrawingOrder.end());
             Items.erase(item->GetID());
@@ -295,7 +303,7 @@ const std::string& GUI::GetAutomaticIDPrefix() {
 }
 
 bool GUI::IsIDAutomatic(const std::string& ID) {
-    return ID.contains(AUTOMATIC_ID_PREFIX);
+    return ID.starts_with(AUTOMATIC_ID_PREFIX);
 }
 
 //--- Getters ---
