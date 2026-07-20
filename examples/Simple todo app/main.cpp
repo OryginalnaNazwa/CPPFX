@@ -5,8 +5,13 @@
 #include <stdexcept>
 
 /****************************************************************************************************************************************************************************************
- * Simple todo app.
- * Type task in the field and accept with the button. Saves and loads from plain text file. Camera is movable for convenience. Should probably be better, but it's just a quick example.
+ *  Simple todo app.
+ *  Type task in the field and accept with the button. Saves and loads from plain text file. Camera is movable for convenience. Should probably be better, but it's just a quick example.
+ *  Todos are Checkboxes. At the bottom of the screen there is a text field and a button.
+ *  Genuinely a very rough, primitive example that was more me testing if it'll work rather than intended use case. DO NOT do things ugly. Be better. It'll pay off.
+ *  Main issues: saving and loading is ugly, no insertion order retention between sessions, no actual scaling and resizing of the todo list (camera moving is a hack counteracting it).
+ ========================================================================================================================================================================================
+ * v1.1 - slight fixes. Made the VBox ID not hardcoded.
  ****************************************************************************************************************************************************************************************/
 
 const std::string path = "todos_list.txt";
@@ -41,7 +46,7 @@ void LoadFromFile(CPPFX::GUI& gui) {
         if (press == "1") { // theres probably a better way to do it, but that's what I got to work
             added->SetPressed(true);
         } else added->SetPressed(false);
-        gui.GetVBox("GUI_AUTO_VBox")->AddItem(added); // automatic prefix + class name is the auto-generated ID for the first widget of this type. Next one would be GUI_AUTO_VBox1 and so on.
+        gui.GetVBox(CPPFX::GUI::GetAutomaticIDPrefix() + CPPFX::VBox::GetClassID())->AddItem(added); // automatic prefix + class name is the auto-generated ID for the first widget of this type. Next one would be GUI_AUTO_VBox1 and so on.
     }
 }
 
@@ -75,7 +80,6 @@ int main() {
     auto todoList = gui.AddVBox(); // column with the todos
 
     auto todoField = gui.AddTextField(); // input field
-    todoField->ClearText();
     todoField->SetPromptText("Put todo here");
     todoField->ExpandToText();
     todoField->border.SetThickness(10.0f);

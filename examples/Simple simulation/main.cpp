@@ -5,6 +5,7 @@
  * Simple mockup simulation controlled by a simple UI. v2
  * A clock-arm like spins around. It's speed is controlled by a Spinner and the simulation can be stopped with a PressedButton.
  * ===========================================================================================================================
+ *  v2.1 - small fixes.
  *  v2 - switched to Line for the clock.
  ******************************************************************************************************************************/
 
@@ -23,13 +24,12 @@ int main()
 
     //gui initialisation
     auto speedPicker = gui.AddSpinner("SpeedPicker");
-    speedPicker->SetX(100.0f);
-    speedPicker->SetY(100.0f);
-    speedPicker->SetMin();
-    speedPicker->SetMinValue(1.0f);
-    speedPicker->SetMax();
+    speedPicker->SetXY(100.0f);
+    speedPicker->SetMin(); // turns on the lower bound
+    speedPicker->SetMinValue(1.0f); // sets it
+    speedPicker->SetMax(); // the same but the other side
     speedPicker->SetMaxValue(10.0f);
-    speedPicker->SetValue(1.0f);
+    speedPicker->SetValue(1.0f); // sets the current value
 
     auto startButton = gui.AddPressedButton("StartButton");
     startButton->pressedColour.SetColour(RED);
@@ -46,7 +46,7 @@ int main()
     arm->SetXY(1000.0f, 500.0f);
     arm->colour.SetColour(BLACK);
 
-    float dt = 0.0f; // small helper
+    float dt = 0.0f; // delta time
 
     while (!WindowShouldClose()) {
         BeginDrawing();

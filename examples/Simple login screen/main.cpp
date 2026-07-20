@@ -4,10 +4,11 @@ using namespace std;
 using namespace CPPFX;
 
 /************************************************************************************************************************************************************************
- *  Simple login screen mockup. v2
+ *  Simple login screen mockup. v2.1
  *  A label with welcome text and two text fields, one masked for password.
  *  Clicking a button or pressing enter is a login attempt. Incorrect credentials end with error appearing. Correct ("Login", "Password") end in welcome label changing.
  * ======================================================================================================================================================================
+ *  v2.1 - made up to date with convenience fixes in Label and Fields.
  *  v2 - switched to Hide and Show for error label
  ************************************************************************************************************************************************************************/
 
@@ -39,7 +40,6 @@ int main() {
 
     auto welcomeLabel = gui.AddLabel("WelcomeLabel");
     welcomeLabel->SetText("Hello!");
-    welcomeLabel->alignment.SetAlignment(Alignment::CENTRE); // by default, the text is on the left.
 
     auto errorLabel = gui.AddLabel("ErrorLabel");
     errorLabel->Hide(); // makes it invisible and not interactable
@@ -48,11 +48,8 @@ int main() {
 
     auto loginField = gui.AddTextField("LoginField");
     loginField->SetPromptText("Login");
-    loginField->ClearText(); //makes sure the prompt text will be displayed instead because the text will be empty. By default it instead displays "TextField".
 
-    auto passwordField = gui.AddPasswordField("PasswordField");
-    passwordField->SetPromptText("Password");
-    passwordField->ClearText(); //makes sure the prompt text will be displayed instead
+    auto passwordField = gui.AddPasswordField("PasswordField"); // by default prompts "Password"
 
     auto loginButton = gui.AddButton("LoginButton");
     loginButton->SetText("Log in");
