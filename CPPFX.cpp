@@ -8,7 +8,7 @@
 
 using namespace CPPFX;
 
-const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.11.0"; //sanity check for version
+const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.11.1"; //sanity check for version
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
     "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "PieChart", "Line", "Square", "Rectangle", "Circle", "Sprite"};
@@ -244,7 +244,7 @@ void GUI::RemoveItem(const std::string& ID) {
     }
 }
 
-void GUI::RemoveItem(Item*& item) {
+void GUI::RemoveItem(Item* item) {
     if (item) {
         if (IsIDTaken(item->GetID())) {
             for (auto& [key, it] : Items) {

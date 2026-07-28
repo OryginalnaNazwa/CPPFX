@@ -48,7 +48,7 @@ namespace CPPFX {
 
 #define CPPFX_VERSION_MAJOR 0
 #define CPPFX_VERSION_MINOR 11
-#define CPPFX_VERSION_PATCH 0
+#define CPPFX_VERSION_PATCH 1
 #define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
 extern const char* CPPFX_VERSION_STRING;
 
@@ -207,13 +207,12 @@ public:
     void RemoveItem(const std::string& ID);
     /**
      *  @brief Removes an item.
-     *  @details Deletes the pointer.
      *  @details Safe removes from all containers.
      *  @param item pointer to the item to be deleted.
      *  @throws std::invalid_argument if the item doesn't exist.
      *  @throws std::out_of_range if the item doesn't exist in this GUI.
      */
-    void RemoveItem(Item*& item);
+    void RemoveItem(Item* item);
 
     /**
      *  @brief Gets an item of the specified type.
