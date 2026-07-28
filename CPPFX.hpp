@@ -12,6 +12,7 @@
 #include "base_item.hpp"    // for Item
 #include "properties.hpp"   // for Colour
 #include "raylib.h"       // for Camera2D, Vector2, Color
+#include <concepts>
 /*// declarations
 namespace CPPFX { class AnchorPane; }
 namespace CPPFX { class Button; }
@@ -37,7 +38,7 @@ namespace CPPFX { template <typename T> class DropDown; }
 namespace CPPFX { template <typename T> class List; }
 namespace CPPFX { class RadioGroup; }
 namespace CPPFX { class Sprite; }*/
-#include "items.hpp" // for items. Needs it, otherwise you'd need to link more files than just this one.
+#include "items.hpp" // for items. Needs it, otherwise you'd need to include more files than just this one.
 
 /******************************************************************************
  *  @file CPPFX
@@ -48,7 +49,7 @@ namespace CPPFX {
 
 #define CPPFX_VERSION_MAJOR 0
 #define CPPFX_VERSION_MINOR 11
-#define CPPFX_VERSION_PATCH 2
+#define CPPFX_VERSION_PATCH 3
 #define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
 extern const char* const CPPFX_VERSION_STRING;
 
@@ -86,7 +87,7 @@ public:
      *  @returns a pointer to the newly created item.
      */
     template <typename T>
-    T* AddItem(const std::string& ID = "") requires std::derived_from<T, Item> {
+    T* AddItem(const std::string& ID = "") requires std::derived_from<T, Item> && std::default_initializable<T> {
         std::unique_ptr<Item> item = std::make_unique<T>();
         CreateItemID(item, ID);
         auto pointer = dynamic_cast<T*>(item.get());
