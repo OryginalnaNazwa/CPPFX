@@ -18,7 +18,7 @@ public:
     Colour colour;
     Border border; //all but a few items have it.
 
-    Item() {}
+    Item() {} ///< for vectors and stuff, don't use normally
     /**
      *  @brief Default constructor.
      *  @param i fxID of the new item.
@@ -55,13 +55,13 @@ public:
     virtual void DoPassiveAction(float elapsedTime);
     /**
      *  @brief Action done while the item is focused in world coordinates.
-     *  @param elapsedTime Frame time
+     *  @param elapsedTime total elapsed time of all frames
      */
     virtual void DoFocusAction(float elapsedTime) = 0;
     /**
      *  @brief Action done while the item is focused and it depends on mouse click in world coordinates.
      *  @details Defaults to the previous DoFocusAction().
-     *  @param elapsedTime Frame time
+     *  @param elapsedTime total elapsed time of all frames
      *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
      */
     virtual void DoFocusAction(float elapsedTime, const Vector2& mousePosition);

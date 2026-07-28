@@ -265,7 +265,7 @@ void Container::DoFocusAction(float elapsedTime) {
 }
 
 void Container::ExpandToChildren() {
-    if (Items.empty()) CPPFX_THROW(std::runtime_error, "There are no children to expand to.");
+    if (Items.empty()) return;
 
     float maxX = std::numeric_limits<float>::lowest(), maxY = std::numeric_limits<float>::lowest();
     for (const auto& [key, item] : Items) {
@@ -277,7 +277,7 @@ void Container::ExpandToChildren() {
 }
 
 void Container::FitToChildren() {
-    if (Items.empty()) CPPFX_THROW(std::runtime_error, "There are no children to fit to.");
+    if (Items.empty()) return;
 
     float maxX = std::numeric_limits<float>::lowest(), maxY = std::numeric_limits<float>::lowest();
     for (const auto& [key, item] : Items) {

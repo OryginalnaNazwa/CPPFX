@@ -8,7 +8,7 @@
 
 using namespace CPPFX;
 
-const char* CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.11.1"; //sanity check for version
+const char* const CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.11.2"; //sanity check for version
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
     "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "PieChart", "Line", "Square", "Rectangle", "Circle", "Sprite"};
@@ -37,10 +37,12 @@ void GUI::DoUI(const Camera2D& camera) {
 }
 
 void GUI::onMouseClick(const Vector2& mousePos, const Camera2D& camera) {
+    bool somethingWasClicked = false;
     for (auto it = ItemsInDrawingOrder.rbegin(); it != ItemsInDrawingOrder.rend(); ++it) {
         Item* item = *it;
         if (!item->IsInactive())  {
             if (((screenBased || item->IsScreenBased()) && item->WasIClicked(mousePos)) || ((!screenBased && !item->IsScreenBased()) && item->WasIClicked(GetScreenToWorld2D(mousePos, camera)))) {
+                somethingWasClicked = true;
                 if (!item->IsFocused()) {
                     DefocusItems();
                     item->Focus();
@@ -52,7 +54,7 @@ void GUI::onMouseClick(const Vector2& mousePos, const Camera2D& camera) {
             }
         }
     }
-    DefocusItems();
+    if (!somethingWasClicked) DefocusItems();
 }
 
 void GUI::DrawUI(const Camera2D& camera) const {
@@ -290,7 +292,7 @@ const std::unordered_set<std::string>& GUI::GetFxIDs() {
     return FXIDs;
 }
 
-const std::unordered_set<std::string> GUI::GetItemsIDs() const {
+std::unordered_set<std::string> GUI::GetItemsIDs() const {
     std::unordered_set<std::string> ids;
     for (const auto& [key, value] : Items) {
         ids.insert(key);
@@ -308,102 +310,102 @@ bool GUI::IsIDAutomatic(const std::string& ID) {
 
 //--- Getters ---
 
-TextField* GUI::GetTextField(const std::string& ID) {
+TextField* GUI::GetTextField(const std::string& ID) const {
     return GetItem<TextField>(ID);
 }
 
-Label* GUI::GetLabel(const std::string& ID) {
+Label* GUI::GetLabel(const std::string& ID) const {
     return GetItem<Label>(ID);
 }
 
-Button* GUI::GetButton(const std::string& ID) {
+Button* GUI::GetButton(const std::string& ID) const {
     return GetItem<Button>(ID);
 }
 
-CheckBox* GUI::GetCheckBox(const std::string& ID) {
+CheckBox* GUI::GetCheckBox(const std::string& ID) const {
     return GetItem<CheckBox>(ID);
 }
 
-AnchorPane* GUI::GetAnchorPane(const std::string& ID) {
+AnchorPane* GUI::GetAnchorPane(const std::string& ID) const {
     return GetItem<AnchorPane>(ID);
 }
 
-VBox* GUI::GetVBox(const std::string& ID) {
+VBox* GUI::GetVBox(const std::string& ID) const {
     return GetItem<VBox>(ID);
 }
 
-HBox* GUI::GetHBox(const std::string& ID) {
+HBox* GUI::GetHBox(const std::string& ID) const {
     return GetItem<HBox>(ID);
 }
 
-Container* GUI::GetContainer(const std::string& ID) {
+Container* GUI::GetContainer(const std::string& ID) const {
     return GetItem<Container>(ID);
 }
 
-Workspace* GUI::GetWorkspace(const std::string& ID) {
+Workspace* GUI::GetWorkspace(const std::string& ID) const {
     return GetItem<Workspace>(ID);
 }
 
-Spinner* GUI::GetSpinner(const std::string& ID) {
+Spinner* GUI::GetSpinner(const std::string& ID) const {
     return GetItem<Spinner>(ID);
 }
 
-EditableSpinner* GUI::GetEditableSpinner(const std::string& ID) {
+EditableSpinner* GUI::GetEditableSpinner(const std::string& ID) const {
     return GetItem<EditableSpinner>(ID);
 }
 
-PasswordField* GUI::GetPasswordField(const std::string& ID) {
+PasswordField* GUI::GetPasswordField(const std::string& ID) const {
     return GetItem<PasswordField>(ID);
 }
 
-ProgressIndicator* GUI::GetProgressIndicator(const std::string& ID) {
+ProgressIndicator* GUI::GetProgressIndicator(const std::string& ID) const {
     return GetItem<ProgressIndicator>(ID);
 }
 
-ProgressBar* GUI::GetProgressBar(const std::string& ID) {
+ProgressBar* GUI::GetProgressBar(const std::string& ID) const {
     return GetItem<ProgressBar>(ID);
 }
 
-PressedButton* GUI::GetPressedButton(const std::string& ID) {
+PressedButton* GUI::GetPressedButton(const std::string& ID) const {
     return GetItem<PressedButton>(ID);
 }
 
-PieChart* GUI::GetPieChart(const std::string& ID) {
+PieChart* GUI::GetPieChart(const std::string& ID) const {
     return GetItem<PieChart>(ID);
 }
 
-Line* GUI::GetLine(const std::string& ID) {
+Line* GUI::GetLine(const std::string& ID) const {
     return GetItem<Line>(ID);
 }
 
-CPPFX::Square* GUI::GetSquare(const std::string& ID) {
+CPPFX::Square* GUI::GetSquare(const std::string& ID) const {
     return GetItem<Square>(ID);
 }
 
-CPPFX::Rectangle* GUI::GetRectangle(const std::string& ID) {
+CPPFX::Rectangle* GUI::GetRectangle(const std::string& ID) const {
     return GetItem<Rectangle>(ID);
 }
 
-Circle* GUI::GetCircle(const std::string& ID) {
+Circle* GUI::GetCircle(const std::string& ID) const {
     return GetItem<Circle>(ID);
 }
 
-RadioButton* GUI::GetRadioButton(const std::string& ID) {
+RadioButton* GUI::GetRadioButton(const std::string& ID) const {
     return GetItem<RadioButton>(ID);
 }
 
-RadioGroup* GUI::GetRadioGroup(const std::string& ID) {
+RadioGroup* GUI::GetRadioGroup(const std::string& ID) const {
     return GetItem<RadioGroup>(ID);
 }
 
-Sprite* GUI::GetSprite(const std::string& ID) {
+Sprite* GUI::GetSprite(const std::string& ID) const {
     return GetItem<Sprite>(ID);
 }
 
 //--- Priority helpers ---
 
 void GUI::SortOrder() {
-    std::sort(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [](const Item* a, const Item* b) {
+    std::stable_sort(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(), [](const Item* a, const Item* b) {
         return a->GetPriority() > b->GetPriority();
     });
 }

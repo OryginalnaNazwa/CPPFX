@@ -1645,6 +1645,8 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
 
+    //bool WasIClicked(const Vector2& mousePosition) const override; // TODO FIX IT IT HAS A RECTANGULAR HIT DETECTION
+
     /**
      *  @brief Sets length of the line.
      *  @details Used only when drawing by length and angle.
