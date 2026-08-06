@@ -1864,10 +1864,15 @@ public:
 class Sprite : public Item {
 public:
 
-    Sprite() : Item("Sprite"), texture{0}, filePath(""), rotation(0.0f), scale(1.0f), textureHasBeenLoaded(false) {colour.SetColour(WHITE);}
+    Sprite() : Item("Sprite"), texture{0}, filePath(""),
+                rotation(0.0f), scale(1.0f), xShift(0.0f), yShift(0.0f),
+                textureHasBeenLoaded(false), ownsTexture(false), autoFits(true) {colour.SetColour(WHITE);}
+
+    Sprite(const Sprite&) = delete;
+    Sprite& operator=(const Sprite&) = delete;
 
     ~Sprite() {
-        if (textureHasBeenLoaded) {::UnloadTexture(texture);}
+        if (textureHasBeenLoaded && ownsTexture) {::UnloadTexture(texture);}
     }
 
     /**
@@ -1889,14 +1894,14 @@ public:
 
     /**
      *  @brief Loads the texture from the stored path.
-     *  @details Wrapper over raylib's LoadTexture.
+     *  @details Wrapper over raylib's LoadTexture. Assumes it's the primary source of the texture, responsible for its unloading.
      *  @see ::LoadTexture
      *  @throws std::runtime_error if the path is empty or if the texture did not load properly.
      */
     void LoadTexture();
     /**
      *  @brief Loads the texture from the parameter
-     *  @details Wrapper over raylib's LoadTexture. Doesn't update the stored path.
+     *  @details Wrapper over raylib's LoadTexture. Doesn't update the stored path. Assumes it's the primary source of the texture, responsible for its unloading.
      *  @param fileName path to the file
      *  @see ::LoadTexture
      *  @throws std::invalid_argument if fileName is empty
@@ -1905,7 +1910,8 @@ public:
     void LoadTexture(const std::string& fileName);
     /**
      *  @brief Unloads the texture
-     *  @details Wrapper over raylib's UnloadTexture. Safe even with empty textures.
+     *  @details Wrapper over raylib's UnloadTexture. Safe with empty textures.
+     *  @throws std::runtime_error if this Sprite is not the owner of the texture (it has been loaded elsewhere and set into it).
      *  @see ::UnloadTexture()
      */
     void UnloadTexture();
@@ -1930,6 +1936,7 @@ public:
 
     /**
      *  @brief Sets the texture by another texture.
+     *  @details Assumes the texture is stored elsewhere. Unload it there.
      *  @param texture new texture to be copied to this one.
      *  @throws std::invalid_argument if the new texture has not loaded properly.
      */
@@ -1937,13 +1944,52 @@ public:
     Texture2D GetTexture() const;
     void ClearTexture();
 
+    /**
+     *  @brief Changes dimensions to fit with those of the texture.
+     *  @details Attempts to call on setting and loading texture and also on setting scale.
+     *  @throws std::runtime_error if there's no texture
+     */
+    void FitToTexture();
+    /**
+     *  @brief Turns automatic fitting to the texture's size on.
+     *  @details Turned on by default.
+     */
+    void EnableAutoFitting();
+    /**
+     *  @brief Turns automatic fitting to the texture's size off.
+     */
+    void DisableAutoFitting();
+    /**
+     *  @brief Turns automatic fitting to the texture's size on or off.
+     *  @details Turned on by default.
+     *  @param value true for enabled auto fitting
+     */
+    void SetAutoFitting(bool value);
+    /**
+     *  @brief Checks whether auto fitting is on.
+     *  @returns true if yes
+     */
+    bool IsAutoFitting() const;
+
+    void    SetXShift(float shift);
+    float   GetXShift() const;
+    void    SetYShift(float shift);
+    float   GetYShift() const;
+    void    SetXYShift(float shift);
+    void    SetXYShift(const Vector2& xyShift);
+    Vector2 GetXYShift() const;
+
 private:
     Texture2D texture;
     std::string filePath;
     float rotation;
     float scale;
+    float xShift; ///< Texture is drawn at Sprite's (x,y) (top-left corner) - use this to shift the drawing point from there
+    float yShift;
 
     bool textureHasBeenLoaded;
+    bool ownsTexture;
+    bool autoFits;
 };
 
 }

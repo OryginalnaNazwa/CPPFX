@@ -1822,7 +1822,7 @@ void Sprite::DrawMyself(float elapsedTime) const {
     if (!textureHasBeenLoaded) {
         return;
     }
-    DrawTextureEx(texture, Vector2{xAnchor, yAnchor}, rotation, scale, colour.GetColour());
+    DrawTextureEx(texture, Vector2{xAnchor + xShift, yAnchor + yShift}, rotation, scale, colour.GetColour());
 }
 
 void Sprite::DoFocusAction(float elapsedTime) {
@@ -1849,17 +1849,27 @@ void Sprite::LoadTexture() {
         CPPFX_THROW(std::runtime_error, "No file path set.");
     }
 
+    if (textureHasBeenLoaded && ownsTexture) {
+        UnloadTexture();
+    }
+
     texture = ::LoadTexture(filePath.c_str());
 
     if (!::IsTextureValid(texture)) {
         CPPFX_THROW(std::runtime_error, "Texture at " + filePath + " did not load correctly.");
     }
     textureHasBeenLoaded = true;
+    ownsTexture = true;
+    if (autoFits) FitToTexture();
 }
 
 void Sprite::LoadTexture(const std::string& fileName) {
     if (fileName.empty()) {
         CPPFX_THROW(std::invalid_argument, "The file name is empty.");
+    }
+
+    if (textureHasBeenLoaded && ownsTexture) {
+        UnloadTexture();
     }
 
     texture = ::LoadTexture(fileName.c_str());
@@ -1868,11 +1878,17 @@ void Sprite::LoadTexture(const std::string& fileName) {
         CPPFX_THROW(std::runtime_error, "Texture at " + fileName + " did not load correctly.");
     }
     textureHasBeenLoaded = true;
+    ownsTexture = true;
+    if (autoFits) FitToTexture();
 }
 
 void Sprite::UnloadTexture() {
+    if (!ownsTexture) {
+        CPPFX_THROW(std::runtime_error, "This sprite is not the owner of this texture!");
+    }
     ::UnloadTexture(texture);
     textureHasBeenLoaded = false;
+    ownsTexture = false;
 }
 
 bool Sprite::IsTextureValid() const {
@@ -1893,6 +1909,8 @@ void Sprite::SetScale(float scale) {
     }
 
     this->scale = scale;
+
+    if (autoFits) FitToTexture();
 }
 
 float Sprite::GetScale() const {
@@ -1903,8 +1921,11 @@ void Sprite::SetTexture(const Texture2D& texture) {
     if (!::IsTextureValid(texture)) {
         CPPFX_THROW(std::invalid_argument, "New texture was not loaded correctly.");
     }
+    if (textureHasBeenLoaded && ownsTexture) { UnloadTexture(); }
     this->texture = texture;
     textureHasBeenLoaded = true;
+    ownsTexture = false;
+    if (autoFits) FitToTexture();
 }
 
 Texture2D Sprite::GetTexture() const {
@@ -1912,6 +1933,63 @@ Texture2D Sprite::GetTexture() const {
 }
 
 void Sprite::ClearTexture() {
+    if (textureHasBeenLoaded && ownsTexture) { UnloadTexture(); }
     texture = {0};
     textureHasBeenLoaded = false;
+    ownsTexture = false;
+}
+
+void Sprite::FitToTexture() {
+    if (!::IsTextureValid(texture)) {
+        CPPFX_THROW(std::runtime_error, "New texture was not loaded correctly.");
+    }
+
+    SetWidth(texture.width * scale);
+    SetHeight(texture.height * scale);
+}
+
+void Sprite::EnableAutoFitting() {
+    autoFits = true;
+}
+
+void Sprite::DisableAutoFitting() {
+    autoFits = false;
+}
+
+void Sprite::SetAutoFitting(bool value) {
+    autoFits = value;
+}
+
+bool Sprite::IsAutoFitting() const {
+    return autoFits;
+}
+
+void Sprite::SetXShift(float shift) {
+    xShift = shift;
+}
+
+float Sprite::GetXShift() const {
+    return xShift;
+}
+
+void Sprite::SetYShift(float shift) {
+    yShift = shift;
+}
+
+float Sprite::GetYShift() const {
+    return yShift;
+}
+
+void Sprite::SetXYShift(float shift) {
+    SetXShift(shift);
+    SetYShift(shift);
+}
+
+void Sprite::SetXYShift(const Vector2& xyShift) {
+    SetXShift(xyShift.x);
+    SetYShift(xyShift.y);
+}
+
+Vector2 Sprite::GetXYShift() const {
+    return Vector2{xShift, yShift};
 }
