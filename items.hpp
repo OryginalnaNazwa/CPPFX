@@ -508,6 +508,15 @@ public:
         if (order != insertion) dirty = true;
     }
 
+   /**
+    *  @brief Inserts a value that is its own label.
+    *  @note Only available for DropDown<std::string>.
+    *  @see InsertItem(std::string, T)
+    */
+    void InsertItem(const std::string& label) requires std::same_as<T, std::string> {
+        InsertItem(label, label);
+    }
+
     /**
      *  @brief Removes a value from the dropdown.
      *  @param label label for removal
@@ -572,6 +581,15 @@ public:
     }
 
     /**
+    *  @brief Changes a value that is its own label.
+    *  @note Only available for DropDown<std::string>.
+    *  @see ChangeValue(std::string, T)
+    */
+    void ChangeValue(const std::string& label) requires std::same_as<T, std::string> {
+        ChangeValue(label, label);
+    }
+
+    /**
      *  @brief Gets a value from the label.
      *  @param label the key
      *  @return the value from the specified key
@@ -601,11 +619,23 @@ public:
         return currentLabel;
     }
 
-    std::pair<std::string, T> GetCurrent() const {
+    std::pair<std::string, T> GetCurrentChoice() const {
         if (currentLabel == "") {
             CPPFX_THROW(std::runtime_error, "No current pick");
         }
         return {currentLabel, currentValue};
+    }
+
+    /**
+     *   @brief Returns the current pick.
+     *   @details For DropDown<std::string> the label and the value are the same
+     *           when inserted via InsertItem(label); identical to GetCurrentLabel().
+     *   @note Only available for DropDown<std::string>.
+     *   @throws std::runtime_error if there is no current pick.
+     *   @see GetCurrentChoice
+     */
+    std::string GetCurrent() const requires std::same_as<T, std::string> {
+        return GetCurrentLabel();
     }
 
     /**
@@ -692,7 +722,7 @@ public:
             case ORDER::reverseNatural:                   cmp = NaturalLess; rev = true; break;
             case ORDER::naturalCaseInsensitive:           cmp = NaturalLessCaseInsensitive; break;
             case ORDER::reverseNaturalCaseInsensitive:    cmp = NaturalLessCaseInsensitive; rev = true; break;
-            case ORDER::custom:                           cmp = customSort; if (!customSort) { CPPFX_THROW(std::runtime_error, "No custom sorting method set"); }
+            case ORDER::custom:                           if (!customSort) { CPPFX_THROW(std::runtime_error, "No custom sorting method set"); } cmp = customSort; break;
             default: return;
         }
 
