@@ -624,6 +624,169 @@ size_t RadioGroup::GetRowsNumber() const {
     return GetGroupsNumber();
 }
 
+// --- ComboBox ---
+
+void ComboBox::DrawMyself(float elapsedTime) const {
+    if (focused) {
+        float yCurrent = yAnchor + height;
+        DrawLineEx({xAnchor, yCurrent}, {xAnchor + width, yCurrent}, 10, BLACK);
+        for (auto& label : valuesInOrder) {
+            DrawLineEx({xAnchor, yCurrent}, {xAnchor + width, yCurrent}, 5, BLACK);
+            DrawRectangle(xAnchor, yCurrent, width, height, colour.GetColour());
+            DrawText(Truncate(label).c_str(), xAnchor + textMargin, yCurrent + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
+            yCurrent += height;
+        }
+        addArea.DrawMyself(elapsedTime);
+    } else {
+        DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+        if (currentLabel != "") {
+            DrawText(Truncate(currentLabel).c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+        }
+
+        border.DrawMyself(xAnchor, yAnchor, width + textMargin, height);
+    }
+}
+
+void ComboBox::CommitAddArea() {
+    std::string label = addArea.GetText();
+    if (label.empty()) return;
+    if (!IsLabelTaken(label)) {
+        try {
+            InsertItem(label);
+        } catch (const std::invalid_argument&) {
+            addArea.ClearText();
+            return;
+        }
+    }
+    SetCurrent(label);
+    Defocus();
+}
+
+void ComboBox::DoFocusAction(float elapsedTime) {
+    justOpened = false;
+    if (!addArea.IsFocused()) return;
+    if (IsKeyPressed(KEY_ENTER)) CommitAddArea();
+    else addArea.DoFocusAction(elapsedTime);
+}
+
+void ComboBox::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
+    if (justOpened) {
+        justOpened = false;
+        return;
+    }
+    if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
+        int index = (mousePosition.y - (yAnchor + height)) / height;
+        index = std::clamp(index, 0, (int)(valuesInOrder.size() - 1));
+        std::string label = valuesInOrder.at(index);
+        currentLabel = label;
+        currentValue = values.at(label);
+        Defocus();
+        return;
+    }
+    if (addArea.WasIClicked(mousePosition)) {
+        addArea.Focus();
+    }
+    DoFocusAction(elapsedTime);
+}
+
+void ComboBox::SetX(float x) {
+    DropDown<std::string>::SetX(x);
+    addArea.SetX(xAnchor);
+}
+
+void ComboBox::SetY(float y) {
+    DropDown<std::string>::SetY(y);
+    addArea.SetY(yAnchor);
+}
+
+void ComboBox::SetWidth(float value) {
+    DropDown<std::string>::SetWidth(value);
+    addArea.SetWidth(width);
+}
+
+void ComboBox::SetHeight(float value) {
+    DropDown<std::string>::SetHeight(value);
+    addArea.SetHeight(height);
+}
+
+void ComboBox::SetToWorld() {
+    DropDown<std::string>::SetToWorld();
+    addArea.SetToWorld();
+}
+
+void ComboBox::SetToScreen() {
+    DropDown<std::string>::SetToScreen();
+    addArea.SetToScreen();
+}
+
+void ComboBox::MakeVisible() {
+    DropDown<std::string>::MakeVisible();
+    addArea.MakeVisible();
+}
+
+void ComboBox::MakeInvisible() {
+    DropDown<std::string>::MakeInvisible();
+    addArea.MakeInvisible();
+}
+
+void ComboBox::SetVisible(bool flag) {
+    DropDown<std::string>::SetVisible(flag);
+    addArea.SetVisible(flag);
+}
+
+void ComboBox::MakeActive() {
+    DropDown<std::string>::MakeActive();
+    addArea.MakeActive();
+}
+
+void ComboBox::MakeInactive() {
+    DropDown<std::string>::MakeInactive();
+    addArea.MakeInactive();
+}
+
+void ComboBox::SetInactive(bool flag) {
+    DropDown<std::string>::SetInactive(flag);
+    addArea.SetInactive(flag);
+}
+
+void ComboBox::Focus() {
+    if (opensOnSecondClick) justOpened = true;
+    DropDown<std::string>::Focus();
+    addArea.Show();
+}
+
+void ComboBox::Defocus() {
+    addArea.ClearText();
+    addArea.Defocus();
+    addArea.Hide();
+    DropDown<std::string>::Defocus();
+}
+
+void ComboBox::SetTextMargin(float margin) {
+    TextItem::SetTextMargin(margin);
+    addArea.SetTextMargin(margin);
+}
+
+void ComboBox::ImmediatelyFocusAddArea() {
+    opensOnSecondClick = false;
+}
+
+void ComboBox::AddAreaFocusesOnSecondClick() {
+    opensOnSecondClick = true;
+}
+
+void ComboBox::AddAreaShouldFocusOnSecondClick(bool should) {
+    opensOnSecondClick = should;
+}
+
+bool ComboBox::DoesAddAreaFocusOnOpen() const {
+    return !opensOnSecondClick;
+}
+
+std::string ComboBox::GetFxID() const {
+    return "ComboBox";
+}
+
 // --- Containers ---
 
 void Workspace::SetPositionsOfItems() {

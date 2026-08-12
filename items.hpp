@@ -750,7 +750,7 @@ public:
         return "DropDown";
     }
 
-private:
+protected:
     std::unordered_map<std::string, T> values;
     std::vector<std::string> valuesInOrder;
     std::vector<std::string> insertionOrder;
@@ -828,6 +828,89 @@ private:
                 return std::tolower(c1) < std::tolower(c2);
             });
     }
+};
+
+class ComboBox : public DropDown<std::string> {
+public:
+    EmbeddedTextField addArea;
+
+    ComboBox() : Item("ComboBox"), DropDown<std::string>() {
+        addArea.ClearText();
+        addArea.SetPromptText("Add new item");
+        addArea.Hide();
+    }
+
+    void DrawMyself(float elapsedTime) const override;
+    void DoFocusAction(float elapsedTime) override;
+    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+
+    // --- Embedded forwarding ---
+
+    /** @see DropDown::SetX @details Moves addArea. */
+    void SetX(float x) override;
+    /** @see DropDown::SetY @details Moves addArea. */
+    void SetY(float y) override;
+    /** @see DropDown::SetWidth @details Resizes addArea. */
+    void SetWidth(float value) override;
+    /** @see DropDown::SetHeight @details Resizes addArea. */
+    void SetHeight(float value) override;
+
+    void SetToWorld() override;
+    void SetToScreen() override;
+
+    void MakeVisible() override;
+    void MakeInvisible() override;
+    void SetVisible(bool flag) override;
+
+    void MakeActive() override;
+    void MakeInactive() override;
+    void SetInactive(bool flag) override;
+
+    /**
+     *  @see Item::Focus
+     *  @details Unrolls the dropdown and reveals addArea. Arms the click-swallowing flag,
+     *  unless the ComboBox is set to focus addArea immediately.
+     */
+    void Focus() override;
+    /** @see Item::Defocus @details Clears and defocuses addArea. */
+    void Defocus() override;
+
+    /** @brief Hides TextItem::SetTextMargin - it isn't virtual. */
+    void SetTextMargin(float margin);
+
+    /**
+     *  @brief Makes addArea take focus the moment the dropdown opens.
+     *  @details The opening click falls through to addArea, so the caret appears
+     *  and the prompt text gives way at once - one click to start typing.
+     */
+    void ImmediatelyFocusAddArea();
+    /**
+     *  @brief Makes the opening click only unroll the dropdown.
+     *  @details The click that focuses the ComboBox is swallowed, so addArea stays
+     *  unfocused and keeps showing its prompt text. A second click on the header
+     *  focuses it for input. Default.
+     */
+    void AddAreaFocusesOnSecondClick();
+    /**
+     *  @brief Sets whether the opening click is swallowed.
+     *  @param should true - second click needed to type, false - addArea focuses on open
+     *  @see ComboBox::ImmediatelyFocusedAddArea
+     *  @see ComboBox::AddAreaFocusesOnSecondClick
+     */
+    void AddAreaShouldFocusOnSecondClick(bool should);
+    /**
+     *  @brief Checks whether addArea takes focus as the dropdown unrolls.
+     *  @returns true if addArea focuses on open
+     */
+    bool DoesAddAreaFocusOnOpen() const;
+
+    std::string GetFxID() const;
+
+private:
+    void CommitAddArea();
+
+    bool opensOnSecondClick = true; ///< if true, the click that unrolls the dropdown doesn't reach addArea
+    bool justOpened = false; ///< set by Focus(), consumed by the first DoFocusAction of that frame
 };
 
 // --- Containers ---

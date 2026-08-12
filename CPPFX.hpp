@@ -48,7 +48,7 @@ namespace CPPFX { class Sprite; }*/
 namespace CPPFX {
 
 #define CPPFX_VERSION_MAJOR 0
-#define CPPFX_VERSION_MINOR 13
+#define CPPFX_VERSION_MINOR 14
 #define CPPFX_VERSION_PATCH 0
 #define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
 extern const char* const CPPFX_VERSION_STRING;
@@ -166,6 +166,10 @@ public:
     /**
      *  @copydoc AddTextField
      */
+    ComboBox* AddComboBox(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     template <typename T>
     List<T>* AddList(const std::string& ID = "") {
         return AddItem<List<T>>(ID);
@@ -259,6 +263,10 @@ public:
     DropDown<T>* GetDropDown(const std::string& ID) const {
         return GetItem<DropDown<T>>(ID);
     }
+    /**
+     *  @copydoc GetTextField
+     */
+    ComboBox* GetComboBox(const std::string& ID) const;
     template <typename T>
     List<T>* GetList(const std::string& ID) const {
        return GetItem<List<T>>(ID);

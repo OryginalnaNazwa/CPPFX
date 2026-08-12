@@ -212,6 +212,7 @@ public:
     friend class Spinner;
     friend class EditableSpinner;
     friend class Button;
+    friend class ComboBox;
 
 protected:
 

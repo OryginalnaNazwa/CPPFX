@@ -8,9 +8,9 @@
 
 using namespace CPPFX;
 
-const char* const CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.13.0"; //sanity check for version
+const char* const CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.14.0"; //sanity check for version
 
-const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
+const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "ComboBox", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
     "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "PieChart", "Line", "Square", "Rectangle", "Circle", "Sprite"};
 
 const std::string GUI::AUTOMATIC_ID_PREFIX = "GUI_AUTO_";
@@ -156,6 +156,10 @@ Button* GUI::AddButton(const std::string& ID) {
 
 CheckBox* GUI::AddCheckBox(const std::string& ID) {
     return AddItem<CheckBox>(ID);
+}
+
+ComboBox* GUI::AddComboBox(const std::string& ID) {
+    return AddItem<ComboBox>(ID);
 }
 
 AnchorPane* GUI::AddAnchorPane(const std::string& ID) {
@@ -324,6 +328,10 @@ Button* GUI::GetButton(const std::string& ID) const {
 
 CheckBox* GUI::GetCheckBox(const std::string& ID) const {
     return GetItem<CheckBox>(ID);
+}
+
+ComboBox* GUI::GetComboBox(const std::string& ID) const {
+    return GetItem<ComboBox>(ID);
 }
 
 AnchorPane* GUI::GetAnchorPane(const std::string& ID) const {
