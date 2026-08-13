@@ -824,13 +824,12 @@ private:
     /**
      *  @details Text is internal here - it mirrors currentLabel for measuring only.
      *  Hides TextItem's text interface into private, the same way Embedded does.
-     *  @note Name hiding only - these aren't virtual, so a TextItem& still reaches them.
      *  @see DropDown::GetCurrentLabel
      *  @see DropDown::SetCurrent
      */
     void SetText(const std::string& text) override { TextItem::SetText(text); }
-    void ClearText() { TextItem::ClearText(); }
-    std::string GetText() const { return TextItem::GetText(); }
+    void ClearText() override { TextItem::ClearText(); }
+    std::string GetText() const override { return TextItem::GetText(); }
 };
 
 /**
@@ -900,7 +899,7 @@ public:
     /**
      *  @brief Sets whether the opening click is swallowed.
      *  @param should true - second click needed to type, false - addArea focuses on open
-     *  @see ComboBox::ImmediatelyFocusedAddArea
+     *  @see ComboBox::ImmediatelyFocusAddArea
      *  @see ComboBox::AddAreaFocusesOnSecondClick
      */
     void AddAreaShouldFocusOnSecondClick(bool should);
@@ -910,7 +909,7 @@ public:
      */
     bool DoesAddAreaFocusOnOpen() const;
 
-    std::string GetFxID() const;
+    const std::string GetClassID() const;
 
 private:
     void CommitAddArea();
@@ -1043,8 +1042,8 @@ public:
  */
 class Spinner : virtual public Item {
 public:
-    mutable EmbeddedButton incrementButton;
-    mutable EmbeddedButton decrementButton;
+    EmbeddedButton incrementButton;
+    EmbeddedButton decrementButton;
 
     Font font;
 
@@ -1213,7 +1212,7 @@ protected:
  */
 class EditableSpinner : virtual public Item, public Spinner {
 public:
-    mutable EmbeddedTextField editArea;
+    EmbeddedTextField editArea;
 
     EditableSpinner() : Item("EditableSpinner"), Spinner("EditableSpinner") {
         editArea.SetX(xAnchor);

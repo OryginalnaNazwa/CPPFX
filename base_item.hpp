@@ -18,7 +18,7 @@ public:
     Colour colour;
     Border border; //all but a few items have it.
 
-    Item() {} ///< for vectors and stuff, don't use normally
+    Item() : ID(""), xAnchor(0.0f), yAnchor(0.0f), height(0.0f), width(0.0f), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID("") {} ///< for vectors and stuff, don't use normally
     /**
      *  @brief Default constructor.
      *  @param i fxID of the new item.

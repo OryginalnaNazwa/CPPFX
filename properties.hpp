@@ -350,7 +350,7 @@ public:
      *  @brief Gets y coordinate aligned according to current alignment.
      *  @details Assumes top left is the default and doesn't have to do anything.
      *  @param y y coordinate
-     *  @param width width of the object to align, for properly centering it
+     *  @param height height of the object to align, for properly centering it
      *  @param objectHeight height of the space in which aligning is happening
      *  @returns y aligned to the current alignment
      *  @throws std::invalid_argument if height or objectHeight is negative

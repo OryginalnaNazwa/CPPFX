@@ -3,7 +3,7 @@
 #include <compare>    // for operator<
 #include <iterator>   // for distance
 #include <stdexcept>  // for out_of_range, invalid_argument
-#include <numeric>    // for numberic_limits
+#include <limits>    // for numeric_limits
 
 using namespace CPPFX;
 

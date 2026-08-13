@@ -785,7 +785,7 @@ bool ComboBox::DoesAddAreaFocusOnOpen() const {
     return !opensOnSecondClick;
 }
 
-std::string ComboBox::GetFxID() const {
+const std::string ComboBox::GetClassID() const {
     return "ComboBox";
 }
 
