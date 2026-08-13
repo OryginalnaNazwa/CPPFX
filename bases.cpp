@@ -13,7 +13,7 @@ std::string TextItem::Truncate(const std::string& text) const {
         if (text.empty()) return text;
         if (MeasureText(text.c_str(), font.GetFontSize()) + textMargin > width) {
             std::string truncated = "";
-            for (const auto& c : text) {
+            for (const auto& c : text) { // TODO make it more clever
                 const std::string characterString(1,c);
                 if ((float)(MeasureText((truncated + "..." + characterString).c_str(), font.GetFontSize())) > width) {//may have to switch to MeasureTextEx with fonts
                     return truncated + "...";
@@ -27,27 +27,28 @@ std::string TextItem::Truncate(const std::string& text) const {
 void TextItem::ExpandToText() {
     float textWidth = MeasureText(text.c_str(), font.GetFontSize());
     if (textWidth > width) {
-        width = textWidth + textMargin;
+        SetWidth(textWidth + (2.0f * textMargin));
     }
 
     if (font.GetFontSize() > height) {
-        height += font.GetFontSize() - height + textMargin;
+        SetHeight(font.GetFontSize() + (2.0f * textMargin));
     }
 }
 
 void TextItem::FitToText() {
     float textWidth = MeasureText(text.c_str(), font.GetFontSize());
-    if (textWidth != width) {
-        width = textWidth + textMargin;
+    if (textWidth + (2.0f * textMargin) != width) {
+        SetWidth(textWidth + (2.0f * textMargin));
     }
 
-    if (font.GetFontSize() != height) {
-        height = font.GetFontSize() + textMargin;
+    if (font.GetFontSize() + (2.0f * textMargin) != height) {
+        SetHeight(font.GetFontSize() + (2.0f * textMargin));
     }
 }
 
 void TextItem::SetText(const std::string& text) {
     this->text = text;
+    if (expandsToTextAutomatically) ExpandToText();
 }
 
 void TextItem::ClearText() {
@@ -62,10 +63,27 @@ void TextItem::SetTextMargin(float margin) {
     if (margin < 0.0f) {
         CPPFX_THROW(std::invalid_argument, "Negative text margin.");
     } else textMargin = margin;
+    if (expandsToTextAutomatically) ExpandToText();
 }
 
 float TextItem::GetTextMargin() const {
     return textMargin;
+}
+
+void TextItem::ExpandToTextAutomatically() {
+    expandsToTextAutomatically = true;
+}
+
+void TextItem::DoNotExpandToTextAutomatically() {
+    expandsToTextAutomatically = false;
+}
+
+void TextItem::ShouldExpandToTextAutomatically(bool should) {
+    expandsToTextAutomatically = should;
+}
+
+bool TextItem::IsExpandingToTextAutomatically() const {
+    return expandsToTextAutomatically;
 }
 
 const std::string TextItem::GetClassID() {

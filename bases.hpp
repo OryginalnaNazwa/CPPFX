@@ -40,29 +40,50 @@ public:
      *  @brief Sets text
      *  @param text new text to be set
      */
-    void SetText(const std::string& text);
+    virtual void SetText(const std::string& text);
     /**
      *  @brief Clears text.
      *  @details Sets text to an empty std::string.
      */
-    void ClearText();
+    virtual void ClearText();
     /**
      *  @brief Returns text.
      *  @returns text
      */
-    std::string GetText() const;
+    virtual std::string GetText() const;
 
     /**
      *  @brief Sets the distance between border and text in x axis.
      *  @param margin new value
      *  @throws std::invalid_argument if margin is negative.
      */
-    void SetTextMargin(float margin);
+    virtual void SetTextMargin(float margin);
     /**
      *  @brief Returns text margin
      *  @returns text margin
      */
-    float GetTextMargin() const;
+    virtual float GetTextMargin() const;
+
+    /**
+     *  @brief Makes the item widen itself to fit its text every frame.
+     *  @details Only ever grows - the item never shrinks back once the text gets shorter.
+     */
+    void ExpandToTextAutomatically();
+    /**
+     *  @brief Stops the automatic expansion.
+     *  @details Text too long for the current dimensions gets truncated instead. Default.
+     */
+    void DoNotExpandToTextAutomatically();
+    /**
+     *  @brief Sets whether the item expands to its text on its own.
+     *  @param should true - expands, false - truncates
+     */
+    void ShouldExpandToTextAutomatically(bool should);
+    /**
+     *  @brief Checks whether the item expands to its text on its own.
+     *  @returns true if expanding automatically
+     */
+    bool IsExpandingToTextAutomatically() const;
 
     /**
      *  @see Item::GetClassID()
@@ -71,11 +92,12 @@ public:
     static const std::string GetClassID();
 
 protected:
-    TextItem(const std::string& i) : Item(i), font(height / 4.0f), text(i), textMargin(10.0f) {}
-    TextItem(const std::string& i, float w, float h) : Item(i, w, h), font(h / 4.0f), text(i), textMargin(10.0f) {}
+    TextItem(const std::string& i) : Item(i), font(height / 4.0f), text(i), textMargin(10.0f), expandsToTextAutomatically(true) {}
+    TextItem(const std::string& i, float w, float h) : Item(i, w, h), font(h / 4.0f), text(i), textMargin(10.0f), expandsToTextAutomatically(true) {}
 
     std::string text;
-    float textMargin; ///<distance from limit to text.
+    float textMargin; ///< distance from limit to text.
+    bool expandsToTextAutomatically; ///< whether it expands its dimensions to the text's.
 
     /**
      *  @brief Truncates text if needed.

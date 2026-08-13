@@ -465,6 +465,7 @@ public:
         }
         if (currentLabel == "" && !values.empty()) {
             SetCurrent(valuesInOrder[0]);
+            if (expandsToTextAutomatically) ExpandToText();
         }
     }
 
@@ -478,6 +479,7 @@ public:
             index = std::clamp(index, 0, (int)(valuesInOrder.size() - 1));
             std::string label = valuesInOrder.at(index);
             currentLabel = label;
+            if (expandsToTextAutomatically) ExpandToText();
             currentValue = values.at(label);
             Defocus();
             return;
@@ -565,6 +567,7 @@ public:
             }
         }
         if (currentLabel == oldLabel) currentLabel = newLabel;
+        if (expandsToTextAutomatically) ExpandToText();
         dirty = true;
     }
 
@@ -648,36 +651,7 @@ public:
             currentLabel = label;
             currentValue = values.at(currentLabel);
         } else CPPFX_THROW(std::out_of_range, "No key " + label + " found.");
-    }
-
-    /**
-     *  @see TextItem::ExpandToText.
-     *  @details Works based on currentLabel.
-     */
-    void ExpandToText() override {
-        int textWidth = MeasureText(currentLabel.c_str(), font.GetFontSize());
-        if (textWidth > width) {
-            width = textWidth + textMargin;
-        }
-
-        if (font.GetFontSize() > height) {
-            height += font.GetFontSize() - height;
-        }
-    }
-
-    /**
-     *  @see TextItem::FitToText.
-     *  @details Works based on currentLabel.
-     */
-    void FitToText() override {
-        int textWidth = MeasureText(currentLabel.c_str(), font.GetFontSize());
-        if (textWidth != width) {
-            width = textWidth + textMargin;
-        }
-
-        if (font.GetFontSize() != height) {
-            height = font.GetFontSize() + textMargin;
-        }
+        if (expandsToTextAutomatically) ExpandToText();
     }
 
     /**
@@ -741,6 +715,23 @@ public:
 
     void SetCustomSort(const std::function<bool(const std::string&, const std::string&)>& custom) {
         customSort = custom;
+    }
+
+    /**
+     *  @see TextItem::ExpandToText.
+     *  @details Works based on currentLabel.
+     */
+    void ExpandToText() override {
+        text = currentLabel;
+        TextItem::ExpandToText();
+    }
+    /**
+     *  @see TextItem::FitToText.
+     *  @details Works based on currentLabel.
+     */
+    void FitToText() override {
+        text = currentLabel;
+        TextItem::FitToText();
     }
 
     /**
@@ -828,8 +819,25 @@ protected:
                 return std::tolower(c1) < std::tolower(c2);
             });
     }
+
+private:
+    /**
+     *  @details Text is internal here - it mirrors currentLabel for measuring only.
+     *  Hides TextItem's text interface into private, the same way Embedded does.
+     *  @note Name hiding only - these aren't virtual, so a TextItem& still reaches them.
+     *  @see DropDown::GetCurrentLabel
+     *  @see DropDown::SetCurrent
+     */
+    void SetText(const std::string& text) override { TextItem::SetText(text); }
+    void ClearText() { TextItem::ClearText(); }
+    std::string GetText() const { return TextItem::GetText(); }
 };
 
+/**
+ *  @class ComboBox
+ *  @brief DropDown with addable items. Only labels.
+ *  @details addArea is a text field for adding items. Inherits after the std::string variant, adding assumes the label is also the value.
+ */
 class ComboBox : public DropDown<std::string> {
 public:
     EmbeddedTextField addArea;
@@ -843,8 +851,6 @@ public:
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
-
-    // --- Embedded forwarding ---
 
     /** @see DropDown::SetX @details Moves addArea. */
     void SetX(float x) override;

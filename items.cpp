@@ -659,6 +659,7 @@ void ComboBox::CommitAddArea() {
         }
     }
     SetCurrent(label);
+    if (expandsToTextAutomatically) ExpandToText();
     Defocus();
 }
 
@@ -680,6 +681,7 @@ void ComboBox::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
         std::string label = valuesInOrder.at(index);
         currentLabel = label;
         currentValue = values.at(label);
+        if (expandsToTextAutomatically) ExpandToText();
         Defocus();
         return;
     }
