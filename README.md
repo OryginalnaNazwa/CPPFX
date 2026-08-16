@@ -1,6 +1,6 @@
 # CPPFX
 A retained mode GUI library for raylib, inspired by JavaFX, written in C++.
-v.0.17.0
+v.0.17.2
 
 ## Based on raylib
 https://www.raylib.com/
@@ -10,7 +10,7 @@ https://github.com/raysan5/raylib
 raylib 6.0, mingw-w64 64bit or GNU C++ Compiler (those were tested), C++23
 
 ## Setup
-Compiler path: ../CPPFX/include (append /CPPFX if you're sure there won't be include conflicts with files named the same)
+Compiler path: ../CPPFX/include (append /CPPFX if you're sure there won't be include conflicts with files named the same. Then in the code just #include <CPPFX.hpp>)
 
 Linker path: ../CPPFX/lib
 
@@ -98,5 +98,5 @@ Check out the examples provided in the Examples folder for more.
 - Alignment
 
 ## License
-CPPFX is licensed under zlib license, same as raylib. See raylib and LICENSE.txt for more information.
+CPPFX is licensed under zlib license, same as raylib. See raylib and LICENSE for more information.
 
