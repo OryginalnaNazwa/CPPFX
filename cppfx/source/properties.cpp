@@ -164,7 +164,7 @@ std::string Colour::ColourToString(Color c) {
 void Colour::SetColour(const std::string& col) {
     const std::string norm = Normalise(col);
     value     = StringToColour(norm);
-    name = norm;
+    name = ColourToString(value);
 }
 
 void Colour::SetColour(Color col) {
@@ -182,14 +182,17 @@ Color Colour::GetColour() const {
 
 void Colour::SetHex() {
     hex = true;
+    name = ColourToString(value);
 }
 
 void Colour::SetDec() {
     hex = false;
+    name = ColourToString(value);
 }
 
 void Colour::SetLiteralBase(bool hex) {
     this->hex = hex;
+    name = ColourToString(value);
 }
 
 bool Colour::IsHex() const {
