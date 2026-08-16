@@ -2,7 +2,7 @@
 *.depend
 *.gch
 *.cbp
-main.cpp
+/main.cpp
 /bin
 /obj
 /lib
