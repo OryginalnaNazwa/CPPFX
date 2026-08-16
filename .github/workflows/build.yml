@@ -1,11 +1,25 @@
+# Builds and tests CPPFX on Linux and Windows, and publishes a draft
+# release when a version tag is pushed.
+#
+# Lives at .github/workflows/build.yml - the path is not optional, GitHub
+# only looks there. Nothing to run by hand: push the file and it runs on
+# that push and every one after. Results are under the Actions tab.
+#
+# To cut a release:
+#     git tag v0.12.0
+#     git push origin v0.12.0
+
 name: build
 
 on:
   push:
     branches: [ main ]
     tags: [ 'v*' ]
+    paths-ignore:          # doc-only pushes don't need a build
+      - '**.md'
+      - 'LICENSE'
   pull_request:
-  workflow_dispatch:
+  workflow_dispatch:       # adds a "Run workflow" button
 
 jobs:
   build:
@@ -59,8 +73,7 @@ jobs:
           -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
           -DCMAKE_BUILD_TYPE=Release
 
-      # Builds the library, the tests and the examples. A failure here is
-      # the cross-platform check doing its job.
+      # Builds the library, the tests and the examples.
       - name: Build
         run: cmake --build build --config Release -j
 
@@ -75,8 +88,49 @@ jobs:
       - name: Stage release tree
         run: cmake --install build --prefix release/CPPFX --component cppfx
 
-      # Downloadable from the bottom of the run's summary page.
+      # Downloadable from the bottom of the run's summary page, and picked
+      # up by the release job below.
       - uses: actions/upload-artifact@v4
         with:
           name: CPPFX-${{ matrix.name }}
           path: release/
+
+  # Runs only for tags starting with v, and only once both builds above
+  # have passed - a failing test blocks the release.
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # required to create the release
+    steps:
+      # Pulls both artifacts into artifacts/CPPFX-linux/ and
+      # artifacts/CPPFX-windows-mingw64/, each holding a CPPFX folder.
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      # Renames the inner folder to match the archive, so extracting gives
+      # one clearly-named directory rather than a generic CPPFX.
+      - name: Package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+
+          linux="CPPFX-${version}-linux-x86_64"
+          cd artifacts/CPPFX-linux
+          mv CPPFX "$linux"
+          tar czf "../../dist/${linux}.tar.gz" "$linux"
+
+          windows="CPPFX-${version}-windows-mingw64"
+          cd ../CPPFX-windows-mingw64
+          mv CPPFX "$windows"
+          zip -qr "../../dist/${windows}.zip" "$windows"
+
+      # draft: true means it does not go public until you press Publish -
+      # you get to check the files and edit the notes first.
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          draft: true
+          generate_release_notes: true
