@@ -27,7 +27,7 @@ raylib's paths should be after CPPFX's
 This is a basic example that will display a label surrounded by a black border, containing the text "Hello world!" around the middle of the window.
 
 ```cpp
-#include "CPPFX.hpp"
+#include <CPPFX/CPPFX.hpp>
 
 int main() {
   //raylib initialisation
