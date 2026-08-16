@@ -7,3 +7,5 @@ main.cpp
 /obj
 /lib
 /.objs
+/build
+/release
