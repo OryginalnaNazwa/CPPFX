@@ -1,4 +1,4 @@
-#include "properties.hpp"
+#include "../include/CPPFX/properties.hpp"
 #include <ctype.h>    // for toupper
 #include <algorithm>  // for transform
 #include <stdexcept>  // for invalid_argument

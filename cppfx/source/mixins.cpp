@@ -1,4 +1,4 @@
-#include "mixins.hpp"
+#include "../include/CPPFX/mixins.hpp"
 #include <stdexcept>  // for invalid_argument
 #include <string>     // for operator+, allocator, char_traits, basic_string
 

@@ -3,3 +3,7 @@
 *.gch
 *.cbp
 main.cpp
+/bin
+/obj
+/lib
+/.objs

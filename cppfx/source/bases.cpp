@@ -1,4 +1,4 @@
-#include "bases.hpp"
+#include "../include/CPPFX/bases.hpp"
 #include <algorithm>  // for remove_if, find, sort
 #include <compare>    // for operator<
 #include <iterator>   // for distance

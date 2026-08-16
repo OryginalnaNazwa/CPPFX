@@ -1,14 +1,14 @@
-#include "CPPFX.hpp"
+#include "../include/CPPFX/CPPFX.hpp"
 #include <algorithm>   // for remove_if, sort
 #include <compare>     // for operator<
 #include <functional>  // for function
 #include <utility>     // for pair, move
-#include "bases.hpp"     // for Container
+#include "../include/CPPFX/bases.hpp" // for Container
 //#include "items.h"     // for widgets
 
 using namespace CPPFX;
 
-const char* const CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.16.0"; //sanity check for version
+const char* const CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.17.0"; //sanity check for version
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "ComboBox", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
     "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "PieChart", "Line", "Square", "Rectangle", "Circle", "Sprite"};

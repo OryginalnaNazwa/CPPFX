@@ -1,4 +1,4 @@
-#include "base_item.hpp"
+#include "../include/CPPFX/base_item.hpp"
 
 #include <stdexcept>  // for invalid_argument
 
