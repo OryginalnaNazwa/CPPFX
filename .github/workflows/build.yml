@@ -1,18 +1,11 @@
-# Builds and tests CPPFX on Linux and Windows.
-#
-# Lives at .github/workflows/build.yml - the path is not optional, GitHub
-# only looks there. Nothing to run by hand: push the file and it runs on
-# that push and every one after.
-#
-# Results are under the Actions tab of the repo.
-
 name: build
 
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
-  workflow_dispatch:        # adds a "Run workflow" button
+  workflow_dispatch:
 
 jobs:
   build:
