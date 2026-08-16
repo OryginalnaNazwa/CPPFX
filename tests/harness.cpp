@@ -1,0 +1,59 @@
+#include "harness.hpp"
+
+#include <iostream>
+
+namespace fxtest {
+
+namespace {
+    int checksRun    = 0;
+    int checksFailed = 0;
+    int failedInCurrentTest = 0;
+}
+
+std::vector<TestCase>& Registry() {
+    // Function-local static: constructed on first use, so it is guaranteed
+    // to exist before any Registrar in any translation unit runs.
+    static std::vector<TestCase> registry;
+    return registry;
+}
+
+Registrar::Registrar(const char* name, void (*fn)()) {
+    Registry().push_back({name, fn});
+}
+
+void CountCheck() {
+    ++checksRun;
+}
+
+void ReportFailure(const std::string& what, const char* file, int line) {
+    ++checksFailed;
+    ++failedInCurrentTest;
+    std::cerr << "  FAILED: " << what << "\n    at " << file << ":" << line << "\n";
+}
+
+int RunAll() {
+    int testsFailed = 0;
+
+    for (const auto& test : Registry()) {
+        failedInCurrentTest = 0;
+        std::cout << "[ RUN  ] " << test.name << "\n";
+        test.fn();
+        if (failedInCurrentTest > 0) {
+            ++testsFailed;
+            std::cout << "[ FAIL ] " << test.name << " ("
+                      << failedInCurrentTest << " checks)\n";
+        } else {
+            std::cout << "[  OK  ] " << test.name << "\n";
+        }
+    }
+
+    std::cout << "\n" << (checksRun - checksFailed) << "/" << checksRun
+              << " checks passed across " << Registry().size() << " tests\n";
+    if (testsFailed > 0) {
+        std::cout << testsFailed << " test(s) FAILED\n";
+    }
+
+    return checksFailed;
+}
+
+}

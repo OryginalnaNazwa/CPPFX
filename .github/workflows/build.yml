@@ -1,14 +1,23 @@
+# Builds and tests CPPFX on Linux and Windows.
+#
+# Lives at .github/workflows/build.yml - the path is not optional, GitHub
+# only looks there. Nothing to run by hand: push the file and it runs on
+# that push and every one after.
+#
+# Results are under the Actions tab of the repo.
+
 name: build
 
 on:
   push:
     branches: [ main ]
   pull_request:
-  workflow_dispatch:
+  workflow_dispatch:        # adds a "Run workflow" button
 
 jobs:
   build:
     strategy:
+      # Don't cancel the other platform when one fails - you want both results.
       fail-fast: false
       matrix:
         include:
@@ -16,12 +25,17 @@ jobs:
             name: linux
           - os: windows-latest
             name: windows-mingw64
+
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.name }}
 
     steps:
+      # Clones the repo into the runner. Only what is committed exists here -
+      # anything gitignored is simply not present.
       - uses: actions/checkout@v4
 
+      # raylib compiles against X11/OpenGL/ALSA headers, which a bare Ubuntu
+      # runner does not ship. Windows runners need nothing extra.
       - name: Install raylib build deps (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -30,6 +44,8 @@ jobs:
             libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev \
             libxinerama-dev libwayland-dev libxkbcommon-dev
 
+      # Keeps the downloaded and built raylib between runs. The key includes
+      # a hash of CMakeLists.txt, so changing the build config rebuilds it.
       - name: Cache raylib build
         uses: actions/cache@v4
         with:
@@ -40,6 +56,9 @@ jobs:
         if: runner.os == 'Linux'
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
+      # The Windows runner has MSVC installed and CMake would prefer it.
+      # Force mingw-w64 GCC, which is what the README tells users to use and
+      # what the shipped .a has to match.
       - name: Configure (Windows)
         if: runner.os == 'Windows'
         run: >
@@ -47,12 +66,23 @@ jobs:
           -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
           -DCMAKE_BUILD_TYPE=Release
 
+      # Builds the library, the tests and the examples. A failure here is
+      # the cross-platform check doing its job.
       - name: Build
         run: cmake --build build --config Release -j
 
+      # Runs cppfx_tests. --output-on-failure prints what failed instead of
+      # just saying a test failed. Colour needs no window, so this is safe
+      # on a headless runner.
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      # Assembles the release tree: include/CPPFX/*.hpp, lib/libCPPFX.a,
+      # README and LICENSE. --component cppfx excludes raylib's own files.
       - name: Stage release tree
         run: cmake --install build --prefix release/CPPFX --component cppfx
 
+      # Downloadable from the bottom of the run's summary page.
       - uses: actions/upload-artifact@v4
         with:
           name: CPPFX-${{ matrix.name }}
