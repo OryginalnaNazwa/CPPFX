@@ -16,6 +16,7 @@ namespace CPPFX {
 class Item {
 public:
     Colour colour;
+    Colour hoverColour; ///< you can also use it for other things, it's legal!
     Border border; //all but a few items have it.
 
     Item() : ID(""), xAnchor(0.0f), yAnchor(0.0f), height(0.0f), width(0.0f), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID("") {} ///< for vectors and stuff, don't use normally

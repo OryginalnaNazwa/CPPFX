@@ -2,6 +2,8 @@
 #include <ctype.h>    // for toupper
 #include <algorithm>  // for transform
 #include <stdexcept>  // for invalid_argument
+#include <unordered_map> // for unordered map
+#include <charconv> // for from_chars
 
 using namespace CPPFX;
 
@@ -9,94 +11,158 @@ using namespace CPPFX;
 
 // --- Colour ---
 
+struct Colour::ColourLayout {
+        int width;       // 2 = hex, 3 = dec
+        int channels;    // 3 = no alpha, 4 = alpha given
+};
+
 std::string Colour::Normalise(const std::string& str) {
     std::string out = str;
     std::transform(out.begin(), out.end(), out.begin(), ::toupper);
     return out;
 }
 
-const std::unordered_set<std::string>& Colour::ValidColours() {
-    static const std::unordered_set<std::string> colours = {
-        "WHITE", "BLACK", "RED", "GREEN", "BLUE",
-        "YELLOW", "ORANGE", "PURPLE", "PINK",
-        "RAYWHITE", "DARKGRAY", "GRAY", "LIGHTGRAY",
-        "DARKGREEN", "DARKBLUE", "DARKPURPLE", "DARKBROWN",
-        "BROWN", "BEIGE", "MAGENTA", "VIOLET", "SKYBLUE",
-        "LIME", "GOLD", "MAROON", "GREY", "DARKGREY", "LIGHTGREY"
+Colour::ColourLayout Colour::DetectLayout(const std::string& s) {
+    static const std::string MODEL_HEX = "#RrrGggBbbAaa";
+    static const std::string MODEL_DEC = "#RrrrGgggBbbbAaaa";
+    const auto Fail = [&s]() {
+        throw std::invalid_argument("Invalid colour: " + s + ". Model colour: "
+            + MODEL_HEX + " (hex) or " + MODEL_DEC + " (dec). Red Green Blue Alpha."
+              " Alpha is optional and defaults to opaque.");
     };
-    return colours;
+
+    if (s.size() < 2 || s.front() != '#' || s.at(1) != 'R') Fail();
+
+    // 'G' is not a digit in either base, so the first one is the green label.
+    const std::size_t g = s.find('G');
+    if (g != 4 && g != 5) Fail();
+
+    ColourLayout layout{static_cast<int>(g) - 2, 0};
+
+    // Each channel costs one label plus `width` digits; the '#' is the +1.
+    const int stride = layout.width + 1;
+    if (s.size() == (size_t)(1 + (3 * stride)))         layout.channels = 3;
+    else if (s.size() == (size_t)(1 + ((4 * stride))))  layout.channels = 4;
+    else                                    Fail();
+
+    return layout;
+}
+
+Color Colour::ParseLiteral(const std::string& s) {
+    const ColourLayout layout = DetectLayout(s);
+    const int base = (layout.width == 2) ? 16 : 10;
+    const char labels[4] = {'R', 'G', 'B', 'A'};
+
+    unsigned char values[4] = {0, 0, 0, 255};   // alpha defaults to opaque
+    std::size_t pos = 1;
+
+    for (int i = 0; i < layout.channels; ++i) {
+        if (s.at(pos++) != labels[i])
+            throw std::invalid_argument("Invalid colour: " + s + ". Expected '"
+                + labels[i] + "' at index " + std::to_string(pos - 1) + ".");
+
+        unsigned parsed{};
+        const char* first = s.data() + pos;
+        const char* last  = first + layout.width;
+        const auto [ptr, ec] = std::from_chars(first, last, parsed, base);
+        if (ec != std::errc{} || ptr != last || parsed > 255)
+            throw std::invalid_argument("Invalid colour: " + s + ". Bad "
+                + labels[i] + " channel.");
+
+        values[i] = static_cast<unsigned char>(parsed);
+        pos += layout.width;
+    }
+
+    return Color{values[0], values[1], values[2], values[3]};
 }
 
 Color Colour::StringToColour(const std::string& s) {
-    if (s == "WHITE")       return WHITE;
-    if (s == "BLACK")       return BLACK;
-    if (s == "RED")         return RED;
-    if (s == "GREEN")       return GREEN;
-    if (s == "BLUE")        return BLUE;
-    if (s == "YELLOW")      return YELLOW;
-    if (s == "ORANGE")      return ORANGE;
-    if (s == "PURPLE")      return PURPLE;
-    if (s == "PINK")        return PINK;
-    if (s == "RAYWHITE")    return RAYWHITE;
-    if (s == "DARKGRAY")    return DARKGRAY;
-    if (s == "DARKGREY")    return DARKGRAY;
-    if (s == "GRAY")        return GRAY;
-    if (s == "GREY")        return GRAY;
-    if (s == "LIGHTGRAY")   return LIGHTGRAY;
-    if (s == "LIGHTGREY")   return LIGHTGRAY;
-    if (s == "DARKGREEN")   return DARKGREEN;
-    if (s == "DARKBLUE")    return DARKBLUE;
-    if (s == "DARKPURPLE")  return DARKPURPLE;
-    if (s == "DARKBROWN")   return DARKBROWN;
-    if (s == "BROWN")       return BROWN;
-    if (s == "BEIGE")       return BEIGE;
-    if (s == "MAGENTA")     return MAGENTA;
-    if (s == "VIOLET")      return VIOLET;
-    if (s == "SKYBLUE")     return SKYBLUE;
-    if (s == "LIME")        return LIME;
-    if (s == "GOLD")        return GOLD;
-    if (s == "MAROON")      return MAROON;
-    throw std::invalid_argument("Unknown colour: " + s);
+    if (s.empty()) throw std::invalid_argument("Colour cannot be empty.");
+    if (s.front() == '#') return ParseLiteral(s); // custom colours start with #
+
+    static const std::unordered_map<std::string, Color> colourMap = {
+        {"BLANK",       BLANK},
+        {"WHITE",       WHITE},
+        {"BLACK",       BLACK},
+        {"RED",         RED},
+        {"GREEN",       GREEN},
+        {"BLUE",        BLUE},
+        {"YELLOW",      YELLOW},
+        {"ORANGE",      ORANGE},
+        {"PURPLE",      PURPLE},
+        {"PINK",        PINK},
+        {"RAYWHITE",    RAYWHITE},
+        {"DARKGRAY",    DARKGRAY},  {"DARKGREY",    DARKGRAY},
+        {"GRAY",        GRAY},      {"GREY",        GRAY},
+        {"LIGHTGRAY",   LIGHTGRAY}, {"LIGHTGREY",   LIGHTGRAY},
+        {"DARKGREEN",   DARKGREEN},
+        {"DARKBLUE",    DARKBLUE},
+        {"DARKPURPLE",  DARKPURPLE},
+        {"DARKBROWN",   DARKBROWN},
+        {"BROWN",       BROWN},
+        {"BEIGE",       BEIGE},
+        {"MAGENTA",     MAGENTA},
+        {"VIOLET",      VIOLET},
+        {"SKYBLUE",     SKYBLUE},
+        {"LIME",        LIME},
+        {"GOLD",        GOLD},
+        {"MAROON",      MAROON}
+    };
+
+    const auto it = colourMap.find(s);
+    if (it != colourMap.end()) return it->second;
+
+    throw std::out_of_range("No colour found.");
 }
 
 std::string Colour::ColourToString(Color c) {
-    // Raylib Color is {r, g, b, a} unsigned chars
-    if (c.r == WHITE.r       && c.g == WHITE.g       && c.b == WHITE.b)       return "WHITE";
-    if (c.r == BLACK.r       && c.g == BLACK.g       && c.b == BLACK.b)       return "BLACK";
-    if (c.r == RED.r         && c.g == RED.g         && c.b == RED.b)         return "RED";
-    if (c.r == GREEN.r       && c.g == GREEN.g       && c.b == GREEN.b)       return "GREEN";
-    if (c.r == BLUE.r        && c.g == BLUE.g        && c.b == BLUE.b)        return "BLUE";
-    if (c.r == YELLOW.r      && c.g == YELLOW.g      && c.b == YELLOW.b)      return "YELLOW";
-    if (c.r == ORANGE.r      && c.g == ORANGE.g      && c.b == ORANGE.b)      return "ORANGE";
-    if (c.r == PURPLE.r      && c.g == PURPLE.g      && c.b == PURPLE.b)      return "PURPLE";
-    if (c.r == PINK.r        && c.g == PINK.g        && c.b == PINK.b)        return "PINK";
-    if (c.r == RAYWHITE.r    && c.g == RAYWHITE.g    && c.b == RAYWHITE.b)    return "RAYWHITE";
-    if (c.r == DARKGRAY.r    && c.g == DARKGRAY.g    && c.b == DARKGRAY.b)    return "DARKGRAY";
-    if (c.r == GRAY.r        && c.g == GRAY.g        && c.b == GRAY.b)        return "GREY";
-    if (c.r == LIGHTGRAY.r   && c.g == LIGHTGRAY.g   && c.b == LIGHTGRAY.b)   return "LIGHTGRAY";
-    if (c.r == DARKGREEN.r   && c.g == DARKGREEN.g   && c.b == DARKGREEN.b)   return "DARKGREEN";
-    if (c.r == DARKBLUE.r    && c.g == DARKBLUE.g    && c.b == DARKBLUE.b)    return "DARKBLUE";
-    if (c.r == DARKPURPLE.r  && c.g == DARKPURPLE.g  && c.b == DARKPURPLE.b)  return "DARKPURPLE";
-    if (c.r == DARKBROWN.r   && c.g == DARKBROWN.g   && c.b == DARKBROWN.b)   return "DARKBROWN";
-    if (c.r == BROWN.r       && c.g == BROWN.g       && c.b == BROWN.b)       return "BROWN";
-    if (c.r == BEIGE.r       && c.g == BEIGE.g       && c.b == BEIGE.b)       return "BEIGE";
-    if (c.r == MAGENTA.r     && c.g == MAGENTA.g     && c.b == MAGENTA.b)     return "MAGENTA";
-    if (c.r == VIOLET.r      && c.g == VIOLET.g      && c.b == VIOLET.b)      return "VIOLET";
-    if (c.r == SKYBLUE.r     && c.g == SKYBLUE.g     && c.b == SKYBLUE.b)     return "SKYBLUE";
-    if (c.r == LIME.r        && c.g == LIME.g        && c.b == LIME.b)        return "LIME";
-    if (c.r == GOLD.r        && c.g == GOLD.g        && c.b == GOLD.b)        return "GOLD";
-    if (c.r == MAROON.r      && c.g == MAROON.g      && c.b == MAROON.b)      return "MAROON";
-    throw std::invalid_argument("Unknown colour");
-    /*// Fallback: hex string for custom colours
-    char buf[10];
-    snprintf(buf, sizeof(buf), "#%02X%02X%02X%02X", c.r, c.g, c.b, c.a);
-    return std::string(buf);*/ // fallback would be nice, but it'd need to be supported everywhere else.
-}
+    static const std::pair<Color, const char*> NAMED_COLOURS[] = {
+        {BLANK,      "BLANK"},
+        {WHITE,      "WHITE"},
+        {BLACK,      "BLACK"},
+        {RED,        "RED"},
+        {GREEN,      "GREEN"},
+        {BLUE,       "BLUE"},
+        {YELLOW,     "YELLOW"},
+        {ORANGE,     "ORANGE"},
+        {PURPLE,     "PURPLE"},
+        {PINK,       "PINK"},
+        {RAYWHITE,   "RAYWHITE"},
+        {DARKGRAY,   "DARKGRAY"},
+        {GRAY,       "GRAY"},
+        {LIGHTGRAY,  "LIGHTGRAY"},
+        {DARKGREEN,  "DARKGREEN"},
+        {DARKBLUE,   "DARKBLUE"},
+        {DARKPURPLE, "DARKPURPLE"},
+        {DARKBROWN,  "DARKBROWN"},
+        {BROWN,      "BROWN"},
+        {BEIGE,      "BEIGE"},
+        {MAGENTA,    "MAGENTA"},
+        {VIOLET,     "VIOLET"},
+        {SKYBLUE,    "SKYBLUE"},
+        {LIME,       "LIME"},
+        {GOLD,       "GOLD"},
+        {MAROON,     "MAROON"}
+        // British spellings are skipped
+    };
+
+    for (const auto& [value, colourName] : NAMED_COLOURS)
+        if (c.r == value.r && c.g == value.g && c.b == value.b && c.a == value.a)
+            return colourName;
+
+    char buf[20];
+    if (hex) {
+        if (c.a == 255) std::snprintf(buf, sizeof(buf), "#R%02XG%02XB%02X", c.r, c.g, c.b); // alpha is optional
+        else            std::snprintf(buf, sizeof(buf), "#R%02XG%02XB%02XA%02X", c.r, c.g, c.b, c.a);
+    } else {
+        if (c.a == 255) std::snprintf(buf, sizeof(buf), "#R%03uG%03uB%03u", c.r, c.g, c.b);
+        else            std::snprintf(buf, sizeof(buf), "#R%03uG%03uB%03uA%03u", c.r, c.g, c.b, c.a);
+    }
+    return buf;
+};
 
 void Colour::SetColour(const std::string& col) {
     const std::string norm = Normalise(col);
-    if (ValidColours().count(norm) == 0)
-        throw std::invalid_argument("Invalid colour name: " + col);
     value     = StringToColour(norm);
     name = norm;
 }
@@ -113,6 +179,65 @@ std::string Colour::GetColourString() const {
 Color Colour::GetColour() const {
     return value;
 }
+
+void Colour::SetHex() {
+    hex = true;
+}
+
+void Colour::SetDec() {
+    hex = false;
+}
+
+void Colour::SetLiteralBase(bool hex) {
+    this->hex = hex;
+}
+
+bool Colour::IsHex() const {
+    return hex;
+}
+
+bool Colour::operator==(const Colour& other) const {
+    return value.r == other.value.r && value.g == other.value.g
+        && value.b == other.value.b && value.a == other.value.a;
+}
+
+bool Colour::operator!=(const Colour& other) const {
+    return !(*this == other);
+}
+
+void Colour::Fade(float factor) {
+    if (factor < 0.0f) factor = 0.0f;
+    if (factor > 1.0f) factor = 1.0f;
+
+    value.a *= factor;
+    name = ColourToString(value);
+}
+
+unsigned char Colour::Lerp(unsigned char a, unsigned char b, float t) {
+    return static_cast<unsigned char>(a + (static_cast<float>(b) - a) * t + 0.5f);
+}
+
+void Colour::Blend(const Color& target, float t) {
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+
+    const Color from = value;
+    const Color to   = target;
+
+    value = Color{
+        Lerp(from.r, to.r, t),
+        Lerp(from.g, to.g, t),
+        Lerp(from.b, to.b, t),
+        Lerp(from.a, to.a, t)
+    };
+    name = ColourToString(value);
+}
+
+void Colour::Blend(const Colour& target, float t) {
+    Blend(target.GetColour(), t);
+}
+
+// --- Property ---
 
 std::string Property::GetFxID() const {
     return fxID;

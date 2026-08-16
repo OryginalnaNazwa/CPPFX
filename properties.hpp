@@ -4,7 +4,6 @@
 #include <functional>     // for function
 #include <iostream>       // for operator<<, basic_ostream, char_traits, cerr
 #include <string>         // for string, allocator
-#include <unordered_set>  // for unordered_set
 #include "raylib.h"       // for Color, BLACK, LIGHTGRAY, DARKGRAY, GRAY
 
 
@@ -32,7 +31,9 @@ namespace CPPFX {
 /**
  *  @class Colour
  *  @brief Wrapper over raylib colours.
- *  @details Used in every widget and property.
+ *  @details Used in every widget and property. Accepts named raylib colours
+ *           and custom literals in the form #RrrGggBbb[Aaa] (hex) or
+ *           #RrrrGgggBbbb[Aaaa] (dec). Alpha is optional and defaults to opaque.
  */
 class Colour {
 public:
@@ -41,36 +42,47 @@ public:
      *  @brief Default constructor.
      *  @details Sets colour as light grey.
      */
-    Colour() : name("LIGHTGREY"), value(LIGHTGREY) {}
+    Colour() : name("LIGHTGRAY"), value(LIGHTGRAY) {}
     /**
-     *  @brief Constructor for setting the colour by name.
-     *  @param colour name of the colour.
-     *  @details Normalises the name before commencing. Sets the value too.
+     *  @brief Constructor for setting the colour by name or literal.
+     *  @param colour name of the colour, or a custom literal.
+     *  @details Normalises the input. Sets the value too. The stored name is
+     *           always the canonical one, so Colour("grey") reports "GRAY".
+     *  @throws std::invalid_argument if the input is empty or the literal is malformed
+     *  @throws std::out_of_range if the name isn't a known colour
      */
-    Colour(const std::string& colour) : name(colour), value(StringToColour(Normalise(colour))) {}
+    explicit Colour(const std::string& colour) {
+                value = StringToColour(Normalise(colour));
+                name  = ColourToString(value);
+            }
     /**
      *  @brief Constructor for setting colour by value.
      *  @param colour value of the colour.
-     *  @details Sets the name too.
+     *  @details Sets the name too - a known name if the value matches one,
+     *           otherwise a custom literal.
      */
-    Colour(const Color& colour) : name(ColourToString(colour)), value(colour) {}
+    Colour(const Color& colour) : value(colour) {
+        name = ColourToString(colour);
+    }
 
     /**
-     *  @brief Sets colour using its name.
-     *  @param colour colour's name
-     *  @details Ignores capitalisation of letters. Both GRAY and GREY work. Only Raylib colours are accepted.
-     *  @throws std::invalid_argument If the colour doesn't exist.
+     *  @brief Sets colour using its name or a custom literal.
+     *  @param colour colour's name, or #RrrGggBbb[Aaa] / #RrrrGgggBbbb[Aaaa]
+     *  @details Ignores capitalisation. Both GRAY and GREY work.
+     *  @throws std::invalid_argument if the input is empty or the literal is malformed
+     *  @throws std::out_of_range if the name isn't a known colour
      */
     void SetColour(const std::string& colour);
     /**
      *  @brief Sets colour using its value.
-     *  @param colour colour's value - {R, G, B} or Raylib's defines. Only raylib colours are accepted.
+     *  @param colour colour's value - {R, G, B, A} or Raylib's defines.
      */
     void SetColour(Color colour);
 
     /**
      *  @brief Gets colour name.
-     *  @details Despite the hack, the only returned names are the raylib one's.
+     *  @details Returns the canonical raylib spelling for known colours -
+     *           never the British aliases. Custom colours come back as literals.
      *  @return A string that's the colour's name.
      */
     std::string GetColourString() const;
@@ -80,33 +92,92 @@ public:
      */
     Color GetColour() const;
 
-private:
-    std::string name; ///< colour's name
-    Color value; ///< Raylib's colour
+    /**
+     *  @brief Sets custom colour literals to be reported in hexadecimal.
+     *  @details Affects GetColourString only, and only for colours with no
+     *           name - #R1EG90BFF rather than #R030G144B255. Both forms are
+     *           always accepted on input.
+     *  @see SetLiteralBase
+     */
+    void SetHex();
+    /**
+     *  @brief Sets custom colour literals to be reported in decimal.
+     *  @details Affects GetColourString only, and only for colours with no
+     *           name - #R030G144B255 rather than #R1EG90BFF. Both forms are
+     *           always accepted on input.
+     *  @see SetLiteralBase
+     */
+    void SetDec();
+    /**
+     *  @brief Sets the base used when reporting custom colour literals.
+     *  @param base true for hexadecimal, false for decimal.
+     *  @details Convenience for the two previous methods, for when the base
+     *           is held in a variable.
+     *  @see SetHex
+     *  @see SetDec
+     */
+    void SetLiteralBase(bool hex);
+    /**
+     *  @brief Checks which base custom colour literals are reported in.
+     *  @returns true if hexadecimal, false if decimal.
+     */
+    bool IsHex() const;
 
     /**
-     *  @brief Gets valid colours.
-     *  @return A set of names of valid colours.
+     *  @brief Compares two colours by value.
+     *  @param other the colour to compare against
+     *  @returns true if RGBA match
+     *  @details Names are ignored - a colour built from "GRAY" equals one
+     *           built from "#R80G80B80".
      */
-    static const std::unordered_set<std::string>& ValidColours();
+    bool operator==(const Colour& other) const;
+    bool operator!=(const Colour& other) const;
+
     /**
-     *  @brief Gets an RGB value based on a colour's name.
-     *  @details Accepts only Raylib's colours. Both GREY and GRAY work.
-     *  @param str A string with a colour's name.
-     *  @returns colour's value
-     *  @throws std::invalid_argument if colour is not a valid one
+     *  @brief Reduces the colour's opacity.
+     *  @details Clamps the factor
+     *  @param factor 0.0 fully transparent, 1.0 unchanged
      */
-    static Color StringToColour(const std::string& str);
+    void Fade(float factor);
+
     /**
-     *  @brief Gets the name of a colour based on the value.
-     *  @details Accepts only raylib colours.
+     *  @brief Blends this colour towards another.
+     *  @param target colour to blend towards
+     *  @param t 0.0 leaves the colour unchanged, 1.0 makes it the target
+     *  @details Clamps t. Blends all four channels, alpha included.
+     */
+    void Blend(const Color& target, float t);
+    void Blend(const Colour& target, float t);
+
+    static unsigned char Lerp(unsigned char a, unsigned char b, float t); ///< lerps from one colour to the other. One colour channel
+
+private:
+    std::string name;   ///< colour's canonical name, or a custom literal
+    Color value;        ///< Raylib's colour
+    bool hex = false;   ///< whether it holds the string value in hex or dec form
+
+    /// How the literal is laid out: digits per channel, and how many channels.
+    struct ColourLayout;
+
+    /**
+     *  @brief Gets a colour value from a name or custom literal.
+     *  @param str A colour's name, or a hex/dec literal.
+     *  @returns colour's value {R, G, B, A}
+     *  @throws std::invalid_argument if str is empty or the literal is malformed
+     *  @throws std::out_of_range if the name isn't a known colour
+     */
+    Color StringToColour(const std::string& str);
+    /**
+     *  @brief Gets the name of a colour from its value.
+     *  @details Falls back to a custom literal when the value isn't a known colour.
      *  @param c color value
-     *  @returns name of the colour
-     *  @throws std::invalid_argument if colour is not a valid one
+     *  @returns canonical name, or a literal
      */
-    static std::string ColourToString(Color c);
-    /// Normalises a colour potential name for further validity check.
+    std::string ColourToString(Color c);
+    /// Normalises a potential colour name for further validity check.
     static std::string Normalise(const std::string& str);
+    static ColourLayout DetectLayout(const std::string& s);
+    static Color ParseLiteral(const std::string& s);
 };
 
 /**
