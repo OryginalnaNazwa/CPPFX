@@ -128,7 +128,7 @@ TEST(colour_base_flag_does_not_affect_input) {
     Colour c;
     c.SetHex();
     c.SetColour("#R255G000B000");
-    CHECK(Same(c.GetColour(), Color{255, 0, 0, 255}))
+    CHECK(Same(c.GetColour(), Color{255, 0, 0, 255}));
 
     c.SetDec();
     c.SetColour("#RFFG00B00");
