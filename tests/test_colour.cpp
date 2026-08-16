@@ -61,14 +61,12 @@ TEST(colour_ignores_capitalisation) {
 }
 
 TEST(colour_setter_normalises_like_the_constructor) {
-    // NOTE: currently fails. SetColour stores the input verbatim
-    // (name = norm) instead of running it back through ColourToString,
-    // so the setter and the constructor disagree.
     Colour c;
     c.SetColour("GREY");
     CHECK_EQ(c.GetColourString(), std::string("GRAY"));
 
-    c.SetColour("#RFFG00B00");
+    // RED is {230, 41, 55} - E6, 29, 37 in hex
+    c.SetColour("#RE6G29B37");
     CHECK_EQ(c.GetColourString(), std::string("RED"));
 }
 
@@ -118,9 +116,6 @@ TEST(colour_literal_round_trips) {
 }
 
 TEST(colour_base_flag_is_reflected_in_the_name) {
-    // NOTE: currently fails. hex is only read inside ColourToString, which
-    // runs when the colour is set - GetColourString just returns the stored
-    // name, so flipping the base after the fact changes nothing.
     Colour c(Color{1, 2, 3, 255});
     c.SetDec();
     CHECK_EQ(c.GetColourString(), std::string("#R001G002B003"));
@@ -133,11 +128,11 @@ TEST(colour_base_flag_does_not_affect_input) {
     Colour c;
     c.SetHex();
     c.SetColour("#R255G000B000");
-    CHECK(Same(c.GetColour(), RED));
+    CHECK(Same(c.GetColour(), Color{255, 0, 0, 255}))
 
     c.SetDec();
     c.SetColour("#RFFG00B00");
-    CHECK(Same(c.GetColour(), RED));
+    CHECK(Same(c.GetColour(), Color{255, 0, 0, 255}));
 }
 
 TEST(colour_literal_base_setters_agree) {
@@ -150,6 +145,11 @@ TEST(colour_literal_base_setters_agree) {
     CHECK(c.IsHex());
     c.SetDec();
     CHECK(!c.IsHex());
+}
+
+TEST(colour_literal_matching_a_named_colour_reports_the_name) {
+    CHECK_EQ(Colour("#RE6G29B37").GetColourString(), std::string("RED"));
+    CHECK_EQ(Colour("#R230G041B055").GetColourString(), std::string("RED"));
 }
 
 // --- errors --------------------------------------------------------------
