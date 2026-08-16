@@ -1,4 +1,4 @@
-#include "CPPFX.hpp"
+#include <CPPFX/CPPFX.hpp>
 #include <fstream>
 #include <string>
 #include <unordered_set>
@@ -11,6 +11,7 @@
  *  Genuinely a very rough, primitive example that was more me testing if it'll work rather than intended use case. DO NOT do things ugly. Be better. It'll pay off.
  *  Main issues: saving and loading is ugly, no insertion order retention between sessions, no actual scaling and resizing of the todo list (camera moving is a hack counteracting it).
  ========================================================================================================================================================================================
+ * v1.2 - doesn't throw on not opened file. That's a first run. Doesn't need the extra file now.
  * v1.1 - slight fixes. Made the VBox ID not hardcoded.
  ****************************************************************************************************************************************************************************************/
 
@@ -34,9 +35,7 @@ void SaveToFile(CPPFX::GUI& gui) {
 
 void LoadFromFile(CPPFX::GUI& gui) {
     std::ifstream file(path);
-    if (!file.is_open()) {
-        throw std::runtime_error("Couldn't open the file during loading.");
-    }
+    if (!file.is_open()) return; // no list yet - first run, nothing to load
 
     std::string todo, press;
     while (getline(file, todo)) {
