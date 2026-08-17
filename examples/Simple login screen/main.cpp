@@ -1,4 +1,4 @@
-#include "CPPFX.hpp"
+#include <CPPFX/CPPFX.hpp>
 
 using namespace std;
 using namespace CPPFX;
