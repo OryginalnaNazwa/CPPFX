@@ -1607,8 +1607,7 @@ void PressedButton::DrawMyself(float elapsedTime) const {
     }
 
     if (textToDisplay != "") {
-       DrawText(textToDisplay.c_str(), xAnchor + (width / 2.0f) - (MeasureText(textToDisplay.c_str(),
-                font.GetFontSize()) / 2.0f), yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+       DrawAlignedText(Alignment::CENTRE, textToDisplay, font);
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);
 };
