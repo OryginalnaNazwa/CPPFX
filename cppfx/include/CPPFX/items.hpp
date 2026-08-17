@@ -433,7 +433,7 @@ public:
     void DrawMyself(float elapsedTime) const override {
         DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
         if (currentLabel != "") {
-            DrawText(Truncate(currentLabel).c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+            DrawAlignedText(Alignment::CENTRE, currentLabel, font);
         }
 
         border.DrawMyself(xAnchor, yAnchor, width + textMargin, height);
@@ -444,7 +444,7 @@ public:
             for (auto& label : valuesInOrder) {
                 DrawLineEx({xAnchor, yCurrent}, {xAnchor + width, yCurrent}, 5, BLACK);
                 DrawRectangle(xAnchor, yCurrent, width, height, colour.GetColour());
-                DrawText(Truncate(label).c_str(), xAnchor + textMargin, yCurrent + (height / 2) - (font.GetFontSize() / 2), font.GetFontSize(), font.colour.GetColour());
+                DrawAlignedText(Alignment::CENTRE, label, font);
                 yCurrent += height;
             }
         }
