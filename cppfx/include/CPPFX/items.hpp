@@ -1643,28 +1643,21 @@ public:
         if (vertical || items.empty()) {
             return width;
         }
-        if (displayMethod) {
-            float sum = 0.0f;
-            for (const auto& item : items) {
-                sum += MeasureText(displayMethod(item).c_str(), font.GetFontSize()) + padding;
+        float sum = 0.0f;
+        for (const auto& item : items) {
+            std::string text;
+            if (displayMethod) {
+                text = displayMethod(item);
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                text = item;
+            } else if constexpr (requires { std::to_string(T{}); }) {
+                text = std::to_string(item);
+            } else {
+                CPPFX_THROW(std::runtime_error, "No display method set for a non-standard type - couldn't calculate width.");
             }
-            return sum;
+            sum += font.MeasureTextWidth(text) + padding;
         }
-        if constexpr (std::is_same_v<T, std::string>) {
-            float sum = 0.0f;
-            for (const auto& item : items) {
-                sum += MeasureText(item.c_str(), font.GetFontSize()) + padding;
-            }
-            return sum;
-        }
-        if constexpr (requires { std::to_string(T{}); }) {
-            float sum = 0.0f;
-            for (const auto& item : items) {
-                sum += MeasureText(std::to_string(item).c_str(), font.GetFontSize()) + padding;
-            }
-            return sum;
-        }
-        CPPFX_THROW(std::runtime_error, "No display method set for a non-standard type - couldn't calculate width.");
+        return sum;
     }
     /**
      *  @brief Returns total height.
