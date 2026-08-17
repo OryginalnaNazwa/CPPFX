@@ -1589,58 +1589,29 @@ public:
      * @see Item::DrawMyself
      */
     void DrawMyself(float elapsedTime) const override {
-        if (displayMethod) {
-            if (vertical) {
-                float nextY = 0.0f;
-                for (const auto& item : items) {
-                    DrawText(displayMethod(item).c_str(), xAnchor, yAnchor + nextY, font.GetFontSize(), font.colour.GetColour());
-                    nextY += font.GetFontSize() + padding;
-                }
-            } else {
-                float nextX = 0.0f;
-                std::string text = "";
-                for (const auto& item : items) {
-                    text = displayMethod(item);
-                    DrawText(text.c_str(), xAnchor + nextX, yAnchor, font.GetFontSize(), font.colour.GetColour());
-                    nextX += MeasureText(text.c_str(), font.GetFontSize()) + padding;
-                }
-            }
-        } else {
-            if constexpr (std::is_same_v<T, std::string>) {
-                if (vertical) {
-                    float nextY = 0.0f;
-                    for (const auto& item : items) {
-                        DrawText(item.c_str(), xAnchor, yAnchor + nextY, font.GetFontSize(), font.colour.GetColour());
-                        nextY += font.GetFontSize() + padding;
-                    }
-                } else {
-                    float nextX = 0.0f;
-                    for (const auto& item : items) {
-                        DrawText(item.c_str(), xAnchor + nextX, yAnchor, font.GetFontSize(), font.colour.GetColour());
-                        nextX += MeasureText(item.c_str(), font.GetFontSize()) + padding;
-                    }
-                }
+        float next = 0.0f;
+        for (const auto& item : items) {
+            std::string text;
+            if (displayMethod) {
+                text = displayMethod(item);
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                text = item;
             } else if constexpr (requires { std::to_string(T{}); }) {
-                if (vertical) {
-                    float nextY = 0.0f;
-                    for (const auto& item : items) {
-                        DrawText(std::to_string(item).c_str(), xAnchor, yAnchor + nextY, font.GetFontSize(), font.colour.GetColour());
-                        nextY += font.GetFontSize() + padding;
-                    }
-                } else {
-                    float nextX = 0.0f;
-                    std::string text = "";
-                    for (const auto& item : items) {
-                        text = std::to_string(item);
-                        DrawText(text.c_str(), xAnchor + nextX, yAnchor, font.GetFontSize(), font.colour.GetColour());
-                        nextX += MeasureText(text.c_str(), font.GetFontSize()) + padding;
-                    }
-                }
+                text = std::to_string(item);
             } else {
-               CPPFX_THROW(std::runtime_error, "No display method set for a non-standard type.");
+                CPPFX_THROW(std::runtime_error, "No display method set for a non-standard type.");
+            }
+
+            if (vertical) {
+                font.DrawText(text, xAnchor, yAnchor + next);
+                next += font.GetFontSize() + padding;
+            } else {
+                font.DrawText(text, xAnchor + next, yAnchor);
+                next += font.MeasureTextWidth(text) + padding;
             }
         }
     }
+
     void DoFocusAction(float elapsedTime) override {
         return;
     }
