@@ -48,8 +48,8 @@ namespace CPPFX { class Sprite; }*/
 namespace CPPFX {
 
 #define CPPFX_VERSION_MAJOR 0
-#define CPPFX_VERSION_MINOR 17
-#define CPPFX_VERSION_PATCH 2
+#define CPPFX_VERSION_MINOR 18
+#define CPPFX_VERSION_PATCH 0
 #define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
 extern const char* const CPPFX_VERSION_STRING;
 
@@ -73,12 +73,20 @@ public:
         }
     }
 
+    ~GUI() { Close(); }
+
     /**
      *  @brief Primary UI drawing and interaction loop.
      *  @details Put in your main loop.
      *  @param camera Camera
      */
     void DoUI(const Camera2D& camera);
+
+    /**
+     *  @brief Closes the GUI
+     *  @details Call in OpenGL context (before CloseWindow). Cleans up, so you can also reuse it, if you want for some reason, instead of just letting it get destructed.
+     */
+    void Close();
 
     /**
      *  @brief Adds item of given type.

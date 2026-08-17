@@ -80,6 +80,7 @@ int main() {
         EndDrawing();
       }
 
+    gui.Close();
     CloseWindow();
 
     return 0;

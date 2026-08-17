@@ -8,7 +8,7 @@
 
 using namespace CPPFX;
 
-const char* const CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.17.2"; //sanity check for version
+const char* const CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.18.0"; //sanity check for version
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "ComboBox", "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
     "PasswordField", "ProgressBar", "ProgressIndicator", "PressedButton", "List", "RadioGroup", "PieChart", "Line", "Square", "Rectangle", "Circle", "Sprite"};
@@ -34,6 +34,13 @@ void GUI::DoUI(const Camera2D& camera) {
     }
 
     DrawUI(camera);
+}
+
+void GUI::Close() {
+    ItemsInDrawingOrder.clear();
+    Items.clear();
+    for (auto& [id, n] : ItemsCounter) n = 0;
+    needsSorting = false;
 }
 
 void GUI::onMouseClick(const Vector2& mousePos, const Camera2D& camera) {
