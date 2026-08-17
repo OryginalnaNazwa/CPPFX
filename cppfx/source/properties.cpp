@@ -1,9 +1,14 @@
 #include "../include/CPPFX/properties.hpp"
-#include <ctype.h>    // for toupper
-#include <algorithm>  // for transform
-#include <stdexcept>  // for invalid_argument
-#include <unordered_map> // for unordered map
-#include <charconv> // for from_chars
+#include <ctype.h>          // for toupper
+#include <algorithm>        // for transform
+#include <stdexcept>        // for invalid_argument
+#include <unordered_map>    // for unordered map
+#include <charconv>         // for from_chars
+#include <algorithm>        // for sort, unique
+#include <memory>           // for shared_ptr
+#include <sstream>          // for ostringstream
+#include <set>              // for set
+#include <vector>           // for vector
 
 using namespace CPPFX;
 
@@ -279,20 +284,441 @@ float Border::GetThickness() const {
 
 //------Font--------
 
+void CPPFX::Font::AppendCodepoint(std::string& text, int codepoint) {
+    int size = 0;
+    const char* utf8 = ::CodepointToUTF8(codepoint, &size);
+    if (utf8 != nullptr && size > 0) {
+        text.append(utf8, static_cast<std::size_t>(size));
+    }
+}
+
+void CPPFX::Font::PopBackCodepoint(std::string& text) {
+    if (text.empty()) return;
+    // continuation bytes are 10xxxxxx - strip them, then the lead byte
+    while (text.size() > 1 &&
+           (static_cast<unsigned char>(text.back()) & 0xC0) == 0x80) {
+        text.pop_back();
+    }
+    text.pop_back();
+}
+
+
+void CPPFX::Font::SetFilePath(const std::string& path) {
+    if (path.empty()) {
+        throw std::invalid_argument("In Font: The file name is empty.");
+    }
+    filePath = path;
+}
+
+std::string CPPFX::Font::GetFilePath() const {
+    return filePath;
+}
+
+void CPPFX::Font::ClearFilePath() {
+    filePath = "";
+}
+
+void CPPFX::Font::LoadFont() {
+    if (filePath.empty()) {
+        throw std::runtime_error("In Font: No file path set.");
+    }
+    LoadFont(filePath);
+}
+
+void CPPFX::Font::LoadFont(const std::string& fileName) {
+    if (fileName.empty()) {
+        throw std::invalid_argument("In Font: The file name is empty.");
+    }
+     if (!::FileExists(fileName.c_str())) {
+        throw std::runtime_error("In Font: No file at " + fileName +
+                                 " (working directory is " +
+                                 ::GetWorkingDirectory() + ").");
+    }
+    if (codepoints.empty()) {
+        AppendPreset(codepoints, Charset::LATIN_EXTENDED);
+        NormaliseCharset(codepoints);
+    }
+
+    int size = (loadSize > 0) ? loadSize : static_cast<int>(fontSize);
+    if (size <= 0) size = 20;
+
+    ::Font loaded = ::LoadFontEx(fileName.c_str(), size,
+                                 codepoints.data(),
+                                 static_cast<int>(codepoints.size()));
+
+    if (!::IsFontValid(loaded)) {
+        ::UnloadFont(loaded);
+        throw std::runtime_error("In Font: Font at " + fileName +
+                                 " did not load correctly.");
+    }
+
+    // smoother when drawn at a size other than the one it was baked at
+    ::SetTextureFilter(loaded.texture, TEXTURE_FILTER_BILINEAR);
+
+    // The deleter is what makes this work: when the last Font sharing this
+    // atlas goes away, the atlas is unloaded, exactly once.
+    font = std::shared_ptr<::Font>(new ::Font(loaded),
+                                   [](::Font* f) { ::UnloadFont(*f); delete f; });
+    warnedCodepoints.clear();
+
+#ifndef NDEBUG
+    const std::vector<int> missing = ValidateCharset();
+    if (!missing.empty()) {
+        std::ostringstream out;
+        out << fileName << " has no glyph for " << missing.size()
+            << " requested codepoint(s):";
+        std::size_t shown = 0;
+        for (int cp : missing) {
+            if (shown++ >= 12) { out << " ..."; break; }
+            std::string glyph;
+            AppendCodepoint(glyph, cp);
+            out << " " << glyph;
+        }
+        CPPFX_WARN(out.str());
+        for (int cp : missing) warnedCodepoints.insert(cp);
+    }
+#endif
+}
+
+void CPPFX::Font::UnloadFont() {
+    font.reset();               // drops one share; unloads only if it was the last
+    warnedCodepoints.clear();
+}
+
+bool CPPFX::Font::IsFontValid() const {
+    return font && ::IsFontValid(*font);
+}
+
+bool CPPFX::Font::IsDefaultFont() const {
+    return !font;
+}
+
+long CPPFX::Font::GetShareCount() const {
+    return font ? static_cast<long>(font.use_count()) : 0L;
+}
+
+void CPPFX::Font::SetFont(const ::Font& newFont) {
+    if (!::IsFontValid(newFont)) {
+        throw std::invalid_argument("In Font: New font was not loaded correctly.");
+    }
+    // no-op deleter: somebody else owns this atlas, we only borrow it
+    font = std::shared_ptr<::Font>(new ::Font(newFont),
+                                   [](::Font* f) { delete f; });
+    warnedCodepoints.clear();
+}
+
+::Font CPPFX::Font::GetFont() const {
+    return Resolve();
+}
+
+void CPPFX::Font::ClearFont() {
+    UnloadFont();
+}
+
+::Font CPPFX::Font::Resolve() const {
+    return font ? *font : ::GetFontDefault();
+}
+
 void CPPFX::Font::SetFontSize(float size) {
     if (size < 0.0f) {
-        throw std::invalid_argument("Negative font size.");
-    } else {
-        if (size == 0.0f) {
-            CPPFX_WARN("Font size set to 0. It will not be visible.");
-        }
-        fontSize = size;
+        throw std::invalid_argument("In Font: Negative font size.");
     }
+    if (size == 0.0f) {
+        CPPFX_WARN("Font size set to 0. It will not be visible.");
+    }
+    fontSize = size;
 }
 
 float CPPFX::Font::GetFontSize() const {
     return fontSize;
 }
+
+void CPPFX::Font::SetLoadSize(int size) {
+    if (size < 0) {
+        throw std::invalid_argument("In Font: Negative load size.");
+    }
+    loadSize = size;
+    ReloadIfLoaded();
+}
+
+int CPPFX::Font::GetLoadSize() const {
+    return loadSize;
+}
+
+int CPPFX::Font::GetBaseSize() const {
+    return Resolve().baseSize;
+}
+
+float CPPFX::Font::GetScaleFactor() const {
+    const ::Font f = Resolve();
+    return (f.baseSize > 0) ? (fontSize / static_cast<float>(f.baseSize)) : 1.0f;
+}
+
+void CPPFX::Font::SetSpacing(float spacing) {
+    this->spacing = spacing;
+}
+
+float CPPFX::Font::GetSpacing() const {
+    // matches raylib's own DrawText, which uses fontSize / 10
+    return (spacing < 0.0f) ? (fontSize / 10.0f) : spacing;
+}
+
+void CPPFX::Font::SetAutoSpacing() {
+    spacing = -1.0f;
+}
+
+bool CPPFX::Font::IsAutoSpacing() const {
+    return spacing < 0.0f;
+}
+
+void CPPFX::Font::SetLineSpacing(float spacing) {
+    lineSpacing = spacing;
+}
+
+float CPPFX::Font::GetLineSpacing() const {
+    return lineSpacing;
+}
+
+void CPPFX::Font::ApplyLineSpacing() const {
+    // raylib keeps this in a global, so never assume it survived another widget
+    ::SetTextLineSpacing(static_cast<int>(lineSpacing));
+}
+
+void CPPFX::Font::AppendPreset(std::vector<int>& target, Charset preset) {
+    switch (preset) {
+        case Charset::LATIN_EXTENDED:
+            for (int c = 0x0100; c <= 0x017F; ++c) target.push_back(c);
+            [[fallthrough]];
+        case Charset::LATIN_1:
+            for (int c = 0x00A0; c <= 0x00FF; ++c) target.push_back(c);
+            break;
+        case Charset::CYRILLIC:
+            for (int c = 0x0400; c <= 0x04FF; ++c) target.push_back(c);
+            break;
+        case Charset::GREEK:
+            for (int c = 0x0370; c <= 0x03FF; ++c) target.push_back(c);
+            break;
+        case Charset::ASCII:
+        default:
+            break;
+    }
+}
+
+void CPPFX::Font::NormaliseCharset(std::vector<int>& target) {
+    // ASCII is never optional - losing space or '?' is a miserable afternoon
+    for (int c = 0x20; c <= 0x7E; ++c) target.push_back(c);
+    std::sort(target.begin(), target.end());
+    target.erase(std::unique(target.begin(), target.end()), target.end());
+}
+
+void CPPFX::Font::SetCharset(Charset preset) {
+    std::vector<int> cps;
+    AppendPreset(cps, preset);
+    NormaliseCharset(cps);
+    codepoints = cps;
+    ReloadIfLoaded();
+}
+
+void CPPFX::Font::AddCharset(Charset preset) {
+    AppendPreset(codepoints, preset);
+    NormaliseCharset(codepoints);
+    ReloadIfLoaded();
+}
+
+void CPPFX::Font::SetCharset(const std::string& sampleText) {
+    if (sampleText.empty()) {
+        throw std::invalid_argument("In Font: The charset sample is empty.");
+    }
+    int count = 0;
+    int* cps = ::LoadCodepoints(sampleText.c_str(), &count);
+    std::vector<int> result(cps, cps + count);   // LoadCodepoints does not dedupe
+    ::UnloadCodepoints(cps);
+
+    NormaliseCharset(result);
+    codepoints = result;
+    ReloadIfLoaded();
+}
+
+void CPPFX::Font::AddCharset(const std::string& sampleText) {
+    if (sampleText.empty()) {
+        throw std::invalid_argument("In Font: The charset sample is empty.");
+    }
+    int count = 0;
+    int* cps = ::LoadCodepoints(sampleText.c_str(), &count);
+    codepoints.insert(codepoints.end(), cps, cps + count);
+    ::UnloadCodepoints(cps);
+
+    NormaliseCharset(codepoints);
+    ReloadIfLoaded();
+}
+
+void CPPFX::Font::SetCharset(const std::vector<int>& codepoints) {
+    if (codepoints.empty()) {
+        throw std::invalid_argument("In Font: The charset is empty.");
+    }
+    std::vector<int> result = codepoints;
+    NormaliseCharset(result);
+    this->codepoints = result;
+    ReloadIfLoaded();
+}
+
+std::vector<int> CPPFX::Font::GetCharset() const {
+    return codepoints;
+}
+
+void CPPFX::Font::ClearCharset() {
+    SetCharset(Charset::LATIN_EXTENDED);
+}
+
+void CPPFX::Font::ReloadIfLoaded() {
+    // only meaningful when we loaded it ourselves and still know from where
+    if (font && !filePath.empty()) {
+        LoadFont(filePath);
+    }
+}
+
+bool CPPFX::Font::HasGlyph(int codepoint) const {
+    const ::Font f = Resolve();
+    if (f.texture.id == 0 || f.glyphCount <= 0) return false;
+
+    const int i = ::GetGlyphIndex(f, codepoint);
+    if (i < 0 || i >= f.glyphCount) return false;
+
+    // GetGlyphIndex falls back to '?' on a miss, so check we got what we asked for
+    if (f.glyphs[i].value != codepoint) return false;
+
+    if (codepoint == ' ' || codepoint == 0x00A0 || codepoint == 0x00AD) return true;
+
+    // present in the atlas but rasterised empty - the file had no such glyph
+    return f.recs[i].width > 0.0f || f.glyphs[i].advanceX > 0;
+}
+
+std::vector<int> CPPFX::Font::FindMissingGlyphs(const std::string& text) const {
+    std::set<int> missing;
+    const char* ptr = text.c_str();
+    while (*ptr != '\0') {
+        int size = 0;
+        const int cp = ::GetCodepointNext(ptr, &size);
+        if (cp != '\n' && cp != '\t' && !HasGlyph(cp)) {
+            missing.insert(cp);
+        }
+        ptr += (size > 0) ? size : 1;
+    }
+    return std::vector<int>(missing.begin(), missing.end());
+}
+
+bool CPPFX::Font::CanRender(const std::string& text) const {
+    return FindMissingGlyphs(text).empty();
+}
+
+std::vector<int> CPPFX::Font::ValidateCharset() const {
+    std::vector<int> missing;
+    if (!font) return missing;
+    for (int cp : codepoints) {
+        if (!HasGlyph(cp)) missing.push_back(cp);
+    }
+    return missing;
+}
+
+void CPPFX::Font::WarnAboutMissingGlyphs(const std::string& text,
+                                         const std::string& context) const {
+#ifdef NDEBUG
+    (void)text;
+    (void)context;
+#else
+    const std::vector<int> missing = FindMissingGlyphs(text);
+    std::ostringstream out;
+    std::size_t fresh = 0;
+
+    for (int cp : missing) {
+        if (!warnedCodepoints.insert(cp).second) continue;   // already moaned about it
+        std::string glyph;
+        AppendCodepoint(glyph, cp);
+        out << " " << glyph << " (U+" << std::uppercase << std::hex << cp
+            << std::dec << ")";
+        ++fresh;
+    }
+
+    if (fresh > 0) {
+        CPPFX_WARN((context.empty() ? std::string("Font") : context)
+                   << " cannot render:" << out.str()
+                   << ". Widen the charset before loading, or use a font that has them.");
+    }
+#endif
+}
+
+void CPPFX::Font::DrawText(const std::string& text, float x, float y,
+                           const Color& tint) const {
+    const ::Font f = Resolve();
+    if (f.texture.id == 0) return;   // no GL context yet, nothing to draw with
+    ApplyLineSpacing();
+    ::DrawTextEx(f, text.c_str(), Vector2{x, y}, fontSize, GetSpacing(), tint);
+}
+
+void CPPFX::Font::DrawText(const std::string& text, float x, float y) const {
+    DrawText(text, x, y, colour.GetColour());
+}
+
+void CPPFX::Font::DrawText(const std::string& text, const Vector2& position) const {
+    DrawText(text, position.x, position.y, colour.GetColour());
+}
+
+void CPPFX::Font::DrawTextPro(const std::string& text, const Vector2& position,
+                              const Vector2& origin, float rotation) const {
+    const ::Font f = Resolve();
+    if (f.texture.id == 0) return;
+    ApplyLineSpacing();
+    ::DrawTextPro(f, text.c_str(), position, origin, rotation,
+                  fontSize, GetSpacing(), colour.GetColour());
+}
+
+Vector2 CPPFX::Font::GetInkSize(const std::string& text) const {
+    return Vector2{ MeasureTextWidth(text), GetCapHeight() };
+}
+
+void CPPFX::Font::DrawTextAt(const std::string& text, const Vector2& inkTopLeft,
+                             const Color& tint) const {
+    // caller gave us where the ink goes; DrawTextEx wants the line box top
+    DrawText(text, inkTopLeft.x, inkTopLeft.y - GetCapOffset(), tint);
+}
+
+void CPPFX::Font::DrawTextAt(const std::string& text, const Vector2& inkTopLeft) const {
+    DrawTextAt(text, inkTopLeft, colour.GetColour());
+}
+
+Vector2 CPPFX::Font::MeasureText(const std::string& text) const {
+    const ::Font f = Resolve();
+    if (f.texture.id == 0) return Vector2{0.0f, 0.0f};
+    ApplyLineSpacing();
+    return ::MeasureTextEx(f, text.c_str(), fontSize, GetSpacing());
+}
+
+float CPPFX::Font::MeasureTextWidth(const std::string& text) const {
+    return MeasureText(text).x;
+}
+
+float CPPFX::Font::MeasureTextHeight(const std::string& text) const {
+    return MeasureText(text).y;
+}
+
+float CPPFX::Font::GetCapHeight() const {
+    const ::Font f = Resolve();
+    if (f.texture.id == 0) return 0.0f;
+    const int i = ::GetGlyphIndex(f, 'H');
+    return f.recs[i].height * GetScaleFactor();
+}
+
+float CPPFX::Font::GetCapOffset() const {
+    const ::Font f = Resolve();
+    if (f.texture.id == 0) return 0.0f;
+    const int i = ::GetGlyphIndex(f, 'H');
+    return static_cast<float>(f.glyphs[i].offsetY) * GetScaleFactor();
+}
+
+float CPPFX::Font::GetVerticalCentreOffset(float boxHeight) const {
+    return ((boxHeight - GetCapHeight()) / 2.0f) - GetCapOffset();
+}
+
 
 //--- Alignment ---
 
@@ -409,4 +835,10 @@ float Alignment::GetAlignedY(float y, float height, float objectHeight) const {
         case BOTTOM_RIGHT: return (y + objectHeight) - height; // move to the far down, go back by alignee's height
         default: return 0; // should't happen
     }
+}
+
+Vector2 Alignment::GetAlignedXY(float x, float y, float width, float height,
+                         float contentWidth, float contentHeight) const {
+    return Vector2{ GetAlignedX(x, contentWidth,  width),
+                    GetAlignedY(y, contentHeight, height) };
 }

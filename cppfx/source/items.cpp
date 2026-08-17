@@ -12,10 +12,7 @@ using namespace CPPFX;
 void Label::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
-        std::string truncated = Truncate(text);
-        float textWidth = (float)(MeasureText(truncated.c_str(), font.GetFontSize()));
-        DrawText(truncated.c_str(), alignment.GetAlignedX(xAnchor + textMargin, textWidth, width - (2 * textMargin)), alignment.GetAlignedY(yAnchor, font.GetFontSize(), height),
-                    font.GetFontSize(), font.colour.GetColour());
+        DrawAlignedText(alignment);
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
@@ -35,15 +32,15 @@ void TextField::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
-            DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (promptFont.GetFontSize() / 2.0f),
-                        promptFont.GetFontSize(), promptFont.colour.GetColour());
+            const std::string truncated = truncates ? Truncate(promptText, promptFont) : promptText;
+            DrawAlignedText(Alignment::CENTRE_LEFT, truncated, promptFont);
         }
     } else {
-        std::string truncated = Truncate(text);
-        DrawText(truncated.c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
-        if (focused && fmod(elapsedTime, 1.0f) < 0.5f) { //checks whether half a second passed // could use timer, like in button?
-            DrawText("|", MeasureText(truncated.c_str(), font.GetFontSize()) + xAnchor + textMargin + 2.0f, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f),
-                      font.GetFontSize(), font.colour.GetColour());
+        const std::string truncated = truncates ? Truncate() : text;
+        if (focused && fmod(elapsedTime, 1.0f) < 0.5f) {
+            font.DrawText("|",
+                xAnchor + textMargin + font.MeasureTextWidth(truncated) + 2.0f,
+                yAnchor + font.GetVerticalCentreOffset(height));
         }
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);
@@ -63,7 +60,11 @@ void TextField::DoFocusAction(float elapsedTime) {
             }
         } else {
             int ch = GetCharPressed();
-            if (ch != 0) text += (char)ch;
+            if (ch != 0) {
+                std::string newText = text;
+                newText += (int)ch;
+                SetText(newText);
+            }
         }
 
     }

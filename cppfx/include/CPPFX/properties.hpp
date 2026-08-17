@@ -5,7 +5,9 @@
 #include <iostream>       // for operator<<, basic_ostream, char_traits, cerr
 #include <string>         // for string, allocator
 #include "raylib.h"       // for Color, BLACK, LIGHTGRAY, DARKGRAY, GRAY
-
+#include <memory>         // for shared_ptr
+#include <vector>         // for vector
+#include <set>            // for set
 
 /******************************************************************
  *  @file properties
@@ -259,45 +261,148 @@ private:
 
 /**
  *  @class Font
- *  @brief Wrapper over raylib's fonts.
+ *  @brief Wrapper over raylib's fonts. Draws and measures text itself.
+ *  @details Holds everything DrawTextEx needs except the position and the text:
+ *           the glyph atlas, size, spacing and tint. Widgets call DrawText and
+ *           MeasureText on it rather than unpacking it into raylib calls.
+ *
+ *           The atlas is reference counted. Load once, assign the Font to as
+ *           many widgets as you like, and it is unloaded exactly once when the
+ *           last of them is gone.
+ *
+ *           When no font has been loaded it falls back to raylib's default
+ *           font, so a default constructed Font is always drawable.
+ *  @see ::DrawTextEx
  */
 class Font : public Property {
 public:
 
     /**
-     *  @brief Default constructor.
-     *  @details Sets font's size to 20 and colour to black.
+     *  @enum Charset
+     *  @brief Ready-made codepoint sets for LoadFont.
+     *  @details Every preset includes printable ASCII. LATIN_EXTENDED is the
+     *           default and covers Polish, Czech, Hungarian, Croatian,
+     *           Romanian, Turkish, the Baltics and the Nordics.
      */
-    Font() : Property("Font", BLACK), fontSize(20.0f) {}
+    enum class Charset {
+        ASCII,           ///< U+0020-U+007E, 95 glyphs
+        LATIN_1,         ///< ASCII + U+00A0-U+00FF
+        LATIN_EXTENDED,  ///< LATIN_1 + U+0100-U+017F (default)
+        CYRILLIC,        ///< ASCII + U+0400-U+04FF
+        GREEK            ///< ASCII + U+0370-U+03FF
+    };
+
+    /**
+     *  @brief Default constructor.
+     *  @details Sets font's size to 20, colour to black and charset to
+     *           LATIN_EXTENDED. Does not touch the GPU, so it is safe to
+     *           construct before InitWindow.
+     */
+    Font() : Property("Font", BLACK), fontSize(20.0f), spacing(-1.0f), lineSpacing(0.0f), loadSize(0) {
+        AppendPreset(codepoints, Charset::LATIN_EXTENDED);
+        NormaliseCharset(codepoints);
+    }
+
     /**
      *  @brief Constructor for custom size.
-     *  @details Sets colour to black.
      *  @param fS size of the font to be set.
      *  @warning throws a warning if size is 0.
      */
-    Font(float fS) : Property("Font", BLACK), fontSize(fS) {
+    Font(float fS) : Font() {
+        if (fS < 0.0f) {
+            throw std::invalid_argument("In Font: Negative font size.");
+        }
         if (fS == 0.0f) {
             CPPFX_WARN("Font size set to 0. It will not be visible.");
         }
+        fontSize = fS;
     }
+
     /**
      *  @brief Constructor for custom colour.
-     *  @details Sets font's size to 20.
      *  @param c colour to be set.
      */
-    Font(const Color& c) : Property("Font", c), fontSize(20.0f) {}
+    Font(const Color& c) : Font() {
+        colour.SetColour(c);
+    }
+
     /**
-     *  @brief Constructor for custom size.
-     *  @details Sets colour to black.
+     *  @brief Constructor for custom size and colour.
      *  @param fS size of the font to be set.
      *  @param c colour to be set.
      *  @warning throws a warning if size is 0.
      */
-    Font(float fS, const Color& c) : Property("Font", c), fontSize(fS) {
-        if (fS == 0.0f) {
-            CPPFX_WARN("Font size set to 0. It will not be visible.");
-        }
+    Font(float fS, const Color& c) : Font(fS) {
+        colour.SetColour(c);
     }
+
+    /**
+     *  @brief Sets the file path for later loading.
+     *  @param path path to the file; file name
+     *  @throws std::invalid_argument if path is empty
+     */
+    void SetFilePath(const std::string& path);
+    std::string GetFilePath() const;
+    void ClearFilePath();
+
+    /**
+     *  @brief Loads the font from the stored path.
+     *  @details Wrapper over raylib's LoadFontEx, using the stored charset and
+     *           load size. Must be called after InitWindow.
+     *  @see ::LoadFontEx
+     *  @throws std::runtime_error if the path is empty or the font did not load.
+     *  @warning throws a warning listing any requested glyphs the file lacks.
+     */
+    void LoadFont();
+    /**
+     *  @brief Loads the font from the parameter.
+     *  @details Doesn't update the stored path.
+     *  @param fileName path to the file
+     *  @throws std::invalid_argument if fileName is empty
+     *  @throws std::runtime_error if the font did not load properly.
+     */
+    void LoadFont(const std::string& fileName);
+    /**
+     *  @brief Releases this Font's share of the atlas.
+     *  @details Falls back to the default font afterwards. The atlas itself is
+     *           only unloaded once every Font sharing it has done the same, so
+     *           this never pulls the texture out from under another widget.
+     *  @see ::UnloadFont
+     */
+    void UnloadFont();
+    /**
+     *  @brief Checks if a font has been loaded and is valid.
+     *  @returns true if this Font holds a valid atlas. False means the default
+     *           font is in use, which still draws.
+     *  @see ::IsFontValid
+     */
+    bool IsFontValid() const;
+    /**
+     *  @brief Checks whether the default font is being used.
+     *  @returns true if no font has been loaded.
+     */
+    bool IsDefaultFont() const;
+    /**
+     *  @brief Counts how many Fonts currently share this atlas.
+     *  @details Mostly for debugging. 0 means the default font is in use.
+     *  @returns Reference count.
+     */
+    long GetShareCount() const;
+
+    /**
+     *  @brief Sets the font from an already loaded raylib font.
+     *  @details Assumes the atlas is owned elsewhere, so it is never unloaded
+     *           from here. Unload it wherever you loaded it.
+     *  @param font new font to be used by this one.
+     *  @throws std::invalid_argument if the new font is not valid.
+     */
+    void SetFont(const ::Font& font);
+    /**
+     *  @brief Gets the raylib font actually used for drawing.
+     *  @returns The loaded atlas, or the default font if none was loaded.
+     */
+    ::Font GetFont() const;
+    void ClearFont();
 
     /**
      *  @brief Sets font size.
@@ -308,13 +413,265 @@ public:
     void SetFontSize(float size);
     /**
      *  @brief Gets font size.
+     *  @details This is the em size, the numerator of fontSize / baseSize. It
+     *           is the height of the line box, not of any particular letter.
+     *           For the height a reader actually sees, use GetCapHeight.
      *  @returns Size of the font.
      */
     float GetFontSize() const;
 
+    /**
+     *  @brief Sets the size the glyph atlas is rasterised at.
+     *  @details Independent of font size. Drawing far above the load size looks
+     *           blurry, far below it wastes memory. 0 means "match font size at
+     *           load time". Reloads the font if one is already loaded from a path.
+     *  @param size load size, or 0 for automatic
+     *  @throws std::invalid_argument if size is negative.
+     */
+    void SetLoadSize(int size);
+    int GetLoadSize() const;
+    /**
+     *  @brief Gets the size the current atlas was actually rasterised at.
+     *  @returns baseSize of the raylib font in use.
+     */
+    int GetBaseSize() const;
+
+    /**
+     *  @brief Sets horizontal spacing between characters.
+     *  @details Negative values mean automatic, which reproduces raylib's
+     *           DrawText spacing of fontSize / 10.
+     *  @param spacing spacing in pixels, or a negative value for automatic
+     */
+    void SetSpacing(float spacing);
+    /**
+     *  @brief Gets the spacing actually used for drawing.
+     *  @returns Spacing in pixels, with automatic already resolved.
+     */
+    float GetSpacing() const;
+    void SetAutoSpacing();
+    bool IsAutoSpacing() const;
+
+    /**
+     *  @brief Sets extra vertical gap between lines of multiline text.
+     *  @param spacing extra pixels between lines; 0 means lines sit exactly
+     *         fontSize apart
+     */
+    void SetLineSpacing(float spacing);
+    float GetLineSpacing() const;
+
+    /**
+     *  @brief Sets the charset from a preset.
+     *  @details Reloads the font if one is already loaded from a path.
+     *  @param preset the preset to use
+     */
+    void SetCharset(Charset preset);
+    /**
+     *  @brief Adds a preset to the current charset.
+     */
+    void AddCharset(Charset preset);
+    /**
+     *  @brief Sets the charset from a sample of text.
+     *  @details Every distinct character in the sample is baked into the atlas,
+     *           on top of ASCII. This is the easy way in:
+     *           SetCharset("AaCcEeLlNnOoSsZzZz" with the diacritics you need).
+     *  @param sampleText text containing the characters that must be renderable
+     *  @throws std::invalid_argument if sampleText is empty
+     *  @see ::LoadCodepoints
+     */
+    void SetCharset(const std::string& sampleText);
+    /**
+     *  @brief Sets the charset from raw Unicode codepoints.
+     *  @details The escape hatch. Prefer the preset or sample text overloads.
+     *  @param codepoints codepoints to bake into the atlas
+     *  @throws std::invalid_argument if codepoints is empty
+     */
+    void SetCharset(const std::vector<int>& codepoints);
+    /**
+     *  @brief Adds a sample of text to the current charset.
+     */
+    void AddCharset(const std::string& sampleText);
+    std::vector<int> GetCharset() const;
+    /**
+     *  @brief Resets the charset to LATIN_EXTENDED.
+     */
+    void ClearCharset();
+
+    /**
+     *  @brief Checks whether a single codepoint can actually be drawn.
+     *  @details Catches both a codepoint missing from the atlas and one baked
+     *           in as a blank because the font file had no such glyph.
+     *  @param codepoint codepoint to check
+     *  @returns true if the glyph will render as itself
+     */
+    bool HasGlyph(int codepoint) const;
+    /**
+     *  @brief Finds every codepoint in the text this font cannot draw.
+     *  @param text text to check
+     *  @returns Sorted, deduplicated missing codepoints. Empty if all fine.
+     */
+    std::vector<int> FindMissingGlyphs(const std::string& text) const;
+    /**
+     *  @brief Checks whether the whole string can be drawn.
+     *  @param text text to check
+     *  @returns true if every character will render as itself
+     */
+    bool CanRender(const std::string& text) const;
+    /**
+     *  @brief Checks the loaded atlas against the requested charset.
+     *  @details Run after loading to find glyphs the font file simply lacks.
+     *  @returns Codepoints that were requested but came back blank.
+     */
+    std::vector<int> ValidateCharset() const;
+    /**
+     *  @brief Warns once per missing codepoint found in the text.
+     *  @details Meant for text mutation points such as SetText, not for the
+     *           draw loop. Compiles to nothing under NDEBUG.
+     *  @param text text to check
+     *  @param context item ID or similar, included in the message
+     */
+    void WarnAboutMissingGlyphs(const std::string& text,
+                                const std::string& context = "") const;
+
+    /**
+     *  @brief Draws text with this font.
+     *  @details Wrapper over DrawTextEx, using this font's size, spacing and
+     *           colour. Position is the top-left of the text's line box.
+     *  @param text text to draw
+     *  @param x left edge
+     *  @param y top of the line box
+     *  @see ::DrawTextEx
+     */
+    void DrawText(const std::string& text, float x, float y) const;
+    void DrawText(const std::string& text, const Vector2& position) const;
+    /**
+     *  @brief Draws text with an overridden tint.
+     *  @param tint colour to use instead of this font's colour
+     */
+    void DrawText(const std::string& text, float x, float y, const Color& tint) const;
+    /**
+     *  @brief Draws rotated text.
+     *  @param origin rotation origin, relative to position
+     *  @param rotation rotation in degrees
+     *  @see ::DrawTextPro
+     */
+    void DrawTextPro(const std::string& text, const Vector2& position,
+                     const Vector2& origin, float rotation) const;
+
+    /**
+     *  @brief Gets the visible size of the text.
+     *  @details Width as measured, height as cap height rather than the line
+     *           box, so alignment centres what a reader actually sees.
+     *  @param text text to measure
+     *  @returns Ink width and height in pixels.
+     */
+    Vector2 GetInkSize(const std::string& text) const;
+    /**
+     *  @brief Draws text anchored by the top-left of its visible ink.
+     *  @details Unlike DrawText, which anchors the line box, this compensates
+     *           for the empty space above the capitals. Pair it with
+     *           Alignment and GetInkSize.
+     *  @param text text to draw
+     *  @param inkTopLeft where the top-left of the visible text should land
+     */
+    void DrawTextAt(const std::string& text, const Vector2& inkTopLeft) const;
+    void DrawTextAt(const std::string& text, const Vector2& inkTopLeft,
+                    const Color& tint) const;
+
+    /**
+     *  @brief Measures text with this font.
+     *  @details Wrapper over MeasureTextEx.
+     *  @param text text to measure
+     *  @returns Width and line box height in pixels.
+     *  @see ::MeasureTextEx
+     */
+    Vector2 MeasureText(const std::string& text) const;
+    float MeasureTextWidth(const std::string& text) const;
+    /**
+     *  @brief Measures the line box height of the text.
+     *  @details Equals font size for single line text, and grows by
+     *           fontSize + lineSpacing per newline.
+     */
+    float MeasureTextHeight(const std::string& text) const;
+
+    /**
+     *  @brief Gets the ink height of a capital letter.
+     *  @details Unlike font size, this is what a reader actually sees. Font
+     *           size is the em box, which includes empty descender space.
+     *  @returns Height of 'H' in pixels at the current font size.
+     */
+    float GetCapHeight() const;
+    /**
+     *  @brief Gets the distance from the top of the line box down to the top
+     *         of a capital letter.
+     */
+    float GetCapOffset() const;
+    /**
+     *  @brief Gets the y offset that optically centres one line of text.
+     *  @details Centres the visible ink rather than the line box, so text does
+     *           not sit high once a real font is loaded. Use it as
+     *           font.DrawText(t, x, yAnchor + font.GetVerticalCentreOffset(height)).
+     *  @param boxHeight height of the box to centre within
+     *  @returns Offset from the top of the box.
+     */
+    float GetVerticalCentreOffset(float boxHeight) const;
+
+    /**
+     *  @brief Appends a Unicode codepoint to a UTF-8 string.
+     *  @details Wrapper over raylib's CodepointToUTF8. Use this instead of casting
+     *           to char - a cast truncates anything above U+007F, so 'z' becomes
+     *           '|'.
+     *  @param text string to append to
+     *  @param codepoint Unicode codepoint, e.g. as returned by GetCharPressed
+     *  @see ::CodepointToUTF8
+     */
+    static void AppendCodepoint(std::string& text, int codepoint);
+
+    /**
+     *  @brief Removes the last whole character from a UTF-8 string.
+     *  @details Strips continuation bytes before the lead byte, so one call removes
+     *           one visible character rather than one byte. Safe on empty strings.
+     */
+    static void PopBackCodepoint(std::string& text);
+
+
 private:
-    float fontSize; ///< distance from the bottom to the top of the letter
-    //std::string name; //TODO ///< name of the font to be used for loading custom ones
+    std::shared_ptr<::Font> font;         ///< atlas; null means use the default font
+    std::string filePath;                 ///< path stored for LoadFont
+    float fontSize;                       ///< em size; numerator of fontSize / baseSize
+    float spacing;                        ///< horizontal gap; negative means automatic
+    float lineSpacing;                    ///< extra vertical gap between lines
+    int loadSize;                         ///< atlas rasterisation size; 0 means match fontSize
+    std::vector<int> codepoints;          ///< charset baked into the atlas
+    mutable std::set<int> warnedCodepoints; ///< deduplicates missing glyph warnings
+
+    /**
+     *  @brief Gets the font to actually draw with.
+     *  @returns The loaded atlas, or raylib's default font.
+     */
+    ::Font Resolve() const;
+    /**
+     *  @brief Gets the ratio the atlas is scaled by when drawing.
+     *  @returns fontSize / baseSize.
+     */
+    float GetScaleFactor() const;
+    /**
+     *  @brief Pushes line spacing into raylib's global text state.
+     *  @details SetTextLineSpacing is global, so it is set before every draw
+     *           and measure rather than assumed.
+     */
+    void ApplyLineSpacing() const;
+    /**
+     *  @brief Reloads the atlas if this Font owns one loaded from a path.
+     */
+    void ReloadIfLoaded();
+    /**
+     *  @brief Appends the codepoints of a preset to a vector.
+     */
+    static void AppendPreset(std::vector<int>& target, Charset preset);
+    /**
+     *  @brief Adds ASCII, then sorts and deduplicates.
+     */
+    static void NormaliseCharset(std::vector<int>& target);
 };
 
 /**
@@ -427,6 +784,21 @@ public:
      *  @throws std::invalid_argument if height or objectHeight is negative
      */
     float GetAlignedY(float y, float height, float objectHeight) const;
+
+    /**
+     *  @brief Places content within a box according to this alignment.
+     *  @param x left edge of the box
+     *  @param y top edge of the box
+     *  @param width width of the box
+     *  @param height height of the box
+     *  @param contentWidth width of the thing being placed
+     *  @param contentHeight height of the thing being placed
+     *  @returns Top-left corner for the content.
+     *  @note Content larger than the box gives a position outside it. That is
+     *        deliberate - it overflows rather than being clamped.
+     */
+    Vector2 GetAlignedXY(float x, float y, float width, float height,
+                  float contentWidth, float contentHeight) const;
 
 private:
     std::string AlignmentToString(const Alignments& alignment) const;

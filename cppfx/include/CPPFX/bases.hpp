@@ -86,6 +86,37 @@ public:
     bool IsExpandingToTextAutomatically() const;
 
     /**
+     *  @brief Draws the text aligned within this item's box.
+     *  @details Uses the item's own anchors and dimensions, minus text margin.
+     *           Alignment is a parameter rather than a member because it means
+     *           different things in different widgets.
+     *  @param alignment where to place the text
+     */
+    virtual std::string DrawAlignedText(const Alignment& alignment,
+                                        const std::string& text, const Font& font,
+                                        float x, float y, float width, float height) const;
+    virtual std::string DrawAlignedText(const Alignment& alignment,
+                                        const std::string& text, const Font& font) const;
+    virtual std::string DrawAlignedText(const Alignment& alignment,
+                                        float x, float y, float width, float height) const;
+    virtual std::string DrawAlignedText(const Alignment& alignment) const;
+
+    void Truncates();
+    void DoNotTructate();
+    void DoTruncation(bool doTruncation);
+    bool DoesTruncate() const;
+
+    /**
+     *  @brief Truncates text if needed.
+     *  @return truncated string
+     */
+    virtual std::string Truncate(const std::string& text, const Font& font, float maxWidth) const;
+    virtual std::string Truncate(const std::string& text, const Font& font) const;
+    virtual std::string Truncate(const std::string& text, float maxWidth) const;
+    virtual std::string Truncate(const std::string& text) const;
+    virtual std::string Truncate() const;
+
+    /**
      *  @see Item::GetClassID()
      *  @note Pointless here, just a reminder to put it in inherited classes.
      */
@@ -98,12 +129,7 @@ protected:
     std::string text;
     float textMargin; ///< distance from limit to text.
     bool expandsToTextAutomatically; ///< whether it expands its dimensions to the text's.
-
-    /**
-     *  @brief Truncates text if needed.
-     *  @return truncated string
-     */
-    virtual std::string Truncate(const std::string& text) const;
+    bool truncates = true;
 };
 
 /**

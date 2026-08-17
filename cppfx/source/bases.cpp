@@ -9,20 +9,37 @@ using namespace CPPFX;
 
 // --- Text Item ---
 
-std::string TextItem::Truncate(const std::string& text) const {
-        if (text.empty()) return text;
-        if (MeasureText(text.c_str(), font.GetFontSize()) + textMargin > width) {
-            std::string truncated = "";
-            for (const auto& c : text) { // TODO make it more clever
-                const std::string characterString(1,c);
-                if ((float)(MeasureText((truncated + "..." + characterString).c_str(), font.GetFontSize())) > width) {//may have to switch to MeasureTextEx with fonts
-                    return truncated + "...";
-                }
-                truncated += c;
-            }
-            return truncated;
-        } else return text;
+std::string TextItem::Truncate(const std::string& text, const Font& font,
+                               float maxWidth) const {
+    if (font.MeasureTextWidth(text) <= maxWidth) return text;
+    std::string truncated;
+    const char* ptr = text.c_str();
+    while (*ptr != '\0') {
+        int size = 0;
+        ::GetCodepointNext(ptr, &size);
+        const std::string next(ptr, (size > 0) ? size : 1);
+        if (font.MeasureTextWidth(truncated + next + "...") > maxWidth) break;
+        truncated += next;
+        ptr += (size > 0) ? size : 1;
     }
+    return truncated + "...";
+}
+
+std::string TextItem::Truncate(const std::string& text, const Font& font) const {
+    return Truncate(text, font, GetWidth() - (2.0f * textMargin));
+}
+
+std::string TextItem::Truncate(const std::string& text, float maxWidth) const {
+    return Truncate(text, font, maxWidth);
+}
+
+std::string TextItem::Truncate(const std::string& text) const {
+    return Truncate(text, font);
+}
+
+std::string TextItem::Truncate() const {
+    return Truncate(text, font);
+}
 
 void TextItem::ExpandToText() {
     float textWidth = MeasureText(text.c_str(), font.GetFontSize());
@@ -84,6 +101,48 @@ void TextItem::ShouldExpandToTextAutomatically(bool should) {
 
 bool TextItem::IsExpandingToTextAutomatically() const {
     return expandsToTextAutomatically;
+}
+
+std::string TextItem::DrawAlignedText(const Alignment& alignment,
+                                      const std::string& text, const Font& font,
+                                      float x, float y, float width, float height) const {
+    const std::string shown = truncates ? Truncate(text, font, width) : text;
+    const Vector2 ink = font.GetInkSize(shown);
+    font.DrawTextAt(shown, alignment.GetAlignedXY(x, y, width, height, ink.x, ink.y));
+    return shown;
+}
+
+std::string TextItem::DrawAlignedText(const Alignment& alignment,
+                                      const std::string& text, const Font& font) const {
+    return DrawAlignedText(alignment, text, font,
+                           xAnchor + textMargin, yAnchor + textMargin,
+                           width  - (2.0f * textMargin),
+                           height - (2.0f * textMargin));
+}
+
+std::string TextItem::DrawAlignedText(const Alignment& alignment,
+                                      float x, float y, float width, float height) const {
+    return DrawAlignedText(alignment, text, font, x, y, width, height);
+}
+
+std::string TextItem::DrawAlignedText(const Alignment& alignment) const {
+    return DrawAlignedText(alignment, text, font);
+}
+
+void TextItem::Truncates() {
+    truncates = true;
+}
+
+void TextItem::DoNotTructate() {
+    truncates = false;
+}
+
+void TextItem::DoTruncation(bool doTruncation) {
+    truncates = doTruncation;
+}
+
+bool TextItem::DoesTruncate() const {
+    return truncates;
 }
 
 const std::string TextItem::GetClassID() {
