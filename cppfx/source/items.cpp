@@ -1454,8 +1454,7 @@ void ProgressIndicator::DrawMyself(float elapsedTime) const {
     if (displayValue && value != -1) {
         std::string valueString = value * 100.0f == (int)(value * 100.0f) ? TextFormat("%d", (int)(value * 100.0f)) : TextFormat("%.1f", value * 100.0f);
         valueString += "%";
-        DrawText(valueString.c_str(), xAnchor + (width / 2.0f) - (MeasureText(valueString.c_str(),
-                font.GetFontSize()) / 2.0f), yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+        font.DrawAligned(valueString, Alignment::CENTRE, xAnchor, yAnchor, width, height);
     }
 }
 
@@ -1526,8 +1525,7 @@ void ProgressBar::DrawMyself(float elapsedTime) const {
     if (displayValue && value != -1) {
         std::string valueString = value * 100.0f == (int)(value * 100.0f) ? TextFormat("%d", (int)(value * 100.0f)) : TextFormat("%.1f", value * 100.0f);
         valueString += "%";
-        DrawText(valueString.c_str(), xAnchor + (width / 2.0f) - (MeasureText(valueString.c_str(),
-                font.GetFontSize()) / 2.0f), yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+        font.DrawAligned(valueString, Alignment::CENTRE, xAnchor, yAnchor, width, height);
     }
 }
 
