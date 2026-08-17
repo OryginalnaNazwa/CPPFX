@@ -97,11 +97,10 @@ bool TextItem::IsExpandingToTextAutomatically() const {
 }
 
 std::string TextItem::DrawAlignedText(const Alignment& alignment,
-                                      const std::string& text, const Font& font,
+                                      const std::string& text, const CPPFX::Font& font,
                                       float x, float y, float width, float height) const {
     const std::string shown = truncates ? Truncate(text, font, width) : text;
-    const Vector2 ink = font.GetInkSize(shown);
-    font.DrawTextAt(shown, alignment.GetAlignedXY(x, y, width, height, ink.x, ink.y));
+    font.DrawAligned(shown, alignment, x, y, width, height);
     return shown;
 }
 

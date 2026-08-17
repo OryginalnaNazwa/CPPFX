@@ -260,6 +260,145 @@ private:
 };
 
 /**
+ *  @class Alignment
+ *  @brief 3 x 3 alignment grid for text display or containers arrangement.
+ */
+class Alignment : public Property {
+public:
+    enum Alignments {
+        TOP_LEFT,       TOP_CENTRE,     TOP_RIGHT,
+        CENTRE_LEFT,    CENTRE,         CENTRE_RIGHT,
+        BOTTOM_LEFT,    BOTTOM_CENTRE,  BOTTOM_RIGHT,
+        //aliases (convenience and reuse of axes)
+        LEFT = CENTRE_LEFT,
+        RIGHT = CENTRE_RIGHT,
+        TOP = TOP_CENTRE,
+        UP = TOP_CENTRE,
+        ABOVE = TOP_CENTRE,
+        BOTTOM = BOTTOM_CENTRE,
+        DOWN = BOTTOM_CENTRE,
+        UNDER = BOTTOM_CENTRE,
+        MIDDLE = CENTRE,
+        TOP_CENTER = TOP_CENTRE,
+        CENTER_LEFT = CENTRE_LEFT,
+        CENTER = CENTRE,
+        BOTTOM_CENTER = BOTTOM_CENTRE,
+        CENTER_RIGHT = CENTRE_RIGHT
+    }; ///< alignments matrix
+
+    /**
+     *  @brief Default constructor
+     *  @details Sets alignment to top left.
+     */
+    Alignment() : Property("Alignment"), alignment(TOP_LEFT) {}
+    /**
+     *  @brief Constructor for setting alignment using enum value.
+     */
+    Alignment(const Alignments& a) : Property("Alignment"), alignment(a) {}
+    /**
+     *  @brief Constructor for setting alignment using string.
+     */
+    Alignment(const std::string& a) : Property("Alignment"), alignment(StringToAlignment(a)) {}
+
+    /**
+     *  @brief Sets the alignment based on a string.
+     *  @details Normalises by toupper only.
+     *  @param alignment string of the alignment
+     *  @throws std::invalid_argument if the parameter is not in the Alignments enum
+     */
+    void SetAlignment(const std::string& alignment);
+    /**
+     *  @brief Sets the alignment based on the value.
+     *  @param alignment value to be set
+     */
+    void SetAlignment(const Alignments& alignment);
+    /**
+     *  @brief Gets the current alignment as a value
+     *  @returns An enum value corresponding to the current alignment.
+     */
+    Alignments GetAlignment() const;
+    /**
+     *  @brief Gets the current alignment as a string.
+     *  @returns A string corresponding to the current alignment.
+     */
+    std::string GetAlignmentString() const;
+
+    /**
+     *  @brief Checks whether the current alignment is X_RIGHT.
+     *  @returns true if right
+     */
+    bool IsRightAlignment() const;
+    /**
+     *  @brief Checks whether the current alignment is X_LEFT.
+     *  @returns true if left
+     */
+    bool IsLeftAlignment() const;
+    /**
+     *  @brief Checks whether the current alignment is X_CENTRE.
+     *  @returns true if centre
+     */
+    bool IsCentreAlignment() const;
+    /**
+     *  @brief Checks whether the current alignment is BOTTOM_X.
+     *  @returns true if bottom
+     */
+    bool IsBottomAlignment() const;
+    /**
+     *  @brief Checks whether the current alignment is TOP_X.
+     *  @returns true if top
+     */
+    bool IsTopAlignment() const;
+
+    /**
+     *  @brief Gets x coordinate aligned according to current alignment.
+     *  @details Assumes top left is the default and doesn't have to do anything.
+     *  @param x x coordinate
+     *  @param width width of the object to align, for properly centering it
+     *  @param objectWidth width of the space in which aligning is happening
+     *  @returns x aligned to the current alignment
+     *  @throws std::invalid_argument if width or objectWidth is negative
+     */
+    float GetAlignedX(float x, float width, float objectWidth) const;
+    /**
+     *  @brief Gets y coordinate aligned according to current alignment.
+     *  @details Assumes top left is the default and doesn't have to do anything.
+     *  @param y y coordinate
+     *  @param height height of the object to align, for properly centering it
+     *  @param objectHeight height of the space in which aligning is happening
+     *  @returns y aligned to the current alignment
+     *  @throws std::invalid_argument if height or objectHeight is negative
+     */
+    float GetAlignedY(float y, float height, float objectHeight) const;
+
+    /**
+     *  @brief Places content within a box according to this alignment.
+     *  @param x left edge of the box
+     *  @param y top edge of the box
+     *  @param width width of the box
+     *  @param height height of the box
+     *  @param contentWidth width of the thing being placed
+     *  @param contentHeight height of the thing being placed
+     *  @returns Top-left corner for the content.
+     *  @note Content larger than the box gives a position outside it. That is
+     *        deliberate - it overflows rather than being clamped.
+     */
+    Vector2 GetAlignedXY(float x, float y, float width, float height,
+                  float contentWidth, float contentHeight) const;
+
+private:
+    std::string AlignmentToString(const Alignments& alignment) const;
+    /**
+     *  @brief Gets alignment based on a name.
+     *  @details Take in aliases, but overwrites them.
+     *  @param alignment name of the alignment
+     *  @returns Alignment
+     */
+    Alignments StringToAlignment(const std::string& alignment) const;
+
+    Alignments alignment; ///< current alignment
+};
+
+/**
  *  @class Font
  *  @brief Wrapper over raylib's fonts. Draws and measures text itself.
  *  @details Holds everything DrawTextEx needs except the position and the text:
@@ -633,6 +772,24 @@ public:
      */
     static void PopBackCodepoint(std::string& text);
 
+    /**
+     *  @brief Draws text aligned within a box.
+     *  @details Places the visible ink, not the line box, so text sits where a
+     *           reader expects it. Alignment is a parameter because it belongs
+     *           to whatever owns the box, not to the font.
+     *  @param text text to draw
+     *  @param alignment where to place it within the box
+     *  @param x left edge of the box
+     *  @param y top edge of the box
+     *  @param width width of the box
+     *  @param height height of the box
+     *  @see Alignment::GetAlignedXY
+     */
+    void DrawAligned(const std::string& text, const Alignment& alignment,
+                     float x, float y, float width, float height) const;
+    void DrawAligned(const std::string& text, const Alignment& alignment,
+                     float x, float y, float width, float height,
+                     const Color& tint) const;
 
 private:
     std::shared_ptr<::Font> font;         ///< atlas; null means use the default font
@@ -672,145 +829,6 @@ private:
      *  @brief Adds ASCII, then sorts and deduplicates.
      */
     static void NormaliseCharset(std::vector<int>& target);
-};
-
-/**
- *  @class Alignment
- *  @brief 3 x 3 alignment grid for text display or containers arrangement.
- */
-class Alignment : public Property {
-public:
-    enum Alignments {
-        TOP_LEFT,       TOP_CENTRE,     TOP_RIGHT,
-        CENTRE_LEFT,    CENTRE,         CENTRE_RIGHT,
-        BOTTOM_LEFT,    BOTTOM_CENTRE,  BOTTOM_RIGHT,
-        //aliases (convenience and reuse of axes)
-        LEFT = CENTRE_LEFT,
-        RIGHT = CENTRE_RIGHT,
-        TOP = TOP_CENTRE,
-        UP = TOP_CENTRE,
-        ABOVE = TOP_CENTRE,
-        BOTTOM = BOTTOM_CENTRE,
-        DOWN = BOTTOM_CENTRE,
-        UNDER = BOTTOM_CENTRE,
-        MIDDLE = CENTRE,
-        TOP_CENTER = TOP_CENTRE,
-        CENTER_LEFT = CENTRE_LEFT,
-        CENTER = CENTRE,
-        BOTTOM_CENTER = BOTTOM_CENTRE,
-        CENTER_RIGHT = CENTRE_RIGHT
-    }; ///< alignments matrix
-
-    /**
-     *  @brief Default constructor
-     *  @details Sets alignment to top left.
-     */
-    Alignment() : Property("Alignment"), alignment(TOP_LEFT) {}
-    /**
-     *  @brief Constructor for setting alignment using enum value.
-     */
-    Alignment(const Alignments& a) : Property("Alignment"), alignment(a) {}
-    /**
-     *  @brief Constructor for setting alignment using string.
-     */
-    Alignment(const std::string& a) : Property("Alignment"), alignment(StringToAlignment(a)) {}
-
-    /**
-     *  @brief Sets the alignment based on a string.
-     *  @details Normalises by toupper only.
-     *  @param alignment string of the alignment
-     *  @throws std::invalid_argument if the parameter is not in the Alignments enum
-     */
-    void SetAlignment(const std::string& alignment);
-    /**
-     *  @brief Sets the alignment based on the value.
-     *  @param alignment value to be set
-     */
-    void SetAlignment(const Alignments& alignment);
-    /**
-     *  @brief Gets the current alignment as a value
-     *  @returns An enum value corresponding to the current alignment.
-     */
-    Alignments GetAlignment() const;
-    /**
-     *  @brief Gets the current alignment as a string.
-     *  @returns A string corresponding to the current alignment.
-     */
-    std::string GetAlignmentString() const;
-
-    /**
-     *  @brief Checks whether the current alignment is X_RIGHT.
-     *  @returns true if right
-     */
-    bool IsRightAlignment() const;
-    /**
-     *  @brief Checks whether the current alignment is X_LEFT.
-     *  @returns true if left
-     */
-    bool IsLeftAlignment() const;
-    /**
-     *  @brief Checks whether the current alignment is X_CENTRE.
-     *  @returns true if centre
-     */
-    bool IsCentreAlignment() const;
-    /**
-     *  @brief Checks whether the current alignment is BOTTOM_X.
-     *  @returns true if bottom
-     */
-    bool IsBottomAlignment() const;
-    /**
-     *  @brief Checks whether the current alignment is TOP_X.
-     *  @returns true if top
-     */
-    bool IsTopAlignment() const;
-
-    /**
-     *  @brief Gets x coordinate aligned according to current alignment.
-     *  @details Assumes top left is the default and doesn't have to do anything.
-     *  @param x x coordinate
-     *  @param width width of the object to align, for properly centering it
-     *  @param objectWidth width of the space in which aligning is happening
-     *  @returns x aligned to the current alignment
-     *  @throws std::invalid_argument if width or objectWidth is negative
-     */
-    float GetAlignedX(float x, float width, float objectWidth) const;
-    /**
-     *  @brief Gets y coordinate aligned according to current alignment.
-     *  @details Assumes top left is the default and doesn't have to do anything.
-     *  @param y y coordinate
-     *  @param height height of the object to align, for properly centering it
-     *  @param objectHeight height of the space in which aligning is happening
-     *  @returns y aligned to the current alignment
-     *  @throws std::invalid_argument if height or objectHeight is negative
-     */
-    float GetAlignedY(float y, float height, float objectHeight) const;
-
-    /**
-     *  @brief Places content within a box according to this alignment.
-     *  @param x left edge of the box
-     *  @param y top edge of the box
-     *  @param width width of the box
-     *  @param height height of the box
-     *  @param contentWidth width of the thing being placed
-     *  @param contentHeight height of the thing being placed
-     *  @returns Top-left corner for the content.
-     *  @note Content larger than the box gives a position outside it. That is
-     *        deliberate - it overflows rather than being clamped.
-     */
-    Vector2 GetAlignedXY(float x, float y, float width, float height,
-                  float contentWidth, float contentHeight) const;
-
-private:
-    std::string AlignmentToString(const Alignments& alignment) const;
-    /**
-     *  @brief Gets alignment based on a name.
-     *  @details Take in aliases, but overwrites them.
-     *  @param alignment name of the alignment
-     *  @returns Alignment
-     */
-    Alignments StringToAlignment(const std::string& alignment) const;
-
-    Alignments alignment; ///< current alignment
 };
 
 }

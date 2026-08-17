@@ -282,6 +282,129 @@ float Border::GetThickness() const {
     return thickness;
 }
 
+//--- Alignment ---
+
+//--- Setters ---
+void Alignment::SetAlignment(const Alignments& alignment) {
+    this->alignment = alignment;
+}
+
+void Alignment::SetAlignment(const std::string& alignment) {
+    this->alignment = StringToAlignment(alignment);
+}
+
+Alignment::Alignments Alignment::GetAlignment() const {
+    return this->alignment;
+}
+
+std::string Alignment::GetAlignmentString() const {
+    return AlignmentToString(this->alignment);
+}
+
+Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment_string) const {
+    static const std::unordered_map<std::string, Alignments> map = {
+        {"TOP_CENTRE", TOP_CENTRE}, {"TOP_CENTER", TOP_CENTRE}, {"TOP", TOP_CENTRE}, {"ABOVE", TOP_CENTRE}, {"UP", TOP_CENTRE},
+        {"TOP_LEFT",   TOP_LEFT},
+        {"TOP_RIGHT",  TOP_RIGHT},
+        {"CENTRE_LEFT",  CENTRE_LEFT}, {"CENTER_LEFT", CENTRE_LEFT}, {"LEFT", CENTRE_LEFT},
+        {"CENTRE",       CENTRE}, {"CENTER", CENTRE}, {"MIDDLE", CENTRE},
+        {"CENTRE_RIGHT", CENTRE_RIGHT}, {"CENTER_RIGHT", CENTRE_RIGHT}, {"RIGHT", CENTRE_RIGHT},
+        {"BOTTOM_LEFT",   BOTTOM_LEFT},
+        {"BOTTOM_CENTRE", BOTTOM_CENTRE}, {"BOTTOM_CENTER", BOTTOM_CENTRE}, {"BOTTOM", BOTTOM_CENTRE}, {"DOWN", BOTTOM_CENTRE}, {"UNDER", BOTTOM_CENTRE},
+        {"BOTTOM_RIGHT",  BOTTOM_RIGHT},
+    };
+
+    std::string normal = alignment_string;
+    std::transform(normal.begin(), normal.end(), normal.begin(), ::toupper);
+
+    auto it = map.find(normal);
+    if (it != map.end()) return it->second;
+    throw std::invalid_argument("No alignment of such name found: " + alignment_string);
+}
+
+std::string Alignment::AlignmentToString(const Alignments& alignment) const {
+    switch (alignment) {
+        case Alignments::TOP_LEFT:      return "TOP_LEFT";
+        case Alignments::TOP_CENTRE:    return "TOP_CENTRE";
+        case Alignments::TOP_RIGHT:     return "TOP_RIGHT";
+        case Alignments::CENTRE_LEFT:   return "CENTRE_LEFT";
+        case Alignments::CENTRE:        return "CENTRE";
+        case Alignments::CENTRE_RIGHT:  return "CENTRE_RIGHT";
+        case Alignments::BOTTOM_LEFT:   return "BOTTOM_LEFT";
+        case Alignments::BOTTOM_CENTRE: return "BOTTOM_CENTRE";
+        case Alignments::BOTTOM_RIGHT:  return "BOTTOM_RIGHT";
+        default: throw std::invalid_argument("No alignment found");
+    }
+}
+
+bool Alignment::IsRightAlignment() const {
+    return alignment == Alignment::Alignments::TOP_RIGHT || alignment == Alignment::Alignments::CENTRE_RIGHT || alignment == Alignment::Alignments::BOTTOM_RIGHT;
+}
+
+bool Alignment::IsLeftAlignment() const {
+    return alignment == Alignment::Alignments::TOP_LEFT || alignment == Alignment::Alignments::CENTRE_LEFT || alignment == Alignment::Alignments::BOTTOM_LEFT;
+}
+
+bool Alignment::IsCentreAlignment() const {
+    return alignment == Alignment::Alignments::TOP_CENTRE || alignment == Alignment::Alignments::CENTRE || alignment == Alignment::Alignments::BOTTOM_CENTRE;
+}
+
+bool Alignment::IsBottomAlignment() const {
+    return alignment == Alignment::Alignments::BOTTOM_CENTRE || alignment == Alignment::Alignments::BOTTOM_LEFT || alignment == Alignment::Alignments::BOTTOM_RIGHT;
+}
+
+bool Alignment::IsTopAlignment() const {
+    return alignment == Alignment::Alignments::TOP_CENTRE || alignment == Alignment::Alignments::TOP_LEFT || alignment == Alignment::Alignments::TOP_RIGHT;
+}
+
+float Alignment::GetAlignedX(float x, float width, float objectWidth) const {
+    if (width < 0.0f) {
+        throw std::invalid_argument("Cannot align x: negative width");
+    }
+    if (objectWidth < 0.0f) {
+        throw std::invalid_argument("Cannot align x: negative object's width");
+    }
+    switch (alignment) {
+        case TOP_LEFT:
+        case CENTRE_LEFT:
+        case BOTTOM_LEFT: return x; // left is the default
+        case TOP_CENTRE:
+        case CENTRE:
+        case BOTTOM_CENTRE: return x + (objectWidth / 2.0f) - (width / 2.0f); // move to the half of the object, move back by half of the alignee
+        case TOP_RIGHT:
+        case CENTRE_RIGHT:
+        case BOTTOM_RIGHT: return (x + objectWidth) - width; // move to the far right, go back by alignee's width
+        default: return 0; // should't happen
+    }
+}
+
+float Alignment::GetAlignedY(float y, float height, float objectHeight) const {
+    if (height < 0.0f) {
+        throw std::invalid_argument("Cannot align y: negative height");
+    }
+    if (objectHeight < 0.0f) {
+        throw std::invalid_argument("Cannot align y: negative object's height");
+    }
+    switch (alignment) {
+        case TOP_LEFT:
+        case TOP_CENTRE:
+        case TOP_RIGHT:  return y; // top is the default
+        case CENTRE_LEFT:
+        case CENTRE:
+        case CENTRE_RIGHT: return y + (objectHeight / 2.0f) - (height / 2.0f); // move to the half of the object, move back by half of the alignee
+        case BOTTOM_CENTRE:
+        case BOTTOM_LEFT:
+        case BOTTOM_RIGHT: return (y + objectHeight) - height; // move to the far down, go back by alignee's height
+        default: return 0; // should't happen
+    }
+}
+
+Vector2 Alignment::GetAlignedXY(float x, float y, float width, float height,
+                         float contentWidth, float contentHeight) const {
+    return Vector2{ GetAlignedX(x, contentWidth,  width),
+                    GetAlignedY(y, contentHeight, height) };
+}
+
 //------Font--------
 
 void CPPFX::Font::AppendCodepoint(std::string& text, int codepoint) {
@@ -719,126 +842,14 @@ float CPPFX::Font::GetVerticalCentreOffset(float boxHeight) const {
     return ((boxHeight - GetCapHeight()) / 2.0f) - GetCapOffset();
 }
 
-
-//--- Alignment ---
-
-//--- Setters ---
-void Alignment::SetAlignment(const Alignments& alignment) {
-    this->alignment = alignment;
+void CPPFX::Font::DrawAligned(const std::string& text, const Alignment& alignment,
+                              float x, float y, float width, float height,
+                              const Color& tint) const {
+    const Vector2 ink = GetInkSize(text);
+    DrawTextAt(text, alignment.GetAlignedXY(x, y, width, height, ink.x, ink.y), tint);
 }
 
-void Alignment::SetAlignment(const std::string& alignment) {
-    this->alignment = StringToAlignment(alignment);
-}
-
-Alignment::Alignments Alignment::GetAlignment() const {
-    return this->alignment;
-}
-
-std::string Alignment::GetAlignmentString() const {
-    return AlignmentToString(this->alignment);
-}
-
-Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment_string) const {
-    static const std::unordered_map<std::string, Alignments> map = {
-        {"TOP_CENTRE", TOP_CENTRE}, {"TOP_CENTER", TOP_CENTRE}, {"TOP", TOP_CENTRE}, {"ABOVE", TOP_CENTRE}, {"UP", TOP_CENTRE},
-        {"TOP_LEFT",   TOP_LEFT},
-        {"TOP_RIGHT",  TOP_RIGHT},
-        {"CENTRE_LEFT",  CENTRE_LEFT}, {"CENTER_LEFT", CENTRE_LEFT}, {"LEFT", CENTRE_LEFT},
-        {"CENTRE",       CENTRE}, {"CENTER", CENTRE}, {"MIDDLE", CENTRE},
-        {"CENTRE_RIGHT", CENTRE_RIGHT}, {"CENTER_RIGHT", CENTRE_RIGHT}, {"RIGHT", CENTRE_RIGHT},
-        {"BOTTOM_LEFT",   BOTTOM_LEFT},
-        {"BOTTOM_CENTRE", BOTTOM_CENTRE}, {"BOTTOM_CENTER", BOTTOM_CENTRE}, {"BOTTOM", BOTTOM_CENTRE}, {"DOWN", BOTTOM_CENTRE}, {"UNDER", BOTTOM_CENTRE},
-        {"BOTTOM_RIGHT",  BOTTOM_RIGHT},
-    };
-
-    std::string normal = alignment_string;
-    std::transform(normal.begin(), normal.end(), normal.begin(), ::toupper);
-
-    auto it = map.find(normal);
-    if (it != map.end()) return it->second;
-    throw std::invalid_argument("No alignment of such name found: " + alignment_string);
-}
-
-std::string Alignment::AlignmentToString(const Alignments& alignment) const {
-    switch (alignment) {
-        case Alignments::TOP_LEFT:      return "TOP_LEFT";
-        case Alignments::TOP_CENTRE:    return "TOP_CENTRE";
-        case Alignments::TOP_RIGHT:     return "TOP_RIGHT";
-        case Alignments::CENTRE_LEFT:   return "CENTRE_LEFT";
-        case Alignments::CENTRE:        return "CENTRE";
-        case Alignments::CENTRE_RIGHT:  return "CENTRE_RIGHT";
-        case Alignments::BOTTOM_LEFT:   return "BOTTOM_LEFT";
-        case Alignments::BOTTOM_CENTRE: return "BOTTOM_CENTRE";
-        case Alignments::BOTTOM_RIGHT:  return "BOTTOM_RIGHT";
-        default: throw std::invalid_argument("No alignment found");
-    }
-}
-
-bool Alignment::IsRightAlignment() const {
-    return alignment == Alignment::Alignments::TOP_RIGHT || alignment == Alignment::Alignments::CENTRE_RIGHT || alignment == Alignment::Alignments::BOTTOM_RIGHT;
-}
-
-bool Alignment::IsLeftAlignment() const {
-    return alignment == Alignment::Alignments::TOP_LEFT || alignment == Alignment::Alignments::CENTRE_LEFT || alignment == Alignment::Alignments::BOTTOM_LEFT;
-}
-
-bool Alignment::IsCentreAlignment() const {
-    return alignment == Alignment::Alignments::TOP_CENTRE || alignment == Alignment::Alignments::CENTRE || alignment == Alignment::Alignments::BOTTOM_CENTRE;
-}
-
-bool Alignment::IsBottomAlignment() const {
-    return alignment == Alignment::Alignments::BOTTOM_CENTRE || alignment == Alignment::Alignments::BOTTOM_LEFT || alignment == Alignment::Alignments::BOTTOM_RIGHT;
-}
-
-bool Alignment::IsTopAlignment() const {
-    return alignment == Alignment::Alignments::TOP_CENTRE || alignment == Alignment::Alignments::TOP_LEFT || alignment == Alignment::Alignments::TOP_RIGHT;
-}
-
-float Alignment::GetAlignedX(float x, float width, float objectWidth) const {
-    if (width < 0.0f) {
-        throw std::invalid_argument("Cannot align x: negative width");
-    }
-    if (objectWidth < 0.0f) {
-        throw std::invalid_argument("Cannot align x: negative object's width");
-    }
-    switch (alignment) {
-        case TOP_LEFT:
-        case CENTRE_LEFT:
-        case BOTTOM_LEFT: return x; // left is the default
-        case TOP_CENTRE:
-        case CENTRE:
-        case BOTTOM_CENTRE: return x + (objectWidth / 2.0f) - (width / 2.0f); // move to the half of the object, move back by half of the alignee
-        case TOP_RIGHT:
-        case CENTRE_RIGHT:
-        case BOTTOM_RIGHT: return (x + objectWidth) - width; // move to the far right, go back by alignee's width
-        default: return 0; // should't happen
-    }
-}
-
-float Alignment::GetAlignedY(float y, float height, float objectHeight) const {
-    if (height < 0.0f) {
-        throw std::invalid_argument("Cannot align y: negative height");
-    }
-    if (objectHeight < 0.0f) {
-        throw std::invalid_argument("Cannot align y: negative object's height");
-    }
-    switch (alignment) {
-        case TOP_LEFT:
-        case TOP_CENTRE:
-        case TOP_RIGHT:  return y; // top is the default
-        case CENTRE_LEFT:
-        case CENTRE:
-        case CENTRE_RIGHT: return y + (objectHeight / 2.0f) - (height / 2.0f); // move to the half of the object, move back by half of the alignee
-        case BOTTOM_CENTRE:
-        case BOTTOM_LEFT:
-        case BOTTOM_RIGHT: return (y + objectHeight) - height; // move to the far down, go back by alignee's height
-        default: return 0; // should't happen
-    }
-}
-
-Vector2 Alignment::GetAlignedXY(float x, float y, float width, float height,
-                         float contentWidth, float contentHeight) const {
-    return Vector2{ GetAlignedX(x, contentWidth,  width),
-                    GetAlignedY(y, contentHeight, height) };
+void CPPFX::Font::DrawAligned(const std::string& text, const Alignment& alignment,
+                              float x, float y, float width, float height) const {
+    DrawAligned(text, alignment, x, y, width, height, colour.GetColour());
 }
