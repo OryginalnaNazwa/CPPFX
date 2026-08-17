@@ -89,8 +89,7 @@ void Button::DrawMyself(float elapsedTime) const {
     } else DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
 
     if (text != "") {
-       DrawText(text.c_str(), xAnchor + (width / 2.0f) - (MeasureText(text.c_str(), font.GetFontSize()) / 2.0f), yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f),
-                    font.GetFontSize(), font.colour.GetColour());
+       DrawAlignedText(Alignment::CENTRE);
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
