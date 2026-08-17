@@ -32,11 +32,10 @@ void TextField::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
-            const std::string truncated = truncates ? Truncate(promptText, promptFont) : promptText;
-            DrawAlignedText(Alignment::CENTRE_LEFT, truncated, promptFont);
+            DrawAlignedText(Alignment::CENTRE_LEFT, promptText, promptFont);
         }
     } else {
-        const std::string truncated = truncates ? Truncate() : text;
+        const std::string truncated = DrawAlignedText(Alignment::CENTRE_LEFT, text, font);
         if (focused && fmod(elapsedTime, 1.0f) < 0.5f) {
             font.DrawText("|",
                 xAnchor + textMargin + font.MeasureTextWidth(truncated) + 2.0f,
@@ -49,24 +48,16 @@ void TextField::DrawMyself(float elapsedTime) const {
 void TextField::DoFocusAction(float elapsedTime) {
     if (focused) {
         if (IsKeyPressed(KEY_BACKSPACE)) {
-            if (text != "") {
-                text.erase(text.size() - 1);
-            }
+            Font::PopBackCodepoint(text);
         } else if (IsKeyDown(KEY_BACKSPACE)) {
-            if (text != "") {
-                if (fmod(elapsedTime, 0.1f) < GetFrameTime()) { // works, but it's a bit janky
-                    text.erase(text.size() - 1);
-                }
-            }
+            if (fmod(elapsedTime, 0.1f) < GetFrameTime()) Font::PopBackCodepoint(text);
         } else {
             int ch = GetCharPressed();
-            if (ch != 0) {
-                std::string newText = text;
-                newText += (int)ch;
-                SetText(newText);
+            while (ch > 0) {
+                Font::AppendCodepoint(text, ch);
+                ch = GetCharPressed();
             }
         }
-
     }
 }
 
@@ -82,19 +73,8 @@ std::string TextField::GetPromptText() const {
     return promptText;
 }
 
-std::string TextField::Truncate(const std::string& text) const {
-    const static float BLINKER_PAD = 2.0f; //makes sure that the blinker won't get out
-    if (MeasureText((text + "|").c_str(), font.GetFontSize()) + textMargin + BLINKER_PAD > width) {
-        std::string truncated = "";
-        for (const auto& c : text) {
-            const std::string characterString(1,c);
-            if (MeasureText((truncated + characterString + "_...|").c_str(), font.GetFontSize()) + BLINKER_PAD > width) {//'_' - little hack to make sure the blinker will stay inbound
-                return truncated + "...";
-            }
-            truncated += c;
-        }
-        return truncated;
-    } else return text;
+std::string TextField::Truncate(const std::string& text, const CPPFX::Font& font, float maxWidth) const {
+    return TextItem::Truncate(text, font, maxWidth - font.MeasureTextWidth("|"));
 }
 
 const std::string TextField::GetClassID() {
@@ -1307,15 +1287,17 @@ void PasswordField::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
-            DrawText(Truncate(promptText).c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), promptFont.colour.GetColour());
+            const std::string truncated = truncates ? Truncate(promptText, promptFont) : promptText;
+            DrawAlignedText(Alignment::CENTRE_LEFT, truncated, promptFont);
         }
     } else {
         std::string password(text.size(), mask);
-        std::string truncated = Truncate(password);
-        DrawText(truncated.c_str(), xAnchor + textMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
+        const std::string truncated = truncates ? Truncate(password) : password;
+        DrawAlignedText(Alignment::CENTRE_LEFT, truncated, font);
         if (focused && fmod(elapsedTime, 1.0f) < 0.5f) {
-            DrawText("|", MeasureText(truncated.c_str(), font.GetFontSize()) + xAnchor + textMargin + 2.0f, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f),
-                      font.GetFontSize(), font.colour.GetColour());
+            font.DrawText("|",
+                xAnchor + textMargin + font.MeasureTextWidth(truncated) + 2.0f,
+                yAnchor + font.GetVerticalCentreOffset(height));
         }
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);

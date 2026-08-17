@@ -133,7 +133,7 @@ void TextItem::Truncates() {
     truncates = true;
 }
 
-void TextItem::DoNotTructate() {
+void TextItem::DoNotTrunctate() {
     truncates = false;
 }
 

@@ -93,16 +93,16 @@ public:
      *  @param alignment where to place the text
      */
     virtual std::string DrawAlignedText(const Alignment& alignment,
-                                        const std::string& text, const Font& font,
+                                        const std::string& text, const CPPFX::Font& font,
                                         float x, float y, float width, float height) const;
     virtual std::string DrawAlignedText(const Alignment& alignment,
-                                        const std::string& text, const Font& font) const;
+                                        const std::string& text, const CPPFX::Font& font) const;
     virtual std::string DrawAlignedText(const Alignment& alignment,
                                         float x, float y, float width, float height) const;
     virtual std::string DrawAlignedText(const Alignment& alignment) const;
 
     void Truncates();
-    void DoNotTructate();
+    void DoNotTrunctate();
     void DoTruncation(bool doTruncation);
     bool DoesTruncate() const;
 
@@ -110,8 +110,8 @@ public:
      *  @brief Truncates text if needed.
      *  @return truncated string
      */
-    virtual std::string Truncate(const std::string& text, const Font& font, float maxWidth) const;
-    virtual std::string Truncate(const std::string& text, const Font& font) const;
+    virtual std::string Truncate(const std::string& text, const CPPFX::Font& font, float maxWidth) const;
+    virtual std::string Truncate(const std::string& text, const CPPFX::Font& font) const;
     virtual std::string Truncate(const std::string& text, float maxWidth) const;
     virtual std::string Truncate(const std::string& text) const;
     virtual std::string Truncate() const;

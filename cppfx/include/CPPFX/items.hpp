@@ -55,6 +55,9 @@ public:
  */
 class TextField : public TextItem {
 public:
+    using TextItem::Truncate;
+    using TextItem::DrawAlignedText;
+
     Font promptFont; ///< mostly here for colour, but maybe you want other font for your prompt text, why not
 
     TextField() : Item("TextField"), TextItem("TextField"), promptFont(height / 4.0f, GREY), promptText("Text goes here...") {ClearText();}
@@ -72,14 +75,14 @@ public:
      */
     static const std::string GetClassID();
 
-protected:
-    std::string promptText; ///< string displayed when the text is empty
-
     /**
      *  @see TextItem::Truncate
      *  @details Includes blinker in truncation
      */
-    std::string Truncate(const std::string& text) const override;
+    virtual std::string Truncate(const std::string& text, const CPPFX::Font& font, float maxWidth) const override;
+
+protected:
+    std::string promptText; ///< string displayed when the text is empty
 };
 
 class EmbeddedTextField : public TextField, public virtual Embedded {
