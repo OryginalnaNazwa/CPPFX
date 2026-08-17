@@ -1663,42 +1663,34 @@ void PieChart::DrawMyself(float elapsedTime) const {
         DrawCircleSector(Vector2{TranslateXToCentre(), TranslateYToCentre()}, GetRadius(), currentAngle, currentAngle + (percent * 360), std::max(4, (int)(percent * 36)), c);
 
         if (showPercentage) {
-            float xShift = 0.0f;
-            float textAngle = currentAngle + (180.0f * percent); //average of start and end angle, simplified
-
-            std::string valueString = percent * 100.0f == (int)(percent * 100.0f) ? TextFormat("%d", (int)(percent * 100.0f)) : TextFormat("%.1f", percent * 100.0f);
+            const float textAngle = currentAngle + (180.0f * percent);
+            std::string valueString = (percent * 100.0f == (int)(percent * 100.0f))
+                ? TextFormat("%d", (int)(percent * 100.0f))
+                : TextFormat("%.1f", percent * 100.0f);
             valueString += "%";
 
-            if (textAngle < 90.0f) {
-                xShift = MeasureText(valueString.c_str(), font.GetFontSize());
-            }
-
-            DrawText(valueString.c_str(), TranslateXToCentre() + (GetRadius() / 2.0f * cos(textAngle * DEG2RAD)) - (MeasureText(valueString.c_str(), font.GetFontSize()) / 2.0f) + xShift,
-                    TranslateYToCentre() + (GetRadius() / 2.0f * sin(textAngle * DEG2RAD)), font.GetFontSize(), font.colour.GetColour());
+            const float px = TranslateXToCentre() + (GetRadius() / 2.0f * (float)cos(textAngle * DEG2RAD));
+            const float py = TranslateYToCentre() + (GetRadius() / 2.0f * (float)sin(textAngle * DEG2RAD));
+            font.DrawAligned(valueString, Alignment::CENTRE, px, py, 0.0f, 0.0f);
         }
+
         if (showLabels) {
-            float xShift = 0.0f, yShift = 0.0f;
-            float textAngle = currentAngle + (180.0f * percent); //average of start and end angle, simplified
+            const float textAngle = currentAngle + (180.0f * percent);
+            const std::string shown = (values.size() == labels.size())
+                ? labels[index]
+                : ((element == (int)element) ? TextFormat("%d", (int)element)
+                                             : TextFormat("%.2f", element));
 
-            if (textAngle > 180.0f) {
-                yShift += -font.GetFontSize() - border.GetThickness();
-            }
+            Alignment::Alignments a = Alignment::CENTRE;
+            if (textAngle > 90.0f && textAngle < 270.0f)      a = Alignment::CENTRE_RIGHT;
+            else if (textAngle < 90.0f || textAngle > 270.0f) a = Alignment::CENTRE_LEFT;
 
-            if (values.size() == labels.size()) {
-                std::string label = labels[index];
-                if (textAngle > 90.0f && textAngle < 270.0f) {
-                    xShift = -MeasureText(label.c_str(), font.GetFontSize()) - border.GetThickness();
-                } else if (textAngle < 90.0f) {
-                    xShift = MeasureText(label.c_str(), font.GetFontSize()) + border.GetThickness();
-                }
-
-                DrawText(label.c_str(), TranslateXToCentre() + (GetRadius()  * cos(textAngle * DEG2RAD)) - (MeasureText(label.c_str(), font.GetFontSize()) / 2.0f) + xShift,
-                        TranslateYToCentre() + (GetRadius() * sin(textAngle * DEG2RAD)) + yShift, font.GetFontSize(), font.colour.GetColour());
-            } else {
-                std::string elementText = element == (int)(element) ? TextFormat("%d", (int)(element)) : TextFormat("%.2f", element);
-                DrawText(elementText.c_str(), TranslateXToCentre() + (GetRadius()  * cos(textAngle * DEG2RAD)) - (MeasureText(elementText.c_str(), font.GetFontSize()) / 2.0f) + xShift,
-                        TranslateYToCentre() + (GetRadius() * sin(textAngle * DEG2RAD)) + yShift, font.GetFontSize(), font.colour.GetColour());
-            }
+            const float pad = (a == Alignment::CENTRE_LEFT) ? border.GetThickness()
+                            : (a == Alignment::CENTRE_RIGHT) ? -border.GetThickness()
+                            : 0.0f;
+            const float lx = TranslateXToCentre() + (GetRadius() * (float)cos(textAngle * DEG2RAD)) + pad;
+            const float ly = TranslateYToCentre() + (GetRadius() * (float)sin(textAngle * DEG2RAD));
+            font.DrawAligned(shown, a, lx, ly, 0.0f, 0.0f);
         }
         currentAngle += 360.0f * percent;
         index++;
