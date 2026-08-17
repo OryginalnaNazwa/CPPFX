@@ -126,18 +126,16 @@ void CheckBox::DrawMyself(float elapsedTime) const {
 
 
     if (text != "") {
-        if (alignment.IsRightAlignment()) {
-            DrawText(text.c_str(), xAnchor + width + textMargin + labelMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
-        } else if (alignment.IsLeftAlignment()) {
-            DrawText(text.c_str(), xAnchor - textMargin - labelMargin - MeasureText(text.c_str(),
-                    font.GetFontSize()), yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f), font.GetFontSize(), font.colour.GetColour());
-        } else if (alignment.IsBottomAlignment()) {
-            DrawText(text.c_str(), xAnchor + (width / 2.0f) - (MeasureText(text.c_str(), font.GetFontSize()) / 2.0f),
-                     yAnchor + height + textMargin + labelMargin, font.GetFontSize(), font.colour.GetColour());
-        } else {
-            DrawText(text.c_str(), xAnchor + (width / 2.0f) - (MeasureText(text.c_str(), font.GetFontSize()) / 2.0f),
-                     yAnchor - textMargin - labelMargin - font.GetFontSize(), font.GetFontSize(), font.colour.GetColour());
-        }
+        float gap = textMargin + labelMargin;
+        const Vector2 ink = font.GetInkSize(text);
+        float x = xAnchor, y = yAnchor, w = width, h = height;
+
+        if (alignment.IsRightAlignment())       { x += width + gap;   w = ink.x; }
+        else if (alignment.IsLeftAlignment())   { x -= gap + ink.x;   w = ink.x; }
+        else if (alignment.IsBottomAlignment()) { y += height + gap;  h = ink.y; }
+        else                                    { y -= gap + ink.y;   h = ink.y; }
+
+        DrawAlignedText(alignment, text, font, x, y, w, h);
     }
 
     if (alignment.IsRightAlignment()) {
@@ -318,7 +316,7 @@ void RadioGroup::AddButton(const std::string& label) {
 
 void RadioGroup::RemoveButton(const std::string& label) {
     if (buttons.empty()) {
-        CPPFX_THROW(std::runtime_error, "Cannot remove button because there's none already.");
+        CPPFX_THROW(std::runtime_error, "Cannot remove button because there's none.");
     }
     if (!IsLabelTaken(label)) {
         CPPFX_THROW(std::out_of_range, "No button with label " + label + " found - cannot remove it.");
