@@ -923,8 +923,11 @@ const std::string HBox::GetClassID() {
 
 void Spinner::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    DrawTextEx(font.GetFont(), value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value),
-                Vector2{xAnchor + valueMargin, yAnchor + (height / 2.0f) - (font.GetFontSize() / 2.0f)}, font.GetFontSize(), font.GetSpacing(), font.colour.GetColour());
+    const std::string shown = (value == (int)value)
+        ? std::to_string((int)value)
+        : TextFormat("%.2f", value);
+    font.DrawAligned(shown, Alignment::CENTRE_LEFT,
+                     xAnchor + valueMargin, yAnchor, width - valueMargin, height);
 
     incrementButton.DrawMyself(elapsedTime);
     decrementButton.DrawMyself(elapsedTime);
