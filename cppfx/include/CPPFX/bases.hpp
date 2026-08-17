@@ -86,35 +86,103 @@ public:
     bool IsExpandingToTextAutomatically() const;
 
     /**
-     *  @brief Draws the text aligned within this item's box.
-     *  @details Uses the item's own anchors and dimensions, minus text margin.
+     *  @brief Draws text aligned within an arbitrary box.
+     *  @details The raw version: everything is a parameter. Truncates first if
+     *           the item truncates, so what gets measured for placement is what
+     *           actually gets drawn. Use it for text outside the item's own
+     *           bounds, such as CheckBox labels.
+     *
      *           Alignment is a parameter rather than a member because it means
-     *           different things in different widgets.
-     *  @param alignment where to place the text
+     *           different things in different widgets - within the box for a
+     *           Label, but which side of the box for a CheckBox.
+     *  @param alignment where to place the text within the box
+     *  @param text text to draw
+     *  @param font font to draw it with
+     *  @param x left edge of the box
+     *  @param y top edge of the box
+     *  @param width width of the box
+     *  @param height height of the box
+     *  @returns The string actually drawn, truncated or not.
+     *  @see Alignment::GetAlignedXY
+     *  @see Font::DrawTextAt
      */
     virtual std::string DrawAlignedText(const Alignment& alignment,
                                         const std::string& text, const CPPFX::Font& font,
                                         float x, float y, float width, float height) const;
+    /**
+     *  @brief Draws given text within this item's box.
+     *  @details For a second text and font, such as TextField's prompt.
+     *  @param text text to draw
+     *  @param font font to draw it with
+     *  @returns The string actually drawn, truncated or not.
+     */
     virtual std::string DrawAlignedText(const Alignment& alignment,
                                         const std::string& text, const CPPFX::Font& font) const;
+    /**
+     *  @brief Draws this item's text within an arbitrary box.
+     *  @returns The string actually drawn, truncated or not.
+     */
     virtual std::string DrawAlignedText(const Alignment& alignment,
                                         float x, float y, float width, float height) const;
+    /**
+     *  @brief Draws this item's text within its own box.
+     *  @details The usual one. Box is the item's anchors and dimensions, minus
+     *           text margin on every side.
+     *  @returns The string actually drawn, truncated or not.
+     */
     virtual std::string DrawAlignedText(const Alignment& alignment) const;
 
-    void Truncates();
-    void DoNotTrunctate();
+    /**
+     *  @brief Makes the item cut text too long for its box.
+     *  @details Default. Cut text ends in an ellipsis.
+     */
+    void DoTruncate();
+    /**
+     *  @brief Stops the item cutting text too long for its box.
+     *  @details Text overflows the box instead.
+     */
+    void DoNotTruncate();
+    /**
+     *  @brief Sets whether the item cuts text too long for its box.
+     *  @param doTruncation true - truncates, false - overflows
+     */
     void DoTruncation(bool doTruncation);
+    /**
+     *  @brief Checks whether the item cuts text too long for its box.
+     *  @returns true if truncating
+     */
     bool DoesTruncate() const;
 
     /**
-     *  @brief Truncates text if needed.
-     *  @return truncated string
+     *  @brief Cuts text to fit a width, ending it with an ellipsis.
+     *  @details Walks whole codepoints, so multi-byte characters are never
+     *           split in half. Returns the text unchanged if it already fits.
+     *  @param text text to cut
+     *  @param font font it will be drawn with; different fonts fit differently
+     *  @param maxWidth width to fit into
+     *  @returns The text, cut and suffixed with an ellipsis if it did not fit.
+     *  @see Font::MeasureTextWidth
+     *  @note This one should be overridden, others rout to it.
      */
     virtual std::string Truncate(const std::string& text, const CPPFX::Font& font, float maxWidth) const;
+    /**
+     *  @brief Cuts text to fit this item's box.
+     *  @param font font it will be drawn with
+     */
     virtual std::string Truncate(const std::string& text, const CPPFX::Font& font) const;
+    /**
+     *  @brief Cuts text to fit a width, using this item's font.
+     *  @param maxWidth width to fit into
+     */
     virtual std::string Truncate(const std::string& text, float maxWidth) const;
+    /**
+     *  @brief Cuts text to fit this item's box, using this item's font.
+     */
     virtual std::string Truncate(const std::string& text) const;
-    virtual std::string Truncate() const;
+    /**
+     *  @brief Cuts this item's own text to fit its own box.
+     */
+    virtual std::string Truncate() const; // optional overflow message?
 
     /**
      *  @see Item::GetClassID()

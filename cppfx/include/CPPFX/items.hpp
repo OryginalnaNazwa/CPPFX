@@ -148,7 +148,7 @@ public:
 
     CheckBox() : Item("CheckBox", 50.0f, 50.0f), PersistentState(), TextItem("CheckBox", 50.0f, 50.0f), alignment(Alignment::RIGHT), labelMargin(10.0f), shape(CheckBox::X) {
                     font.SetFontSize(height / 2.0f);
-                    DoNotTrunctate(); // perhaps a max width to which might truncate label?
+                    DoNotTruncate(); // perhaps a max width to which might truncate label?
                 }
 
     void DrawMyself(float elapsedTime) const override;

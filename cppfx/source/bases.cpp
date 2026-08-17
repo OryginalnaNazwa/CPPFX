@@ -22,7 +22,7 @@ std::string TextItem::Truncate(const std::string& text, const Font& font,
         truncated += next;
         ptr += (size > 0) ? size : 1;
     }
-    return truncated + "...";
+    return truncated + "..."; // customizable truncation mark?
 }
 
 std::string TextItem::Truncate(const std::string& text, const Font& font) const {
@@ -129,11 +129,11 @@ std::string TextItem::DrawAlignedText(const Alignment& alignment) const {
     return DrawAlignedText(alignment, text, font);
 }
 
-void TextItem::Truncates() {
+void TextItem::DoTruncate() {
     truncates = true;
 }
 
-void TextItem::DoNotTrunctate() {
+void TextItem::DoNotTruncate() {
     truncates = false;
 }
 
