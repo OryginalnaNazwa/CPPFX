@@ -2,9 +2,10 @@
 #include <cmath> // for fmod
 
 /*****************************************************************************************************************************
- * Simple mockup simulation controlled by a simple UI. v2
+ * Simple mockup simulation controlled by a simple UI.
  * A clock-arm like spins around. It's speed is controlled by a Spinner and the simulation can be stopped with a PressedButton.
  * ===========================================================================================================================
+ *  v2.2 - Close().
  *  v2.1 - small fixes.
  *  v2 - switched to Line for the clock.
  ******************************************************************************************************************************/
@@ -67,6 +68,7 @@ int main()
         EndDrawing();
     }
 
+    gui.Close();
     CloseWindow();
 
     return 0;

@@ -1,13 +1,14 @@
-#include <CPPFX/CPPFX.hpp>
+#include "CPPFX.hpp"
 
 using namespace std;
 using namespace CPPFX;
 
 /************************************************************************************************************************************************************************
- *  Simple login screen mockup. v2.1
+ *  Simple login screen mockup.
  *  A label with welcome text and two text fields, one masked for password.
  *  Clicking a button or pressing enter is a login attempt. Incorrect credentials end with error appearing. Correct ("Login", "Password") end in welcome label changing.
  * ======================================================================================================================================================================
+ *  v3 - removed the manual expansion now that it's automatic, removed references in lambda, just pointers. Centred the alignment.
  *  v2.1 - made up to date with convenience fixes in Label and Fields.
  *  v2 - switched to Hide and Show for error label
  ************************************************************************************************************************************************************************/
@@ -35,6 +36,7 @@ int main() {
 
     //VBox to hold other items in a neat column
     auto fields = gui.AddVBox("Fields");
+    fields->alignment.SetAlignment(Alignment::TOP_CENTRE);
     fields->SetX(GetScreenWidth() / 2.0f - 100.0f);
     fields->SetY(GetScreenHeight() / 2.0f - 200.0f);
 
@@ -53,7 +55,7 @@ int main() {
 
     auto loginButton = gui.AddButton("LoginButton");
     loginButton->SetText("Log in");
-    loginButton->onClick = [&loginField, &passwordField, &welcomeLabel, &errorLabel]() { LoginLogic(loginField, passwordField, welcomeLabel, errorLabel); }; //callback
+    loginButton->onClick = [loginField, passwordField, welcomeLabel, errorLabel]() { LoginLogic(loginField, passwordField, welcomeLabel, errorLabel); }; //callback
 
     //add items to the VBox
     fields->AddItem(welcomeLabel);

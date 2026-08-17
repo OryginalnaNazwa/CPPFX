@@ -11,7 +11,8 @@
  *  Genuinely a very rough, primitive example that was more me testing if it'll work rather than intended use case. DO NOT do things ugly. Be better. It'll pay off.
  *  Main issues: saving and loading is ugly, no insertion order retention between sessions, no actual scaling and resizing of the todo list (camera moving is a hack counteracting it).
  ========================================================================================================================================================================================
- * v1.2 - doesn't throw on not opened file. That's a first run. Doesn't need the extra file now.
+ * v2.1 - removed manual expansion to text now that it's automatic. Added Close().
+ * v2 - doesn't throw on not opened file. That's a first run. Doesn't need the extra file now.
  * v1.1 - slight fixes. Made the VBox ID not hardcoded.
  ****************************************************************************************************************************************************************************************/
 
@@ -80,12 +81,10 @@ int main() {
 
     auto todoField = gui.AddTextField(); // input field
     todoField->SetPromptText("Put todo here");
-    todoField->ExpandToText();
     todoField->border.SetThickness(10.0f);
 
     auto addButton = gui.AddButton();
     addButton->SetText("Add a todo");
-    addButton->ExpandToText();
     addButton->onClick = [&todoField, &todoList, &gui](){ // calback
         const std::string newTodo = todoField->GetText();
         if (!gui.IsIDTaken(newTodo)) {
@@ -99,7 +98,6 @@ int main() {
 
     auto saveButton = gui.AddButton();
     saveButton->SetText("Save and quit");
-    saveButton->ExpandToText();
     saveButton->onClick = [&gui, &closing](){
         SaveToFile(gui);
         closing = true;
@@ -129,6 +127,7 @@ int main() {
         if (closing) break; // gets out of the loop
     }
 
+    gui.Close();
     CloseWindow();
 
     return 0;

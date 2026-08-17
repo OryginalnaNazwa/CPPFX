@@ -3,8 +3,10 @@
 #include <cmath>
 
 /*************************************************************************************************************************************************************
- *  A simple robotic arm (v2)
+ *  A simple robotic arm
  *  Use controls to move the arm around. Arm is composed of nodes that are linked. Change length and angle using spinners. You can also add and delete nodes.
+ *  =========================================================================================================================================================
+ *  v3 - removed manual expansion to text now that it's automatic. Added Close().
  *************************************************************************************************************************************************************/
 
 class Node {
@@ -87,9 +89,9 @@ int main() {
     angleChoice->SetMax();  angleChoice->SetMaxValue(360.0f);
     angleChoice->AllowWrap();
 
-    auto nodeLabel   = gui.AddLabel();  nodeLabel->SetText("Active node index");    nodeLabel->ExpandToText();
-    auto lengthLabel = gui.AddLabel();  lengthLabel->SetText("Length of the arm");  lengthLabel->ExpandToText();
-    auto angleLabel  = gui.AddLabel();  angleLabel->SetText("Angle of the arm");    angleLabel->ExpandToText();
+    auto nodeLabel   = gui.AddLabel();  nodeLabel->SetText("Active node index");
+    auto lengthLabel = gui.AddLabel();  lengthLabel->SetText("Length of the arm");
+    auto angleLabel  = gui.AddLabel();  angleLabel->SetText("Angle of the arm");
 
     auto nodePick   = gui.AddHBox();
     nodePick->AddItem(nodeLabel);
@@ -104,12 +106,12 @@ int main() {
     anglePick->AddItem(angleChoice);
 
     auto addButton = gui.AddButton();
-    addButton->SetText("Add node to the top");  addButton->ExpandToText();
+    addButton->SetText("Add node to the top");
     addButton->onClick = [&nodes]() {AddNode(nodes);};
     addButton->border.SetThickness(5.0f);
 
     auto removeButton = gui.AddButton();
-    removeButton->SetText("Remove the top node");   removeButton->ExpandToText();
+    removeButton->SetText("Remove the top node");
     removeButton->onClick = [&nodes]() {RemoveNode(nodes);};
     removeButton->border.SetThickness(5.0f);
 
@@ -150,6 +152,7 @@ int main() {
         EndDrawing();
     }
 
+    gui.Close();
     CloseWindow();
     return 0;
 }
