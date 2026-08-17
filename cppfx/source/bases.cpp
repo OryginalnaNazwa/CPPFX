@@ -42,25 +42,18 @@ std::string TextItem::Truncate() const {
 }
 
 void TextItem::ExpandToText() {
-    float textWidth = MeasureText(text.c_str(), font.GetFontSize());
-    if (textWidth > width) {
-        SetWidth(textWidth + (2.0f * textMargin));
+    const Vector2 ink = font.GetInkSize(text);
+    if (ink.x + (2.0f * textMargin) > width) {
+        SetWidth(ink.x + (2.0f * textMargin));
     }
-
-    if (font.GetFontSize() > height) {
-        SetHeight(font.GetFontSize() + (2.0f * textMargin));
+    if (ink.y + (2.0f * textMargin) > height) {
+        SetHeight(ink.y + (2.0f * textMargin));
     }
 }
 
 void TextItem::FitToText() {
-    float textWidth = MeasureText(text.c_str(), font.GetFontSize());
-    if (textWidth + (2.0f * textMargin) != width) {
-        SetWidth(textWidth + (2.0f * textMargin));
-    }
-
-    if (font.GetFontSize() + (2.0f * textMargin) != height) {
-        SetHeight(font.GetFontSize() + (2.0f * textMargin));
-    }
+    SetWidth(font.MeasureTextWidth(text) + (2.0f * textMargin));
+    SetHeight(font.MeasureTextHeight(text) + (2.0f * textMargin));
 }
 
 void TextItem::SetText(const std::string& text) {
