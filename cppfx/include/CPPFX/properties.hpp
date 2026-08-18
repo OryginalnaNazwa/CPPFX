@@ -800,6 +800,7 @@ private:
     int loadSize;                         ///< atlas rasterisation size; 0 means match fontSize
     std::vector<int> codepoints;          ///< charset baked into the atlas
     mutable std::set<int> warnedCodepoints; ///< deduplicates missing glyph warnings
+    std::string loadedFrom;               ///< path the current atlas came from; empty if borrowed
 
     /**
      *  @brief Gets the font to actually draw with.

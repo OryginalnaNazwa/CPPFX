@@ -487,6 +487,7 @@ void CPPFX::Font::LoadFont(const std::string& fileName) {
     // atlas goes away, the atlas is unloaded, exactly once.
     font = std::shared_ptr<::Font>(new ::Font(loaded),
                                    [](::Font* f) { ::UnloadFont(*f); delete f; });
+    loadedFrom = fileName;
     warnedCodepoints.clear();
 
 #ifndef NDEBUG
@@ -510,6 +511,7 @@ void CPPFX::Font::LoadFont(const std::string& fileName) {
 
 void CPPFX::Font::UnloadFont() {
     font.reset();               // drops one share; unloads only if it was the last
+    loadedFrom.clear();
     warnedCodepoints.clear();
 }
 
@@ -532,6 +534,7 @@ void CPPFX::Font::SetFont(const ::Font& newFont) {
     // no-op deleter: somebody else owns this atlas, we only borrow it
     font = std::shared_ptr<::Font>(new ::Font(newFont),
                                    [](::Font* f) { delete f; });
+    loadedFrom.clear();       // borrowed - never reload over the top of it
     warnedCodepoints.clear();
 }
 
@@ -699,9 +702,8 @@ void CPPFX::Font::ClearCharset() {
 }
 
 void CPPFX::Font::ReloadIfLoaded() {
-    // only meaningful when we loaded it ourselves and still know from where
-    if (font && !filePath.empty()) {
-        LoadFont(filePath);
+    if (font && !loadedFrom.empty()) {
+        LoadFont(std::string(loadedFrom));   // copy: LoadFont reassigns loadedFrom
     }
 }
 
