@@ -707,8 +707,7 @@ void CPPFX::Font::ReloadIfLoaded() {
 }
 
 int CPPFX::Font::SafeGlyphIndex(const ::Font& f, int codepoint) {
-    if (f.texture.id == 0 || f.glyphCount <= 0 ||
-        f.recs == nullptr || f.glyphs == nullptr) return -1;
+    if (!IsDrawable(f)) return -1;
     const int i = ::GetGlyphIndex(f, codepoint);   // returns 0 on a bad font
     return (i >= 0 && i < f.glyphCount) ? i : -1;
 }
@@ -779,7 +778,7 @@ void CPPFX::Font::WarnAboutMissingGlyphs(const std::string& text,
 void CPPFX::Font::DrawText(const std::string& text, float x, float y,
                            const Color& tint) const {
     const ::Font f = Resolve();
-    if (f.texture.id == 0) return;   // no GL context yet, nothing to draw with
+    if (!IsDrawable(f)) return;   // no GL context yet, nothing to draw with
     ApplyLineSpacing();
     ::DrawTextEx(f, text.c_str(), Vector2{x, y}, fontSize, GetSpacing(), tint);
 }
@@ -795,7 +794,7 @@ void CPPFX::Font::DrawText(const std::string& text, const Vector2& position) con
 void CPPFX::Font::DrawTextPro(const std::string& text, const Vector2& position,
                               const Vector2& origin, float rotation) const {
     const ::Font f = Resolve();
-    if (f.texture.id == 0) return;
+    if (!IsDrawable(f)) return;
     ApplyLineSpacing();
     ::DrawTextPro(f, text.c_str(), position, origin, rotation,
                   fontSize, GetSpacing(), colour.GetColour());
@@ -824,7 +823,7 @@ void CPPFX::Font::DrawTextAt(const std::string& text, const Vector2& inkTopLeft)
 
 Vector2 CPPFX::Font::MeasureText(const std::string& text) const {
     const ::Font f = Resolve();
-    if (f.texture.id == 0) return Vector2{0.0f, 0.0f};
+    if (!IsDrawable(f)) return Vector2{0.0f, 0.0f};
     ApplyLineSpacing();
     return ::MeasureTextEx(f, text.c_str(), fontSize, GetSpacing());
 }
@@ -863,4 +862,12 @@ void CPPFX::Font::DrawAligned(const std::string& text, const Alignment& alignmen
 void CPPFX::Font::DrawAligned(const std::string& text, const Alignment& alignment,
                               float x, float y, float width, float height) const {
     DrawAligned(text, alignment, x, y, width, height, colour.GetColour());
+}
+
+bool CPPFX::Font::IsDrawable(const ::Font& f) {
+    return f.texture.id != 0 && ::IsFontValid(f);   // atlas on the GPU, glyphs in RAM
+}
+
+std::string CPPFX::Font::GetLoadedPath() const {
+    return loadedFrom;
 }

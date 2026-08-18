@@ -794,6 +794,17 @@ public:
                      float x, float y, float width, float height,
                      const Color& tint) const;
 
+    /// True when this font can actually be measured and drawn.
+    static bool IsDrawable(const ::Font& f);
+
+        /**
+     *  @brief Gets the path the current atlas was loaded from.
+     *  @details Empty when the default font is in use or the atlas was
+     *           borrowed via SetFont. Unlike GetFilePath this reflects what
+     *           is loaded, not what would load next.
+     */
+    std::string GetLoadedPath() const;
+
 private:
     std::shared_ptr<::Font> font;         ///< atlas; null means use the default font
     std::string filePath;                 ///< path stored for LoadFont

@@ -1,13 +1,5 @@
 # Builds and tests CPPFX on Linux and Windows, and publishes a draft
 # release when a version tag is pushed.
-#
-# Lives at .github/workflows/build.yml - the path is not optional, GitHub
-# only looks there. Nothing to run by hand: push the file and it runs on
-# that push and every one after. Results are under the Actions tab.
-#
-# To cut a release:
-#     git tag v0.12.0
-#     git push origin v0.12.0
 
 name: build
 
@@ -46,8 +38,7 @@ jobs:
       - name: Install raylib build deps (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev \
+            sudo apt-get install -y xvfb libasound2-dev libx11-dev libxrandr-dev \
             libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev \
             libxinerama-dev libwayland-dev libxkbcommon-dev
 
@@ -77,10 +68,17 @@ jobs:
       - name: Build
         run: cmake --build build --config Release -j
 
-      # Runs cppfx_tests. --output-on-failure prints what failed instead of
-      # just saying a test failed. Colour needs no window, so this is safe
-      # on a headless runner.
-      - name: Test
+      # cppfx_tests is headless. cppfx_tests_gl opens a window, so Linux
+      # needs a virtual display - without xvfb-run those tests would skip
+      # and the run would go green having tested half of Font.
+      - name: Test (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a ctest --test-dir build --output-on-failure
+
+      # Windows runners expose OpenGL 1.1 only, so InitWindow fails and the
+      # GL tests skip. Expected - Linux is where they actually run.
+      - name: Test (Windows)
+        if: runner.os == 'Windows'
         run: ctest --test-dir build --output-on-failure
 
       # Assembles the release tree: include/CPPFX/*.hpp, lib/libCPPFX.a,

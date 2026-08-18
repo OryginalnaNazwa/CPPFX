@@ -93,4 +93,22 @@ struct Registrar {
                                     __FILE__, __LINE__);                       \
     } while (0)
 
+/// Compares floats with a tolerance. Prints both sides and the gap.
+#define CHECK_NEAR(a, b, eps)                                                  \
+    do {                                                                       \
+        ::fxtest::CountCheck();                                                \
+        const double _a = (a), _b = (b), _e = (eps);                           \
+        if (!((_a - _b) < _e && (_b - _a) < _e)) {                             \
+            std::ostringstream _os;                                            \
+            _os << #a " ~= " #b "\n    got:      " << _a                       \
+                << "\n    expected: " << _b << " +/- " << _e;                  \
+            ::fxtest::ReportFailure(_os.str(), __FILE__, __LINE__);            \
+        }                                                                      \
+    } while (0)
+
+/// Abandons the current test without failing it. For tests that need
+/// something the environment may not have, such as a display.
+#define SKIP(why)                                                              \
+    do { ::fxtest::ReportSkip(why); return; } while (0)
+
 #endif // CPPFX_TEST_HARNESS_HPP

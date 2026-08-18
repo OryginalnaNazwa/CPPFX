@@ -74,11 +74,35 @@ target_compile_options(CPPFX PRIVATE
 
 if(CPPFX_BUILD_TESTS)
     enable_testing()
+
+    # Shared runner. Every test file registers itself, so neither binary
+    # needs editing when you add one.
+    set(CPPFX_TEST_RUNNER tests/main.cpp tests/harness.cpp)
+
+    # Headless: no window, runs anywhere.
     file(GLOB CPPFX_TEST_SOURCES CONFIGURE_DEPENDS "tests/*.cpp")
+    list(REMOVE_ITEM CPPFX_TEST_SOURCES
+         "${CMAKE_CURRENT_SOURCE_DIR}/tests/main.cpp"
+         "${CMAKE_CURRENT_SOURCE_DIR}/tests/harness.cpp")
     if(CPPFX_TEST_SOURCES)
-        add_executable(cppfx_tests ${CPPFX_TEST_SOURCES})
+        add_executable(cppfx_tests ${CPPFX_TEST_RUNNER} ${CPPFX_TEST_SOURCES})
+        target_include_directories(cppfx_tests PRIVATE tests)
         target_link_libraries(cppfx_tests PRIVATE CPPFX::CPPFX)
         add_test(NAME cppfx_tests COMMAND cppfx_tests)
+    endif()
+
+    # Needs a GL context. Separate process, because raylib leaves a stale
+    # texture id on the default font after CloseWindow and that would
+    # corrupt the headless assertions above.
+    file(GLOB CPPFX_GL_TEST_SOURCES CONFIGURE_DEPENDS "tests/gl/*.cpp")
+    if(CPPFX_GL_TEST_SOURCES)
+        add_executable(cppfx_tests_gl ${CPPFX_TEST_RUNNER} ${CPPFX_GL_TEST_SOURCES})
+        target_include_directories(cppfx_tests_gl PRIVATE tests)
+        target_link_libraries(cppfx_tests_gl PRIVATE CPPFX::CPPFX)
+        # Absolute, so ctest's working directory does not matter.
+        target_compile_definitions(cppfx_tests_gl PRIVATE
+            CPPFX_TEST_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/tests/assets")
+        add_test(NAME cppfx_tests_gl COMMAND cppfx_tests_gl)
     endif()
 endif()
 
