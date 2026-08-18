@@ -707,19 +707,19 @@ void CPPFX::Font::ReloadIfLoaded() {
     }
 }
 
+int CPPFX::Font::SafeGlyphIndex(const ::Font& f, int codepoint) {
+    if (f.texture.id == 0 || f.glyphCount <= 0 ||
+        f.recs == nullptr || f.glyphs == nullptr) return -1;
+    const int i = ::GetGlyphIndex(f, codepoint);   // returns 0 on a bad font
+    return (i >= 0 && i < f.glyphCount) ? i : -1;
+}
+
 bool CPPFX::Font::HasGlyph(int codepoint) const {
     const ::Font f = Resolve();
-    if (f.texture.id == 0 || f.glyphCount <= 0) return false;
-
-    const int i = ::GetGlyphIndex(f, codepoint);
-    if (i < 0 || i >= f.glyphCount) return false;
-
-    // GetGlyphIndex falls back to '?' on a miss, so check we got what we asked for
-    if (f.glyphs[i].value != codepoint) return false;
-
+    const int i = SafeGlyphIndex(f, codepoint);
+    if (i < 0) return false;
+    if (f.glyphs[i].value != codepoint) return false;   // fell back to '?'
     if (codepoint == ' ' || codepoint == 0x00A0 || codepoint == 0x00AD) return true;
-
-    // present in the atlas but rasterised empty - the file had no such glyph
     return f.recs[i].width > 0.0f || f.glyphs[i].advanceX > 0;
 }
 
@@ -833,16 +833,14 @@ float CPPFX::Font::MeasureTextHeight(const std::string& text) const {
 
 float CPPFX::Font::GetCapHeight() const {
     const ::Font f = Resolve();
-    if (f.texture.id == 0) return 0.0f;
-    const int i = ::GetGlyphIndex(f, 'H');
-    return f.recs[i].height * GetScaleFactor();
+    const int i = SafeGlyphIndex(f, 'H');
+    return (i < 0) ? 0.0f : f.recs[i].height * GetScaleFactor();
 }
 
 float CPPFX::Font::GetCapOffset() const {
     const ::Font f = Resolve();
-    if (f.texture.id == 0) return 0.0f;
-    const int i = ::GetGlyphIndex(f, 'H');
-    return static_cast<float>(f.glyphs[i].offsetY) * GetScaleFactor();
+    const int i = SafeGlyphIndex(f, 'H');
+    return (i < 0) ? 0.0f : static_cast<float>(f.glyphs[i].offsetY) * GetScaleFactor();
 }
 
 float CPPFX::Font::GetVerticalCentreOffset(float boxHeight) const {

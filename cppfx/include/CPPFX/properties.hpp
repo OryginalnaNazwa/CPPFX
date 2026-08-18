@@ -830,6 +830,12 @@ private:
      *  @brief Adds ASCII, then sorts and deduplicates.
      */
     static void NormaliseCharset(std::vector<int>& target);
+
+    /**
+     *  @brief Gets a glyph index that is safe to use on recs and glyphs.
+     *  @returns Index, or -1 when there is nothing to index into.
+     */
+    static int SafeGlyphIndex(const ::Font& f, int codepoint);
 };
 
 }
