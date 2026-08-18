@@ -465,14 +465,19 @@ void CPPFX::Font::LoadFont(const std::string& fileName) {
     int size = (loadSize > 0) ? loadSize : static_cast<int>(fontSize);
     if (size <= 0) size = 20;
 
-    ::Font loaded = ::LoadFontEx(fileName.c_str(), size,
+        ::Font loaded = ::LoadFontEx(fileName.c_str(), size,
                                  codepoints.data(),
                                  static_cast<int>(codepoints.size()));
 
-    if (!::IsFontValid(loaded)) {
-        ::UnloadFont(loaded);
+    // raylib hands back the default font when it cannot parse the file, and that
+    // font passes IsFontValid - so compare the atlas as well. Without this the
+    // bilinear filter below would be applied to the shared default atlas.
+    if (!::IsFontValid(loaded) ||
+        loaded.texture.id == ::GetFontDefault().texture.id) {
+        ::UnloadFont(loaded);   // no-op on the default font, raylib guards it
         throw std::runtime_error("In Font: Font at " + fileName +
-                                 " did not load correctly.");
+                                 " did not load correctly - unsupported format "
+                                 "or no glyphs for the requested charset.");
     }
 
     // smoother when drawn at a size other than the one it was baked at
