@@ -124,10 +124,10 @@ void CheckBox::DrawMyself(float elapsedTime) const {
         DrawCircle(xAnchor + (width / 2.0f), yAnchor + (height / 2.0f), width / 2.0f, colour.GetColour());
     }
 
+    const Vector2 ink = font.GetInkSize(text);
 
     if (text != "") {
         float gap = textMargin + labelMargin;
-        const Vector2 ink = font.GetInkSize(text);
         float x = xAnchor, y = yAnchor, w = width, h = height;
 
         if (alignment.IsRightAlignment())       { x += width + gap;   w = ink.x; }
@@ -139,24 +139,20 @@ void CheckBox::DrawMyself(float elapsedTime) const {
     }
 
     if (alignment.IsRightAlignment()) {
-        border.DrawMyself(xAnchor, yAnchor, width + (2.0f * textMargin) + labelMargin + MeasureText(text.c_str(), font.GetFontSize()), height);
+        border.DrawMyself(xAnchor, yAnchor,
+                          width + (2.0f * textMargin) + labelMargin + ink.x, height);
     } else if (alignment.IsLeftAlignment()) {
-        border.DrawMyself(xAnchor - (2.0f * textMargin) - labelMargin - MeasureText(text.c_str(), font.GetFontSize()),
-                        yAnchor, width + (2.0f * textMargin) + labelMargin + MeasureText(text.c_str(), font.GetFontSize()), height);
-    } else if (alignment.IsTopAlignment()) {
-        float textSize = (float)(MeasureText(text.c_str(), font.GetFontSize()));
-        if (width > textSize) {
-            border.DrawMyself(xAnchor - ((textSize - width) / 2.0f) - textMargin, yAnchor - (2.0f * textMargin) - labelMargin - font.GetFontSize(),
-                               width + (2.0f * textMargin), height + (2.0f * textMargin) + labelMargin + font.GetFontSize());
-        } else border.DrawMyself(xAnchor - ((textSize - width) / 2.0f) - textMargin, yAnchor - (2.0f * textMargin) - labelMargin - font.GetFontSize(),
-                                textSize + (2.0f * textMargin), height + (2.0f * textMargin) + labelMargin + font.GetFontSize());
+        border.DrawMyself(xAnchor - (2.0f * textMargin) - labelMargin - ink.x, yAnchor,
+                          width + (2.0f * textMargin) + labelMargin + ink.x, height);
     } else {
-        float textSize = (float)(MeasureText(text.c_str(), font.GetFontSize()));
-        if (width > textSize) {
-            border.DrawMyself(xAnchor - ((textSize - width) / 2.0f) - textMargin, yAnchor,
-                               width + (2.0f * textMargin), height + (2.0f * textMargin) + labelMargin + font.GetFontSize());
-        } else border.DrawMyself(xAnchor - ((textSize - width) / 2.0f) - textMargin, yAnchor,
-                                textSize + (2.0f * textMargin), height + (2.0f * textMargin) + labelMargin + font.GetFontSize());
+        // top and bottom differ only in whether the label sits above the box
+        const float boxWidth = std::max(width, ink.x) + (2.0f * textMargin);
+        const float boxX     = xAnchor - ((ink.x - width) / 2.0f) - textMargin;
+        const float boxY     = alignment.IsTopAlignment()
+                             ? yAnchor - (2.0f * textMargin) - labelMargin - ink.y
+                             : yAnchor;
+        border.DrawMyself(boxX, boxY, boxWidth,
+                          height + (2.0f * textMargin) + labelMargin + ink.y);
     }
     clickBorder.DrawMyself(xAnchor, yAnchor, width, height);
 
@@ -195,19 +191,20 @@ float CheckBox::GetLabelMargin() const {
 }
 
 float CheckBox::GetTotalWidth() const {
+    const float textWidth = text.empty() ? 0.0f : font.GetInkSize(text).x;
     if (alignment.IsRightAlignment() || alignment.IsLeftAlignment()) {
-        return Item::GetTotalWidth() + clickBorder.GetThickness() + labelMargin + (2.0f * textMargin) + (float)(MeasureText(text.c_str(), font.GetFontSize()));
+        return Item::GetTotalWidth() + clickBorder.GetThickness() + labelMargin
+             + (2.0f * textMargin) + textWidth;
     }
-    float textLength = (float)(MeasureText(text.c_str(), font.GetFontSize()));
-    if (textLength > width) {
-        return textLength + (2.0f * textMargin);
-    }
+    if (textWidth > width) return textWidth + (2.0f * textMargin);
     return Item::GetTotalWidth() + clickBorder.GetThickness();
 }
 
 float CheckBox::GetTotalHeight() const {
     if (alignment.IsTopAlignment() || alignment.IsBottomAlignment()) {
-        return Item::GetTotalHeight() + clickBorder.GetThickness() + labelMargin + (2.0f * textMargin) + font.GetFontSize();
+        const float textHeight = text.empty() ? 0.0f : font.GetInkSize(text).y;
+        return Item::GetTotalHeight() + clickBorder.GetThickness() + labelMargin
+             + (2.0f * textMargin) + textHeight;
     }
     return Item::GetTotalHeight() + clickBorder.GetThickness();
 }
