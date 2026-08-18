@@ -24,7 +24,7 @@
  *  runner without xvfb reports honestly instead of going red.
  **********************************************************************/
 
-using CPPFX::Font;
+namespace fx = CPPFX;
 
 namespace {
 
@@ -80,7 +80,7 @@ const int EURO  = 0x20AC;
 TEST(font_loads_from_path) {
     NEEDS_WINDOW(window);
 
-    Font f;
+    fx::Font f;
     f.SetFilePath(Asset(FONT_A));
     f.SetLoadSize(48);
     f.LoadFont();
@@ -94,7 +94,7 @@ TEST(font_loads_from_path) {
 TEST(font_load_size_defaults_to_font_size) {
     NEEDS_WINDOW(window);
 
-    Font f(36.0f);
+    fx::Font f(36.0f);
     f.LoadFont(Asset(FONT_A));
     CHECK_EQ(f.GetBaseSize(), 36);
 }
@@ -106,7 +106,7 @@ TEST(font_load_size_defaults_to_font_size) {
 TEST(font_rejects_the_default_font_fallback) {
     NEEDS_WINDOW(window);
 
-    Font f;
+    fx::Font f;
     CHECK_THROWS_AS(f.LoadFont(Asset(NOT_FONT)), std::runtime_error);
     CHECK(f.IsDefaultFont());
     CHECK_EQ(f.GetShareCount(), 0L);
@@ -116,7 +116,7 @@ TEST(font_rejects_the_default_font_fallback) {
 TEST(font_unload_falls_back_to_default) {
     NEEDS_WINDOW(window);
 
-    Font f;
+    fx::Font f;
     f.LoadFont(Asset(FONT_A));
     CHECK(!f.IsDefaultFont());
 
@@ -132,12 +132,12 @@ TEST(font_unload_falls_back_to_default) {
 TEST(font_atlas_is_reference_counted) {
     NEEDS_WINDOW(window);
 
-    Font original;
+    fx::Font original;
     original.LoadFont(Asset(FONT_A));
     CHECK_EQ(original.GetShareCount(), 1L);
 
     {
-        Font copy = original;
+        fx::Font copy = original;
         CHECK_EQ(original.GetShareCount(), 2L);
         CHECK_EQ(copy.GetShareCount(),     2L);
         CHECK_EQ(copy.GetFont().texture.id, original.GetFont().texture.id);
@@ -154,9 +154,9 @@ TEST(font_atlas_is_reference_counted) {
 TEST(font_copy_outliving_the_original_keeps_the_atlas) {
     NEEDS_WINDOW(window);
 
-    Font survivor;
+    fx::Font survivor;
     {
-        Font original;
+        fx::Font original;
         original.LoadFont(Asset(FONT_A));
         survivor = original;
     }
@@ -173,14 +173,14 @@ TEST(font_borrowed_atlas_is_not_reloaded_over) {
     ::Font raw = ::LoadFontEx(Asset(FONT_A).c_str(), 32, nullptr, 0);
     CHECK(::IsFontValid(raw));
 
-    Font f;
+    fx::Font f;
     f.SetFilePath(Asset(FONT_B));                // a stale path from earlier setup
     f.SetFont(raw);
     CHECK(f.IsFontValid());
     CHECK_EQ(f.GetLoadedPath(), std::string(""));   // borrowed, not owned
 
     const unsigned int before = f.GetFont().texture.id;
-    f.SetCharset(Font::Charset::GREEK);          // must not reload from filePath
+    f.SetCharset(fx::Font::Charset::GREEK);          // must not reload from filePath
     CHECK_EQ(f.GetFont().texture.id, before);
 
     ::UnloadFont(raw);                           // we still own it
@@ -189,13 +189,13 @@ TEST(font_borrowed_atlas_is_not_reloaded_over) {
 TEST(font_reload_uses_the_file_actually_loaded) {
     NEEDS_WINDOW(window);
 
-    Font f;
+    fx::Font f;
     f.SetFilePath(Asset(FONT_A));
     f.LoadFont();
     f.LoadFont(Asset(FONT_B));                   // overload does not store the path
     CHECK_EQ(f.GetLoadedPath(), Asset(FONT_B));
 
-    f.SetCharset(Font::Charset::GREEK);          // triggers a reload
+    f.SetCharset(fx::Font::Charset::GREEK);          // triggers a reload
     CHECK_EQ(f.GetLoadedPath(), Asset(FONT_B));  // still B, not the stored A
     CHECK_EQ(f.GetFilePath(),   Asset(FONT_A));  // and the stored path is untouched
 }
@@ -203,7 +203,7 @@ TEST(font_reload_uses_the_file_actually_loaded) {
 TEST(font_load_size_change_reloads_the_atlas) {
     NEEDS_WINDOW(window);
 
-    Font f;
+    fx::Font f;
     f.LoadFont(Asset(FONT_A));
     f.SetLoadSize(64);
     CHECK_EQ(f.GetBaseSize(), 64);
@@ -215,7 +215,7 @@ TEST(font_load_size_change_reloads_the_atlas) {
 TEST(font_reports_glyphs_it_has) {
     NEEDS_WINDOW(window);
 
-    Font f;
+    fx::Font f;
     f.SetCharset("ąćęłńóśźż");
     f.LoadFont(Asset(FONT_A));
 
@@ -230,8 +230,8 @@ TEST(font_reports_glyphs_it_has) {
 TEST(font_finds_missing_glyphs) {
     NEEDS_WINDOW(window);
 
-    Font f;
-    f.SetCharset(Font::Charset::ASCII);
+    fx::Font f;
+    f.SetCharset(fx::Font::Charset::ASCII);
     f.LoadFont(Asset(FONT_A));
 
     const std::vector<int> missing = f.FindMissingGlyphs("aa一b一");
@@ -245,7 +245,7 @@ TEST(font_finds_missing_glyphs) {
 TEST(font_ignores_layout_characters) {
     NEEDS_WINDOW(window);
 
-    Font f;
+    fx::Font f;
     f.LoadFont(Asset(FONT_A));
     CHECK(f.FindMissingGlyphs("first\r\nsecond\tthird").empty());
     CHECK(f.CanRender("first\r\nsecond\tthird"));
@@ -256,7 +256,7 @@ TEST(font_ignores_layout_characters) {
 TEST(font_validate_charset_finds_blank_glyphs) {
     NEEDS_WINDOW(window);
 
-    Font f;
+    fx::Font f;
     f.SetCharset(std::vector<int>{CJK});
     f.LoadFont(Asset(FONT_A));
 
@@ -270,7 +270,7 @@ TEST(font_validate_charset_finds_blank_glyphs) {
 TEST(font_cap_height_is_less_than_font_size) {
     NEEDS_WINDOW(window);
 
-    Font f(40.0f);
+    fx::Font f(40.0f);
     f.LoadFont(Asset(FONT_A));
 
     const float cap = f.GetCapHeight();
@@ -283,7 +283,7 @@ TEST(font_cap_height_is_less_than_font_size) {
 TEST(font_single_line_ink_height_is_cap_height) {
     NEEDS_WINDOW(window);
 
-    Font f(40.0f);
+    fx::Font f(40.0f);
     f.LoadFont(Asset(FONT_A));
     CHECK_NEAR(f.GetInkSize("Hello").y, f.GetCapHeight(), 0.01f);
 }
@@ -293,7 +293,7 @@ TEST(font_single_line_ink_height_is_cap_height) {
 TEST(font_multiline_ink_height_grows_per_line) {
     NEEDS_WINDOW(window);
 
-    Font f(40.0f);
+    fx::Font f(40.0f);
     f.LoadFont(Asset(FONT_A));
     f.SetLineSpacing(0.0f);
 
@@ -308,7 +308,7 @@ TEST(font_multiline_ink_height_grows_per_line) {
 TEST(font_line_spacing_widens_the_gap) {
     NEEDS_WINDOW(window);
 
-    Font f(40.0f);
+    fx::Font f(40.0f);
     f.LoadFont(Asset(FONT_A));
 
     f.SetLineSpacing(0.0f);
@@ -322,7 +322,7 @@ TEST(font_line_spacing_widens_the_gap) {
 TEST(font_multiline_width_is_the_widest_line) {
     NEEDS_WINDOW(window);
 
-    Font f;
+    fx::Font f;
     f.LoadFont(Asset(FONT_A));
     CHECK_NEAR(f.GetInkSize("A\nWWWW").x, f.MeasureTextWidth("WWWW"), 0.01f);
 }
@@ -330,7 +330,7 @@ TEST(font_multiline_width_is_the_widest_line) {
 TEST(font_measured_width_grows_with_size_and_spacing) {
     NEEDS_WINDOW(window);
 
-    Font f(20.0f);
+    fx::Font f(20.0f);
     f.SetLoadSize(64);                           // fixed atlas, so only the size varies
     f.LoadFont(Asset(FONT_A));
 
@@ -346,7 +346,7 @@ TEST(font_measured_width_grows_with_size_and_spacing) {
 TEST(font_empty_text_measures_zero_with_an_atlas) {
     NEEDS_WINDOW(window);
 
-    Font f;
+    fx::Font f;
     f.LoadFont(Asset(FONT_A));
     const Vector2 ink = f.GetInkSize("");
     CHECK_NEAR(ink.x, 0.0f, 0.001f);

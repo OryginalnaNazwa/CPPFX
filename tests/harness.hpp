@@ -97,7 +97,9 @@ struct Registrar {
 #define CHECK_NEAR(a, b, eps)                                                  \
     do {                                                                       \
         ::fxtest::CountCheck();                                                \
-        const double _a = (a), _b = (b), _e = (eps);                           \
+        const double _a = (a);                                                 \
+        const double _b = (b);                                                 \
+        const double _e = (eps);                                               \
         if (!((_a - _b) < _e && (_b - _a) < _e)) {                             \
             std::ostringstream _os;                                            \
             _os << #a " ~= " #b "\n    got:      " << _a                       \
