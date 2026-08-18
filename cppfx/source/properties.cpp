@@ -802,8 +802,15 @@ void CPPFX::Font::DrawTextPro(const std::string& text, const Vector2& position,
                   fontSize, GetSpacing(), colour.GetColour());
 }
 
+float CPPFX::Font::GetInkHeight(const std::string& text) const {
+    const float lineBox = MeasureTextHeight(text);
+    if (lineBox <= 0.0f) return 0.0f;
+    // the line box is fontSize tall, the ink in it is capHeight - drop the rest
+    return lineBox - (fontSize - GetCapHeight());
+}
+
 Vector2 CPPFX::Font::GetInkSize(const std::string& text) const {
-    return Vector2{ MeasureTextWidth(text), GetCapHeight() };
+    return Vector2{ MeasureTextWidth(text), GetInkHeight(text) };
 }
 
 void CPPFX::Font::DrawTextAt(const std::string& text, const Vector2& inkTopLeft,

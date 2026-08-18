@@ -696,6 +696,7 @@ public:
     void DrawTextPro(const std::string& text, const Vector2& position,
                      const Vector2& origin, float rotation) const;
 
+    float GetInkHeight(const std::string& text) const;
     /**
      *  @brief Gets the visible size of the text.
      *  @details Width as measured, height as cap height rather than the line
