@@ -40,6 +40,8 @@ int RunAll();
 void CountCheck();
 /// Records a failed check. Called by the macros, not directly.
 void ReportFailure(const std::string& what, const char* file, int line);
+/// Records that the current test was skipped. Called by the macros, not directly.
+void ReportSkip(const std::string& why);
 
 /// Adds a test to the registry at static initialisation time.
 struct Registrar {
