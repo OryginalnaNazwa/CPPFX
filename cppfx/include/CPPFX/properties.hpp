@@ -195,6 +195,8 @@ public:
     Property(const std::string& i, const Color& colour) : colour(colour), fxID(i)  {}
     Property(const std::string& i, const std::string& colour) : colour(colour), fxID(i) {}
 
+    virtual ~Property() = default;
+
     /**
      *  @brief Returns name of the property.
      *  @returns Name of the property.
@@ -447,7 +449,7 @@ public:
      *  @param fS size of the font to be set.
      *  @warning throws a warning if size is 0.
      */
-    Font(float fS) : Font() {
+    explicit Font(float fS) : Font() {
         if (fS < 0.0f) {
             throw std::invalid_argument("In Font: Negative font size.");
         }
@@ -461,7 +463,7 @@ public:
      *  @brief Constructor for custom colour.
      *  @param c colour to be set.
      */
-    Font(const Color& c) : Font() {
+    explicit Font(const Color& c) : Font() {
         colour.SetColour(c);
     }
 
@@ -471,7 +473,7 @@ public:
      *  @param c colour to be set.
      *  @warning throws a warning if size is 0.
      */
-    Font(float fS, const Color& c) : Font(fS) {
+    explicit Font(float fS, const Color& c) : Font(fS) {
         colour.SetColour(c);
     }
 

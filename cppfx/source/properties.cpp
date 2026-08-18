@@ -1,10 +1,9 @@
 #include "../include/CPPFX/properties.hpp"
 #include <ctype.h>          // for toupper
-#include <algorithm>        // for transform
+#include <algorithm>        // for transform, sort, unique
 #include <stdexcept>        // for invalid_argument
 #include <unordered_map>    // for unordered map
 #include <charconv>         // for from_chars
-#include <algorithm>        // for sort, unique
 #include <memory>           // for shared_ptr
 #include <sstream>          // for ostringstream
 #include <set>              // for set
