@@ -729,7 +729,7 @@ std::vector<int> CPPFX::Font::FindMissingGlyphs(const std::string& text) const {
     while (*ptr != '\0') {
         int size = 0;
         const int cp = ::GetCodepointNext(ptr, &size);
-        if (cp != '\n' && cp != '\t' && !HasGlyph(cp)) {
+        if (cp != '\n' && cp != '\t' && cp != '\r' && !HasGlyph(cp)) {
             missing.insert(cp);
         }
         ptr += (size > 0) ? size : 1;
