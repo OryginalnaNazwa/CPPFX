@@ -603,23 +603,12 @@ size_t RadioGroup::GetRowsNumber() const {
 
 void ComboBox::DrawMyself(float elapsedTime) const {
     if (focused) {
-        float yCurrent = yAnchor + height;
-        DrawLineEx({xAnchor, yCurrent}, {xAnchor + width, yCurrent}, 10, BLACK);
-        for (auto& label : valuesInOrder) {
-            DrawLineEx({xAnchor, yCurrent}, {xAnchor + width, yCurrent}, 5, BLACK);
-            DrawRectangle(xAnchor, yCurrent, width, height, colour.GetColour());
-            DrawAlignedText(Alignment::CENTRE, label, font);
-            yCurrent += height;
-        }
         addArea.DrawMyself(elapsedTime);
+        DrawList(elapsedTime);
     } else {
-        DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-        if (currentLabel != "") {
-            DrawAlignedText(Alignment::CENTRE, currentLabel, font);
-        }
-
-        border.DrawMyself(xAnchor, yAnchor, width + textMargin, height);
+        DrawHeader(elapsedTime);
     }
+    DrawFrame();
 }
 
 void ComboBox::CommitAddArea() {
@@ -627,7 +616,7 @@ void ComboBox::CommitAddArea() {
     if (label.empty()) return;
     if (!IsLabelTaken(label)) {
         try {
-            InsertItem(label);
+            AddItem(label);
         } catch (const std::invalid_argument&) {
             addArea.ClearText();
             return;
@@ -650,20 +639,23 @@ void ComboBox::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
         justOpened = false;
         return;
     }
-    if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
-        int index = (mousePosition.y - (yAnchor + height)) / height;
-        index = std::clamp(index, 0, (int)(valuesInOrder.size() - 1));
-        std::string label = valuesInOrder.at(index);
-        currentLabel = label;
-        currentValue = values.at(label);
-        if (expandsToTextAutomatically) ExpandToText();
+    if (!WasIClicked(mousePosition)) {
         Defocus();
         return;
     }
-    if (addArea.WasIClicked(mousePosition)) {
-        addArea.Focus();
+    if (mousePosition.y < GetListTop()) {   // the header slot - addArea lives there while open
+        if (addArea.WasIClicked(mousePosition)) addArea.Focus();
+        DoFocusAction(elapsedTime);
+        return;
     }
-    DoFocusAction(elapsedTime);
+    const int index = GetIndexAt(mousePosition.y);
+    if (index >= 0) {
+        const std::string label = valuesInOrder[index];
+        SetCurrent(label);
+        Defocus();
+    } else if (values.empty()) {
+        Defocus();
+    }
 }
 
 void ComboBox::SetX(float x) {
@@ -758,6 +750,14 @@ void ComboBox::AddAreaShouldFocusOnSecondClick(bool should) {
 
 bool ComboBox::DoesAddAreaFocusOnOpen() const {
     return !opensOnSecondClick;
+}
+
+void ComboBox::SyncToHeader() {
+    DropDown<std::string>::SyncToHeader();
+
+    addArea.font = font;
+    addArea.colour = colour;
+    addArea.border = headerBorder;
 }
 
 const std::string ComboBox::GetClassID() const {

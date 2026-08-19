@@ -15,6 +15,7 @@
 #include "properties.hpp"  // for Font, Colour, Border, GREY, Alignment, CPPFX...
 #include "raylib.h"      // for MeasureText, Vector2, DrawText, Camera2D
 #include <memory>       // for unique_ptr
+#include <cmath>        // for fmod
 
 
 /*********************************************************************************
@@ -428,35 +429,24 @@ public:
         custom
     };
 
-    DropDown() : Item("DropDown"), TextItem("DropDown"), order(insertion), currentLabel("") {}
+    Colour headerDividerColour;
+    Colour dividerColour;
+    Colour listColour;
+    Border headerBorder;
+    Border listBorder;
+    Font listFont;
 
-    void DrawMyself(float elapsedTime) const override {
-        DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-        if (currentLabel != "") {
-            DrawAlignedText(Alignment::CENTRE, currentLabel, font);
-        }
-
-        border.DrawMyself(xAnchor, yAnchor, width + textMargin, height);
-
-        if (focused) {
-            float yCurrent = yAnchor + height;
-            DrawLineEx({xAnchor, yCurrent}, {xAnchor + width, yCurrent}, 10, BLACK);
-            for (auto& label : valuesInOrder) {
-                DrawLineEx({xAnchor, yCurrent}, {xAnchor + width, yCurrent}, 5, BLACK);
-                DrawRectangle(xAnchor, yCurrent, width, height, colour.GetColour());
-                DrawAlignedText(Alignment::CENTRE, label, font);
-                yCurrent += height;
-            }
-        }
+    DropDown() : Item("DropDown"), TextItem("DropDown"), order(insertion), currentLabel(""), headerDividerThickness(10.0f), dividerThickness(5.0f), listItemHeight(height) {
+        headerDividerColour.SetColour(BLACK);
+        dividerColour.SetColour(BLACK);
+        listColour.SetColour(LIGHTGREY);
+        listFont = font;
     }
 
-    bool WasIClicked(const Vector2& mousePosition) const override {
-        if (focused) {
-            if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y >= yAnchor && mousePosition.y <= yAnchor + ((values.size() + 1) * height)) {
-                return true;
-            }
-            return false;
-        } else return Item::WasIClicked(mousePosition);
+    void DrawMyself(float elapsedTime) const override {
+        DrawHeader(elapsedTime);
+        if (focused) DrawList(elapsedTime);
+        DrawFrame();
     }
 
     void DoFocusAction(float elapsedTime) override {
@@ -472,24 +462,31 @@ public:
             SetCurrent(valuesInOrder[0]);
             if (expandsToTextAutomatically) ExpandToText();
         }
+        if (syncsToHeaderAutomatically) SyncToHeader();
+    }
+
+    bool WasIClicked(const Vector2& mousePosition) const override {
+        if (!focused) return Item::WasIClicked(mousePosition);
+        return mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width
+            && mousePosition.y >= yAnchor
+            && mousePosition.y <= GetListTop() + GetListContentHeight();
+    }
+
+    void Focus() override {
+        TextItem::Focus();
+        justOpened = true;
     }
 
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override {
-        if (mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width && mousePosition.y <= (yAnchor + ((values.size() + 1) * height)) && mousePosition.y >= yAnchor + height) {
-            if (valuesInOrder.size() == 0) {
-                Defocus();
-                return;
-            }
-            int index = (mousePosition.y - (yAnchor + height)) / height;
-            index = std::clamp(index, 0, (int)(valuesInOrder.size() - 1));
-            std::string label = valuesInOrder.at(index);
-            currentLabel = label;
-            if (expandsToTextAutomatically) ExpandToText();
-            currentValue = values.at(label);
+        if (justOpened) { justOpened = false; return; }
+        if (!WasIClicked(mousePosition)) { Defocus(); return; }
+        if (mousePosition.y < GetListTop()) { Defocus(); return; }
+        const int index = GetIndexAt(mousePosition.y);
+        if (index >= 0) {
+            const std::string label = valuesInOrder[index];
+            SetCurrent(label);
             Defocus();
-            return;
-        }
-        if (!Item::WasIClicked(mousePosition)) {
+        } else if (values.empty()) {
             Defocus();
         }
     }
@@ -501,7 +498,7 @@ public:
      *  @throws std::invalid_argument if the label is empty
      *  @throws std::out_of_range if the label is taken.
      */
-    void InsertItem(const std::string& label, const T& value) {
+    void AddItem(const std::string& label, const T& value) {
         if (label == "") {
             CPPFX_WARN("Use space (' ') if you want to have it actually empty.");
             CPPFX_THROW(std::invalid_argument, "Cannot add item with empty label.");
@@ -520,8 +517,8 @@ public:
     *  @note Only available for DropDown<std::string>.
     *  @see InsertItem(std::string, T)
     */
-    void InsertItem(const std::string& label) requires std::same_as<T, std::string> {
-        InsertItem(label, label);
+    void AddItem(const std::string& label) requires std::same_as<T, std::string> {
+        AddItem(label, label);
     }
 
     /**
@@ -534,6 +531,7 @@ public:
             values.erase(label);
             valuesInOrder.erase(std::remove_if(valuesInOrder.begin(), valuesInOrder.end(),[&label](const std::string& lab) { return label == lab; }),valuesInOrder.end());
             insertionOrder.erase(std::remove_if(insertionOrder.begin(), insertionOrder.end(),[&label](const std::string& lab) { return label == lab; }),insertionOrder.end());
+            labelToColour.erase(label);
             if (currentLabel == label) {
                 currentLabel = "";
                 currentValue = T{};
@@ -559,6 +557,11 @@ public:
         auto node = values.extract(oldLabel);
         node.key() = newLabel;
         values.insert(std::move(node));
+        if (labelToColour.contains(oldLabel)) {
+            auto node1 = labelToColour.extract(oldLabel);
+            node1.key() = newLabel;
+            labelToColour.insert(std::move(node));
+        }
         for (auto& label : valuesInOrder) {
             if (label == oldLabel) {
                 label = newLabel;
@@ -627,6 +630,9 @@ public:
         return currentLabel;
     }
 
+    /**
+     *  @brief Returns current label and value.
+     */
     std::pair<std::string, T> GetCurrentChoice() const {
         if (currentLabel == "") {
             CPPFX_THROW(std::runtime_error, "No current pick");
@@ -672,9 +678,18 @@ public:
      *  @brief Height of all the items combined.
      *  @details height times number of items + 1 (for the default).
      *  @returns Height when rolled out.
+     *  @see Item::GetTotalHeight
      */
     float GetTotalHeight() const override {
-        return height * (values.size() + 1);
+        if (!IsFocused()) return Item::GetTotalHeight();
+        return Item::GetTotalHeight() + GetTotalListHeight();
+    }
+    /**
+     *  @details Takes into account the header or list border, whatever is greater.
+     *  @see Item::GetTotalWidth
+     */
+    float GetTotalWidth() const override {
+        return Item::GetTotalWidth() + (2.0f * (headerBorder.GetThickness() > listBorder.GetThickness() ? headerBorder.GetThickness() : listBorder.GetThickness()));
     }
 
     const std::vector<std::string>& GetLabelsInOrder() const {
@@ -724,19 +739,23 @@ public:
 
     /**
      *  @see TextItem::ExpandToText.
-     *  @details Works based on currentLabel.
+     *  @details Works based on currentLabel. Works per font.
      */
-    void ExpandToText() override {
+    virtual void ExpandToText() override {
         text = currentLabel;
         TextItem::ExpandToText();
+        const float rowNeeds = listFont.GetInkSize(currentLabel).y + (2.0f * textMargin);
+        if (rowNeeds > listItemHeight) listItemHeight = rowNeeds;
     }
     /**
      *  @see TextItem::FitToText.
-     *  @details Works based on currentLabel.
+     *  @details Works based on currentLabel. Works per font.
      */
     void FitToText() override {
         text = currentLabel;
-        TextItem::FitToText();
+        TextItem::ExpandToText();
+        const float rowNeeds = listFont.GetInkSize(currentLabel).y + (2.0f * textMargin);
+        listItemHeight = rowNeeds;
     }
 
     /**
@@ -746,15 +765,233 @@ public:
         return "DropDown";
     }
 
+    /**
+     *  @brief Sets the thickness of the divider between the header and the list.
+     *  @details Drawn in dividerColour, full width. 0 turns it off.
+     *  @throws std::invalid_argument if thickness is negative
+     */
+    void SetHeaderDividerThickness(float thickness) {
+        if (thickness < 0.0f) CPPFX_THROW(std::invalid_argument, "Cannot set divider thickness: cannot be negative.");
+        headerDividerThickness = thickness;
+    }
+    float GetHeaderDividerThickness() const {
+        return headerDividerThickness;
+    }
+    /**
+     *  @brief Sets the thickness of the dividers between list items.
+     *  @details Only between items - none after the last one.
+     *  @throws std::invalid_argument if thickness is negative
+     */
+    void SetDividerThickness(float thickness) {
+        if (thickness < 0.0f) CPPFX_THROW(std::invalid_argument, "Cannot set  divider thickness: cannot be negative.");
+        dividerThickness = thickness;
+    }
+    float GetDividerThickness() const {
+        return dividerThickness;
+    }
+    /**
+     *  @brief Sets the height of a row in the unrolled list.
+     *  @details Independent of the header's height.
+     *  @throws std::invalid_argument if height is negative
+     *  @warning throws a warning if height is below listFont's size.
+     */
+    void SetItemInListHeight(float height) {
+        if (height < 0.0f) CPPFX_THROW(std::invalid_argument, "Cannot set height of an item in the list: cannot be negative.");
+        if (height < listFont.GetFontSize()) CPPFX_WARN("Height of the item in the " + GetFxID() + "'s " + GetID() + " is smaller than the font's size.");
+        listItemHeight = height;
+    }
+    float GetItemInListHeight() const {
+        return listItemHeight;
+    }
+
+    /**
+     *  @brief Gives one label its own background colour, overriding listColour.
+     *  @warning throws a warning if the label isn't in the dropdown - the colour
+     *           is still stored, and applies if the label is inserted later.
+     */
+    void SetColourToLabel(const std::string& label, const Colour& colour) {
+        if (!IsLabelTaken(label)) CPPFX_WARN("Label " + label + " is not in the " + GetFxID() + " " + GetID());
+        if (labelToColour.contains(label)) {
+            labelToColour.at(label) = colour;
+        } else {
+            labelToColour.insert({label, colour});
+        }
+    }
+    /**
+     *  @brief Drops a label's colour, returning that row to listColour.
+     *  @warning throws a warning if the label had no colour set.
+     */
+    void RemoveColourFromLabel(const std::string& label) {
+        if (labelToColour.contains(label)) {
+            labelToColour.erase(label);
+        } else {
+            CPPFX_WARN("No colour was set to this label: " + label + " in the " + GetFxID() + " " + GetID());
+        }
+    }
+    /** @brief Drops every per-label colour. Labels themselves are untouched. */
+    void ClearColoursFromLabels() {
+        labelToColour.clear();
+    }
+    /** @details Labels with no colour of their own are absent from the map. */
+    const std::unordered_map<std::string, Colour>& GetColoursToLabels() const {
+        return labelToColour;
+    }
+
+    /** @brief Combined height of the rows alone - no dividers, no borders. */
+    float GetRowsHeight() const {
+        return (float)(GetNumberOfItems()) * listItemHeight;
+    }
+    /** @brief Number of items. The header shows one of them rather than being one. */
+    size_t GetNumberOfItems() const {
+        return values.size();
+    }
+     /** @brief Content height plus the list border on both sides. */
+    float GetTotalListHeight() const {
+        return GetListContentHeight() + (2.0f * listBorder.GetThickness());
+    }
+    /**
+     *  @brief Height of everything inside the list border.
+     *  @details Header divider, rows, and the dividers between them. An empty
+     *           dropdown still measures the header divider, so opening one
+     *           shows a stub.
+     */
+    float GetListContentHeight() const {
+        if (values.empty()) return 0.0f;
+        return headerDividerThickness + (float)valuesInOrder.size() * listItemHeight + (float)(values.size() - 1) * dividerThickness;
+    }
+
+        /**
+     *  @brief Makes the list follow the header's font, colour and border.
+     *  @details The header draws with the inherited font and colour, so styling
+     *           a DropDown the obvious way restyles one rectangle and leaves the
+     *           list behind. With this on, the list reads them at draw time and
+     *           follows along, however often the header changes.
+     *  @note listFont, listColour and listBorder are left alone, not overwritten -
+     *        they are simply not consulted while this is on, and take effect again
+     *        the moment it is off. Setting them meanwhile does nothing visible.
+     */
+    void SyncToHeaderAutomatically() { syncsToHeaderAutomatically = true; }
+    /**
+     *  @brief Lets the list keep its own font, colour and border. Default.
+     *  @details Whatever listFont, listColour and listBorder were set to comes
+     *           back into use.
+     */
+    void DoNotSyncToHeaderAutomatically() { syncsToHeaderAutomatically = false; }
+    /**
+     *  @brief Sets whether the list follows the header's styling.
+     *  @param should true - list mirrors the header, false - list styles itself
+     *  @see DropDown::SyncToHeaderAutomatically
+     *  @see DropDown::DoNotSyncToHeaderAutomatically
+     */
+    void ShouldSyncToHeaderAutomatically(bool should) { syncsToHeaderAutomatically = should; }
+    /**
+     *  @brief Checks whether the list is following the header.
+     *  @returns true if the list draws with the header's styling.
+     */
+    bool IsSyncingToHeaderAutomatically() const { return syncsToHeaderAutomatically; }
+
+    /**
+     * @brief Copies the header's styling onto the list, once.
+     */
+    virtual void SyncToHeader() {
+        listFont = font;
+        listColour = colour;
+        listBorder.SetThickness(headerBorder.GetThickness());
+        listBorder.colour = headerBorder.colour;
+    }
+
+    /** @brief Top of the list, where the header divider starts. */
+    float GetListTop() const {
+        return yAnchor + height + headerBorder.GetThickness() + listBorder.GetThickness();
+    }
+    /** @brief Distance from one row's top to the next. */
+    float GetRowPitch() const {
+        return listItemHeight + dividerThickness;
+    }
+    /**
+     *  @brief Index of the row at a given y.
+     *  @returns index into GetLabelsInOrder, or -1 if y is on the header
+     *           divider, on a divider between rows, or past the list.
+     */
+    int GetIndexAt(float y) const {
+        if (values.empty()) return -1;
+        const float rowsTop = GetListTop() + headerDividerThickness;
+        if (y < rowsTop) return -1;
+        const float offset = y - rowsTop;
+        const int index = (int)(offset / GetRowPitch());
+        if (index < 0 || index >= (int)values.size()) return -1;
+        if (fmod(offset, GetRowPitch()) > listItemHeight) return -1;
+        return index;
+    }
+
 protected:
-    std::unordered_map<std::string, T> values;
-    std::vector<std::string> valuesInOrder;
-    std::vector<std::string> insertionOrder;
-    ORDER order;
-    std::string currentLabel;
-    T currentValue;
-    bool dirty = false;
-    std::function<bool(const std::string&, const std::string&)> customSort;
+    std::unordered_map<std::string, T> values;      ///< source of truth: every label and the value it stands for
+    std::vector<std::string> valuesInOrder;         ///< labels as drawn, top to bottom; rebuilt by Sort
+    std::vector<std::string> insertionOrder;        ///< labels in the order they arrived, so insertion order survives sorting
+    ORDER order;                                    ///< how valuesInOrder is arranged
+    std::string currentLabel;                       ///< the pick shown in the header; empty means nothing picked yet
+    T currentValue;                                 ///< value behind currentLabel, kept alongside it to avoid a lookup per frame
+    bool dirty = false;                             ///< lazy sorting - set on insert or reorder, consumed by DoPassiveAction
+    std::function<bool(const std::string&, const std::string&)> customSort; ///< comparator for ORDER::custom
+    bool justOpened = false;
+
+    float headerDividerThickness;                   ///< seam between header and list; 0 turns it off
+    float dividerThickness;                         ///< seam between rows; none after the last one
+    float listItemHeight;                           ///< row height, independent of the header's
+    std::unordered_map<std::string, Colour> labelToColour; ///< per-row background overrides; labels absent here use listColour
+    bool syncsToHeaderAutomatically = false;        ///< if true, the list draws with the header's font, colour and border
+
+    /** @brief Draws the header - background, current pick, and its border. */
+    virtual void DrawHeader(float elapsedTime) const {
+        DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+        if (currentLabel != "") {
+            DrawAlignedText(Alignment::CENTRE, currentLabel, font);
+        }
+        headerBorder.DrawMyself(xAnchor, yAnchor, width, height);
+    }
+
+    /**
+     *  @brief Draws the unrolled list - divider, rows, and the list border.
+     *  @details Advances by GetRowPitch, the same figure GetIndexAt divides by,
+     *           so what is drawn and what is clickable cannot drift apart.
+     */
+    virtual void DrawList(float elapsedTime) const {
+        float yCurrent = GetListTop();
+        DrawRectangle(xAnchor, yCurrent, width, headerDividerThickness, dividerColour.GetColour());
+        yCurrent += headerDividerThickness;
+
+        for (size_t i = 0; i < valuesInOrder.size(); ++i) {
+            const std::string& label = valuesInOrder[i];
+            const Color rowColour = labelToColour.contains(label)
+                                  ? labelToColour.at(label).GetColour()
+                                  : listColour.GetColour();
+
+            DrawRectangle(xAnchor, yCurrent, width, listItemHeight, rowColour);
+            DrawAlignedText(Alignment::CENTRE, label, listFont,
+                            xAnchor + textMargin, yCurrent + textMargin,
+                            width - (2.0f * textMargin),
+                            listItemHeight - (2.0f * textMargin));
+
+            if (i + 1 < valuesInOrder.size()) {
+                DrawRectangle(xAnchor, yCurrent + listItemHeight, width,
+                              dividerThickness, dividerColour.GetColour());
+            }
+            yCurrent += GetRowPitch();
+        }
+
+        listBorder.DrawMyself(xAnchor, GetListTop(), width, GetListContentHeight());
+    }
+
+    /** @brief Draws the outer border around the header and, when open, the list. */
+    virtual void DrawFrame() const {
+        const float outer = std::max(headerBorder.GetThickness(), listBorder.GetThickness());
+        const float listSpan = focused
+                             ? GetListContentHeight() + (2.0f * listBorder.GetThickness())
+                             : 0.0f;
+        border.DrawMyself(xAnchor - outer, yAnchor - headerBorder.GetThickness(),
+                          width + (2.0f * outer),
+                          height + (2.0f * headerBorder.GetThickness()) + listSpan);
+    }
 
     static bool NaturalLess(const std::string& a, const std::string& b) {
         size_t i = 0, j = 0;
@@ -914,13 +1151,17 @@ public:
      */
     bool DoesAddAreaFocusOnOpen() const;
 
+    /**
+     * @brief Copies the header's styling onto the list and addArea, once.
+     */
+    virtual void SyncToHeader() override;
+
     const std::string GetClassID() const;
 
 private:
     void CommitAddArea();
 
     bool opensOnSecondClick = true; ///< if true, the click that unrolls the dropdown doesn't reach addArea
-    bool justOpened = false; ///< set by Focus(), consumed by the first DoFocusAction of that frame
 };
 
 // --- Containers ---
