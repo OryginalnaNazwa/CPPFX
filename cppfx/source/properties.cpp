@@ -22,7 +22,7 @@ struct Colour::ColourLayout {
 
 std::string Colour::Normalise(const std::string& str) {
     std::string out = str;
-    std::transform(out.begin(), out.end(), out.begin(), ::toupper);
+    std::transform(out.begin(), out.end(), out.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
     return out;
 }
 
@@ -314,7 +314,7 @@ Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment_
     };
 
     std::string normal = alignment_string;
-    std::transform(normal.begin(), normal.end(), normal.begin(), ::toupper);
+    std::transform(normal.begin(), normal.end(), normal.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 
     auto it = map.find(normal);
     if (it != map.end()) return it->second;
@@ -332,8 +332,8 @@ std::string Alignment::AlignmentToString(const Alignments& alignment) {
         case Alignments::BOTTOM_LEFT:   return "BOTTOM_LEFT";
         case Alignments::BOTTOM_CENTRE: return "BOTTOM_CENTRE";
         case Alignments::BOTTOM_RIGHT:  return "BOTTOM_RIGHT";
-        default: throw std::invalid_argument("No alignment found");
     }
+    throw std::invalid_argument("No alignment found");
 }
 
 bool Alignment::IsRightAlignment() const {
@@ -344,11 +344,11 @@ bool Alignment::IsLeftAlignment() const {
     return alignment == Alignment::Alignments::TOP_LEFT || alignment == Alignment::Alignments::CENTRE_LEFT || alignment == Alignment::Alignments::BOTTOM_LEFT;
 }
 
-bool Alignment::IsVerticalCentreAlignment() const {
+bool Alignment::IsCentreColumnAlignment() const {
     return alignment == Alignment::Alignments::TOP_CENTRE || alignment == Alignment::Alignments::CENTRE || alignment == Alignment::Alignments::BOTTOM_CENTRE;
 }
 
-bool Alignment::IsHorizontalCentreAlignment() const {
+bool Alignment::IsCentreRowAlignment() const {
     return alignment == Alignment::Alignments::CENTRE_LEFT || alignment == Alignment::Alignments::CENTRE || alignment == Alignment::Alignments::CENTRE_RIGHT;
 }
 
@@ -362,10 +362,10 @@ bool Alignment::IsTopAlignment() const {
 
 float Alignment::GetAlignedX(float boxX, float contentWidth, float boxWidth) const {
     if (contentWidth < 0.0f) {
-        throw std::invalid_argument("Cannot align x: negative width");
+        throw std::invalid_argument("Cannot align x: negative content's width");
     }
     if (boxWidth < 0.0f) {
-        throw std::invalid_argument("Cannot align x: negative object's width");
+        throw std::invalid_argument("Cannot align x: negative box's width");
     }
     switch (alignment) {
         case TOP_LEFT:
@@ -373,7 +373,7 @@ float Alignment::GetAlignedX(float boxX, float contentWidth, float boxWidth) con
         case BOTTOM_LEFT: return boxX; // left is the default
         case TOP_CENTRE:
         case CENTRE:
-        case BOTTOM_CENTRE: return boxX + (boxWidth / 2.0f) - (contentWidth / 2.0f); // move to the half of the object, move back by half of the alignee
+        case BOTTOM_CENTRE: return boxX + (boxWidth / 2.0f) - (contentWidth / 2.0f); // move to the half of the box, move back by half of the alignee
         case TOP_RIGHT:
         case CENTRE_RIGHT:
         case BOTTOM_RIGHT: return (boxX + boxWidth) - contentWidth; // move to the far right, go back by alignee's width
@@ -383,10 +383,10 @@ float Alignment::GetAlignedX(float boxX, float contentWidth, float boxWidth) con
 
 float Alignment::GetAlignedY(float boxY, float contentHeight, float boxHeight) const {
     if (boxHeight < 0.0f) {
-        throw std::invalid_argument("Cannot align y: negative height");
+        throw std::invalid_argument("Cannot align y: negative box's height");
     }
     if (contentHeight < 0.0f) {
-        throw std::invalid_argument("Cannot align y: negative object's height");
+        throw std::invalid_argument("Cannot align y: negative content's height");
     }
 
     switch (alignment) {
@@ -395,7 +395,7 @@ float Alignment::GetAlignedY(float boxY, float contentHeight, float boxHeight) c
         case TOP_RIGHT:  return boxY; // top is the default
         case CENTRE_LEFT:
         case CENTRE:
-        case CENTRE_RIGHT: return boxY + (boxHeight / 2.0f) - (contentHeight / 2.0f); // move to the half of the object, move back by half of the alignee
+        case CENTRE_RIGHT: return boxY + (boxHeight / 2.0f) - (contentHeight / 2.0f); // move to the half of the box, move back by half of the alignee
         case BOTTOM_CENTRE:
         case BOTTOM_LEFT:
         case BOTTOM_RIGHT: return (boxY + boxHeight) - contentHeight; // move to the far down, go back by alignee's height

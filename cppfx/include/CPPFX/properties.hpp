@@ -338,14 +338,14 @@ public:
     bool IsLeftAlignment() const;
     /**
      *  @brief Checks whether the current alignment is X_CENTRE.
-     *  @returns true if centre
+     *  @returns true if centre column
      */
-    bool IsVerticalCentreAlignment() const;
+    bool IsCentreColumnAlignment() const;
     /**
      *  @brief Checks whether the current alignment is CENTRE_X.
-     *  @returns true if centre
+     *  @returns true if centre row
      */
-    bool IsHorizontalCentreAlignment() const;
+    bool IsCentreRowAlignment() const;
     /**
      *  @brief Checks whether the current alignment is BOTTOM_X.
      *  @returns true if bottom
@@ -366,7 +366,7 @@ public:
      *  @returns content's x aligned to the current alignment
      *  @throws std::invalid_argument if contentWidth or boxWidth is negative
      */
-    float GetAlignedX(float boxY, float contentWidth, float boxWidth) const;
+    float GetAlignedX(float boxX, float contentWidth, float boxWidth) const;
     /**
      *  @brief Gets y coordinate aligned according to current alignment.
      *  @details Assumes top left is the default and doesn't have to do anything.
@@ -374,7 +374,7 @@ public:
      *  @param contentHeight height of the object to align, for properly centering it
      *  @param boxHeight height of the space in which aligning is happening
      *  @returns content's y aligned to the current alignment
-     *  @throws std::invalid_argument if height or objectHeight is negative
+     *  @throws std::invalid_argument if contentHeight or boxHeight is negative
      */
     float GetAlignedY(float boxY, float contentHeight, float boxHeight) const;
 
@@ -391,6 +391,12 @@ public:
     Vector2 GetAlignedXY(float boxX, float boxY, float boxWidth, float boxHeight,
                          float contentWidth, float contentHeight) const;
 
+    /**
+     *  @brief Gets alignment's name based on value.
+     *  @details Returns only the 9 base values.
+     *  @param alignment alignment value
+     *  @returns string with the alignment's name
+     */
     static std::string AlignmentToString(const Alignments& alignment);
     /**
      *  @brief Gets alignment based on a name.
