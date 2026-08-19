@@ -1,5 +1,5 @@
 #include "../include/CPPFX/properties.hpp"
-#include <ctype.h>          // for toupper
+#include <cctype>          // for toupper
 #include <algorithm>        // for transform, sort, unique
 #include <stdexcept>        // for invalid_argument
 #include <unordered_map>    // for unordered map
@@ -305,8 +305,8 @@ Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment_
         {"TOP_CENTRE", TOP_CENTRE}, {"TOP_CENTER", TOP_CENTRE}, {"TOP", TOP_CENTRE}, {"ABOVE", TOP_CENTRE}, {"UP", TOP_CENTRE},
         {"TOP_LEFT",   TOP_LEFT},
         {"TOP_RIGHT",  TOP_RIGHT},
-        {"CENTRE_LEFT",  CENTRE_LEFT}, {"CENTER_LEFT", CENTRE_LEFT}, {"LEFT", CENTRE_LEFT},
-        {"CENTRE",       CENTRE}, {"CENTER", CENTRE}, {"MIDDLE", CENTRE},
+        {"CENTRE_LEFT",  CENTRE_LEFT},  {"CENTER_LEFT", CENTRE_LEFT}, {"LEFT", CENTRE_LEFT},
+        {"CENTRE",       CENTRE},       {"CENTER", CENTRE}, {"MIDDLE", CENTRE},
         {"CENTRE_RIGHT", CENTRE_RIGHT}, {"CENTER_RIGHT", CENTRE_RIGHT}, {"RIGHT", CENTRE_RIGHT},
         {"BOTTOM_LEFT",   BOTTOM_LEFT},
         {"BOTTOM_CENTRE", BOTTOM_CENTRE}, {"BOTTOM_CENTER", BOTTOM_CENTRE}, {"BOTTOM", BOTTOM_CENTRE}, {"DOWN", BOTTOM_CENTRE}, {"UNDER", BOTTOM_CENTRE},
@@ -360,52 +360,53 @@ bool Alignment::IsTopAlignment() const {
     return alignment == Alignment::Alignments::TOP_CENTRE || alignment == Alignment::Alignments::TOP_LEFT || alignment == Alignment::Alignments::TOP_RIGHT;
 }
 
-float Alignment::GetAlignedX(float x, float width, float objectWidth) const {
-    if (width < 0.0f) {
+float Alignment::GetAlignedX(float boxX, float contentWidth, float boxWidth) const {
+    if (contentWidth < 0.0f) {
         throw std::invalid_argument("Cannot align x: negative width");
     }
-    if (objectWidth < 0.0f) {
+    if (boxWidth < 0.0f) {
         throw std::invalid_argument("Cannot align x: negative object's width");
     }
     switch (alignment) {
         case TOP_LEFT:
         case CENTRE_LEFT:
-        case BOTTOM_LEFT: return x; // left is the default
+        case BOTTOM_LEFT: return boxX; // left is the default
         case TOP_CENTRE:
         case CENTRE:
-        case BOTTOM_CENTRE: return x + (objectWidth / 2.0f) - (width / 2.0f); // move to the half of the object, move back by half of the alignee
+        case BOTTOM_CENTRE: return boxX + (boxWidth / 2.0f) - (contentWidth / 2.0f); // move to the half of the object, move back by half of the alignee
         case TOP_RIGHT:
         case CENTRE_RIGHT:
-        case BOTTOM_RIGHT: return (x + objectWidth) - width; // move to the far right, go back by alignee's width
-        default: return 0; // should't happen
+        case BOTTOM_RIGHT: return (boxX + boxWidth) - contentWidth; // move to the far right, go back by alignee's width
     }
+    return boxX; // should't happen
 }
 
-float Alignment::GetAlignedY(float y, float height, float objectHeight) const {
-    if (height < 0.0f) {
+float Alignment::GetAlignedY(float boxY, float contentHeight, float boxHeight) const {
+    if (boxHeight < 0.0f) {
         throw std::invalid_argument("Cannot align y: negative height");
     }
-    if (objectHeight < 0.0f) {
+    if (contentHeight < 0.0f) {
         throw std::invalid_argument("Cannot align y: negative object's height");
     }
+
     switch (alignment) {
         case TOP_LEFT:
         case TOP_CENTRE:
-        case TOP_RIGHT:  return y; // top is the default
+        case TOP_RIGHT:  return boxY; // top is the default
         case CENTRE_LEFT:
         case CENTRE:
-        case CENTRE_RIGHT: return y + (objectHeight / 2.0f) - (height / 2.0f); // move to the half of the object, move back by half of the alignee
+        case CENTRE_RIGHT: return boxY + (boxHeight / 2.0f) - (contentHeight / 2.0f); // move to the half of the object, move back by half of the alignee
         case BOTTOM_CENTRE:
         case BOTTOM_LEFT:
-        case BOTTOM_RIGHT: return (y + objectHeight) - height; // move to the far down, go back by alignee's height
-        default: return 0; // should't happen
+        case BOTTOM_RIGHT: return (boxY + boxHeight) - contentHeight; // move to the far down, go back by alignee's height
     }
+    return boxY; // should't happen
 }
 
-Vector2 Alignment::GetAlignedXY(float x, float y, float width, float height,
-                         float contentWidth, float contentHeight) const {
-    return Vector2{ GetAlignedX(x, contentWidth,  width),
-                    GetAlignedY(y, contentHeight, height) };
+Vector2 Alignment::GetAlignedXY(float boxX, float boxY, float boxWidth, float boxHeight,
+                                float contentWidth, float contentHeight) const {
+    return Vector2{ GetAlignedX(boxX, contentWidth,  boxWidth),
+                    GetAlignedY(boxY, contentHeight, boxHeight) };
 }
 
 //------Font--------

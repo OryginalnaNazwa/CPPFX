@@ -301,6 +301,7 @@ public:
      *  @brief Constructor for setting alignment using string.
      */
     Alignment(const std::string& a) : Property("Alignment"), alignment(StringToAlignment(a)) {}
+    Alignment(const char* a) : Property("Alignment"), alignment(StringToAlignment(a)) {}
 
     /**
      *  @brief Sets the alignment based on a string.
@@ -359,38 +360,36 @@ public:
     /**
      *  @brief Gets x coordinate aligned according to current alignment.
      *  @details Assumes top left is the default and doesn't have to do anything.
-     *  @param x x coordinate
-     *  @param width width of the object to align, for properly centering it
-     *  @param objectWidth width of the space in which aligning is happening
-     *  @returns x aligned to the current alignment
-     *  @throws std::invalid_argument if width or objectWidth is negative
+     *  @param boxX x coordinate of the box
+     *  @param contentWidth width of the object to align, for properly centering it
+     *  @param boxWidth width of the space in which aligning is happening
+     *  @returns content's x aligned to the current alignment
+     *  @throws std::invalid_argument if contentWidth or boxWidth is negative
      */
-    float GetAlignedX(float x, float width, float objectWidth) const;
+    float GetAlignedX(float boxY, float contentWidth, float boxWidth) const;
     /**
      *  @brief Gets y coordinate aligned according to current alignment.
      *  @details Assumes top left is the default and doesn't have to do anything.
-     *  @param y y coordinate
-     *  @param height height of the object to align, for properly centering it
-     *  @param objectHeight height of the space in which aligning is happening
-     *  @returns y aligned to the current alignment
+     *  @param boxY y coordinate of the box
+     *  @param contentHeight height of the object to align, for properly centering it
+     *  @param boxHeight height of the space in which aligning is happening
+     *  @returns content's y aligned to the current alignment
      *  @throws std::invalid_argument if height or objectHeight is negative
      */
-    float GetAlignedY(float y, float height, float objectHeight) const;
+    float GetAlignedY(float boxY, float contentHeight, float boxHeight) const;
 
     /**
      *  @brief Places content within a box according to this alignment.
-     *  @param x left edge of the box
-     *  @param y top edge of the box
-     *  @param width width of the box
-     *  @param height height of the box
+     *  @param boxX left edge of the box
+     *  @param boxY top edge of the box
+     *  @param boxWidth width of the box
+     *  @param boxHeight height of the box
      *  @param contentWidth width of the thing being placed
      *  @param contentHeight height of the thing being placed
      *  @returns Top-left corner for the content.
-     *  @note Content larger than the box gives a position outside it. That is
-     *        deliberate - it overflows rather than being clamped.
      */
-    Vector2 GetAlignedXY(float x, float y, float width, float height,
-                  float contentWidth, float contentHeight) const;
+    Vector2 GetAlignedXY(float boxX, float boxY, float boxWidth, float boxHeight,
+                         float contentWidth, float contentHeight) const;
 
     static std::string AlignmentToString(const Alignments& alignment);
     /**
