@@ -300,7 +300,7 @@ std::string Alignment::GetAlignmentString() const {
     return AlignmentToString(this->alignment);
 }
 
-Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment_string) const {
+Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment_string) {
     static const std::unordered_map<std::string, Alignments> map = {
         {"TOP_CENTRE", TOP_CENTRE}, {"TOP_CENTER", TOP_CENTRE}, {"TOP", TOP_CENTRE}, {"ABOVE", TOP_CENTRE}, {"UP", TOP_CENTRE},
         {"TOP_LEFT",   TOP_LEFT},
@@ -321,7 +321,7 @@ Alignment::Alignments Alignment::StringToAlignment(const std::string& alignment_
     throw std::invalid_argument("No alignment of such name found: " + alignment_string);
 }
 
-std::string Alignment::AlignmentToString(const Alignments& alignment) const {
+std::string Alignment::AlignmentToString(const Alignments& alignment) {
     switch (alignment) {
         case Alignments::TOP_LEFT:      return "TOP_LEFT";
         case Alignments::TOP_CENTRE:    return "TOP_CENTRE";
@@ -344,8 +344,12 @@ bool Alignment::IsLeftAlignment() const {
     return alignment == Alignment::Alignments::TOP_LEFT || alignment == Alignment::Alignments::CENTRE_LEFT || alignment == Alignment::Alignments::BOTTOM_LEFT;
 }
 
-bool Alignment::IsCentreAlignment() const {
+bool Alignment::IsVerticalCentreAlignment() const {
     return alignment == Alignment::Alignments::TOP_CENTRE || alignment == Alignment::Alignments::CENTRE || alignment == Alignment::Alignments::BOTTOM_CENTRE;
+}
+
+bool Alignment::IsHorizontalCentreAlignment() const {
+    return alignment == Alignment::Alignments::CENTRE_LEFT || alignment == Alignment::Alignments::CENTRE || alignment == Alignment::Alignments::CENTRE_RIGHT;
 }
 
 bool Alignment::IsBottomAlignment() const {

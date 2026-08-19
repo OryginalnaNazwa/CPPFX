@@ -339,7 +339,12 @@ public:
      *  @brief Checks whether the current alignment is X_CENTRE.
      *  @returns true if centre
      */
-    bool IsCentreAlignment() const;
+    bool IsVerticalCentreAlignment() const;
+    /**
+     *  @brief Checks whether the current alignment is CENTRE_X.
+     *  @returns true if centre
+     */
+    bool IsHorizontalCentreAlignment() const;
     /**
      *  @brief Checks whether the current alignment is BOTTOM_X.
      *  @returns true if bottom
@@ -387,16 +392,16 @@ public:
     Vector2 GetAlignedXY(float x, float y, float width, float height,
                   float contentWidth, float contentHeight) const;
 
-private:
-    std::string AlignmentToString(const Alignments& alignment) const;
+    static std::string AlignmentToString(const Alignments& alignment);
     /**
      *  @brief Gets alignment based on a name.
      *  @details Take in aliases, but overwrites them.
      *  @param alignment name of the alignment
      *  @returns Alignment
      */
-    Alignments StringToAlignment(const std::string& alignment) const;
+    static Alignments StringToAlignment(const std::string& alignment);
 
+private:
     Alignments alignment; ///< current alignment
 };
 

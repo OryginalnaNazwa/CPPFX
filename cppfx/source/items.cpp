@@ -879,7 +879,7 @@ const std::string VBox::GetClassID() {
 void HBox::SetPositionsOfItems() {
     float currentX = 0.0f;
     for (auto& item : ItemsInDrawingOrder) {
-        if (alignment.IsCentreAlignment()) {
+        if (alignment.IsVerticalCentreAlignment()) {
             item->SetX(currentX + alignment.GetAlignedX(xAnchor - currentX, item->GetTotalWidth(), GetTotalWidth() - currentX));
         } else item->SetX(currentX + alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
         item->SetY(alignment.GetAlignedY(yAnchor, item->GetTotalHeight(), height));
