@@ -856,7 +856,7 @@ public:
      *           shows a stub.
      */
     float GetListContentHeight() const {
-        if (values.empty()) return 0.0f;
+        if (values.empty()) return headerDividerThickness;
         return headerDividerThickness + (float)valuesInOrder.size() * listItemHeight + (float)(values.size() - 1) * dividerThickness;
     }
 
@@ -920,7 +920,7 @@ public:
         const float offset = y - rowsTop;
         const int index = (int)(offset / GetRowPitch());
         if (index < 0 || index >= (int)values.size()) return -1;
-        if (fmod(offset, GetRowPitch()) > listItemHeight) return -1;
+        if (fmod(offset, GetRowPitch()) >= listItemHeight) return -1;
         return index;
     }
 
