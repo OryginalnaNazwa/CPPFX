@@ -558,9 +558,9 @@ public:
         node.key() = newLabel;
         values.insert(std::move(node));
         if (labelToColour.contains(oldLabel)) {
-            auto node1 = labelToColour.extract(oldLabel);
-            node1.key() = newLabel;
-            labelToColour.insert(std::move(node));
+            auto colourNode = labelToColour.extract(oldLabel);
+            colourNode.key() = newLabel;
+            labelToColour.insert(std::move(colourNode));
         }
         for (auto& label : valuesInOrder) {
             if (label == oldLabel) {
