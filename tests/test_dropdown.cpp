@@ -69,9 +69,9 @@ DropDown<int> MakeFixture() {
     dd.SetHeaderDividerThickness(4.0f);
     dd.SetDividerThickness(2.0f);
     dd.SetItemInListHeight(20.0f);
-    dd.InsertItem("first", 1);
-    dd.InsertItem("second", 2);
-    dd.InsertItem("third", 3);
+    dd.AddItem("first", 1);
+    dd.AddItem("second", 2);
+    dd.AddItem("third", 3);
     return dd;
 }
 
@@ -101,7 +101,7 @@ TEST(dropdown_content_height_of_one_item_has_no_dividers) {
     dd.SetHeaderDividerThickness(4.0f);
     dd.SetDividerThickness(2.0f);
     dd.SetItemInListHeight(20.0f);
-    dd.InsertItem("only", 1);
+    dd.AddItem("only", 1);
     CHECK(Near(dd.GetListContentHeight(), 24.0f));
 }
 
@@ -178,7 +178,7 @@ TEST(dropdown_index_at_survives_a_zero_pitch) {
     dd.DoNotExpandToTextAutomatically();
     dd.SetItemInListHeight(0.0f);
     dd.SetDividerThickness(0.0f);
-    dd.InsertItem("first", 1);
+    dd.AddItem("first", 1);
     CHECK_EQ(dd.GetIndexAt(200.0f), -1);
 }
 
@@ -245,9 +245,9 @@ TEST(dropdown_was_i_clicked_covers_the_open_list) {
 TEST(dropdown_natural_order_puts_nine_before_ten) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("item10", 10);
-    dd.InsertItem("item9", 9);
-    dd.InsertItem("item1", 1);
+    dd.AddItem("item10", 10);
+    dd.AddItem("item9", 9);
+    dd.AddItem("item1", 1);
     dd.SetOrder(DropDown<int>::natural);
     dd.Sort();
     CHECK_EQ(Joined(dd.GetLabelsInOrder()), std::string("item1, item9, item10"));
@@ -256,9 +256,9 @@ TEST(dropdown_natural_order_puts_nine_before_ten) {
 TEST(dropdown_alphabetic_order_does_not) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("item10", 10);
-    dd.InsertItem("item9", 9);
-    dd.InsertItem("item1", 1);
+    dd.AddItem("item10", 10);
+    dd.AddItem("item9", 9);
+    dd.AddItem("item1", 1);
     dd.SetOrder(DropDown<int>::alphabetic);
     dd.Sort();
     CHECK_EQ(Joined(dd.GetLabelsInOrder()), std::string("item1, item10, item9"));
@@ -267,8 +267,8 @@ TEST(dropdown_alphabetic_order_does_not) {
 TEST(dropdown_natural_order_breaks_ties_on_leading_zeros) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("item007", 7);
-    dd.InsertItem("item7", 7);
+    dd.AddItem("item007", 7);
+    dd.AddItem("item7", 7);
     dd.SetOrder(DropDown<int>::natural);
     dd.Sort();
     // Numerically equal, so the one with fewer leading zeros comes first.
@@ -278,9 +278,9 @@ TEST(dropdown_natural_order_breaks_ties_on_leading_zeros) {
 TEST(dropdown_case_sensitivity_changes_the_order) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("Apple", 1);
-    dd.InsertItem("banana", 2);
-    dd.InsertItem("Cherry", 3);
+    dd.AddItem("Apple", 1);
+    dd.AddItem("banana", 2);
+    dd.AddItem("Cherry", 3);
 
     dd.SetOrder(DropDown<int>::alphabetic);
     dd.Sort();
@@ -295,9 +295,9 @@ TEST(dropdown_case_sensitivity_changes_the_order) {
 TEST(dropdown_reverse_orders_are_exact_reverses) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("item10", 10);
-    dd.InsertItem("item2", 2);
-    dd.InsertItem("Item1", 1);
+    dd.AddItem("item10", 10);
+    dd.AddItem("item2", 2);
+    dd.AddItem("Item1", 1);
 
     dd.SetOrder(DropDown<int>::natural);
     dd.Sort();
@@ -314,9 +314,9 @@ TEST(dropdown_reverse_orders_are_exact_reverses) {
 TEST(dropdown_insertion_order_is_recoverable_after_sorting) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("cherry", 3);
-    dd.InsertItem("apple", 1);
-    dd.InsertItem("banana", 2);
+    dd.AddItem("cherry", 3);
+    dd.AddItem("apple", 1);
+    dd.AddItem("banana", 2);
 
     dd.SetOrder(DropDown<int>::alphabetic);
     dd.Sort();
@@ -331,9 +331,9 @@ TEST(dropdown_insertion_order_is_recoverable_after_sorting) {
 TEST(dropdown_new_items_land_at_the_end_in_insertion_order) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("a", 1);
-    dd.InsertItem("b", 2);
-    dd.InsertItem("c", 3);
+    dd.AddItem("a", 1);
+    dd.AddItem("b", 2);
+    dd.AddItem("c", 3);
     CHECK_EQ(Joined(dd.GetLabelsInOrder()), std::string("a, b, c"));
 }
 
@@ -341,8 +341,8 @@ TEST(dropdown_sorting_is_lazy) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
     dd.SetOrder(DropDown<int>::alphabetic);
-    dd.InsertItem("c", 3);
-    dd.InsertItem("a", 1);
+    dd.AddItem("c", 3);
+    dd.AddItem("a", 1);
     // Inserting marks it dirty; DoPassiveAction is what actually sorts.
     dd.DoPassiveAction(0.0f);
     CHECK_EQ(Joined(dd.GetLabelsInOrder()), std::string("a, c"));
@@ -351,7 +351,7 @@ TEST(dropdown_sorting_is_lazy) {
 TEST(dropdown_custom_order_without_a_comparator_throws) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("a", 1);
+    dd.AddItem("a", 1);
     dd.SetOrder(DropDown<int>::custom);
     CHECK_THROWS_AS(dd.Sort(), std::runtime_error);
 }
@@ -359,9 +359,9 @@ TEST(dropdown_custom_order_without_a_comparator_throws) {
 TEST(dropdown_custom_order_uses_the_comparator) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("aaa", 1);
-    dd.InsertItem("z", 2);
-    dd.InsertItem("bb", 3);
+    dd.AddItem("aaa", 1);
+    dd.AddItem("z", 2);
+    dd.AddItem("bb", 3);
     dd.SetCustomSort([](const std::string& a, const std::string& b) {
         return a.size() < b.size();
     });
@@ -375,14 +375,14 @@ TEST(dropdown_custom_order_uses_the_comparator) {
 TEST(dropdown_rejects_an_empty_label) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    CHECK_THROWS_AS(dd.InsertItem("", 1), std::invalid_argument);
+    CHECK_THROWS_AS(dd.AddItem("", 1), std::invalid_argument);
 }
 
 TEST(dropdown_rejects_a_duplicate_label) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("taken", 1);
-    CHECK_THROWS_AS(dd.InsertItem("taken", 2), std::out_of_range);
+    dd.AddItem("taken", 1);
+    CHECK_THROWS_AS(dd.AddItem("taken", 2), std::out_of_range);
 }
 
 TEST(dropdown_removing_a_missing_label_throws) {
@@ -394,8 +394,8 @@ TEST(dropdown_removing_a_missing_label_throws) {
 TEST(dropdown_renaming_onto_a_taken_label_throws) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("a", 1);
-    dd.InsertItem("b", 2);
+    dd.AddItem("a", 1);
+    dd.AddItem("b", 2);
     CHECK_THROWS_AS(dd.ChangeLabel("a", "b"), std::invalid_argument);
 }
 
@@ -409,7 +409,7 @@ TEST(dropdown_with_no_pick_throws_on_access) {
 TEST(dropdown_setting_a_missing_current_throws) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("a", 1);
+    dd.AddItem("a", 1);
     CHECK_THROWS_AS(dd.SetCurrent("b"), std::out_of_range);
 }
 
@@ -446,8 +446,8 @@ TEST(dropdown_picks_the_first_item_when_nothing_is_current) {
 TEST(dropdown_first_item_follows_the_order) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.InsertItem("cherry", 3);
-    dd.InsertItem("apple", 1);
+    dd.AddItem("cherry", 3);
+    dd.AddItem("apple", 1);
     dd.SetOrder(DropDown<int>::alphabetic);
     dd.DoPassiveAction(0.0f);
     // "First" means first as drawn, not first inserted.
@@ -484,7 +484,7 @@ TEST(dropdown_removing_an_item_takes_its_colour_with_it) {
     dd.RemoveItem("second");
     CHECK(!dd.GetColoursToLabels().contains("second"));
     // Reusing the name must not inherit the old colour.
-    dd.InsertItem("second", 2);
+    dd.AddItem("second", 2);
     CHECK(!dd.GetColoursToLabels().contains("second"));
 }
 
