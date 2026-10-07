@@ -435,7 +435,7 @@ public:
         OverrideColour colour;
         Colour dividerColour;
         Border border;
-        Font font;
+        OverrideFont font;
 
         /**
          *  @brief Sets the thickness of the divider between the header and the list.
@@ -460,7 +460,7 @@ public:
 
         OverrideColour colour;
         Border border;
-        Font font;
+        OverrideFont font;
         Colour dividerColour;
 
         /**
@@ -483,7 +483,7 @@ public:
          */
         void SetItemInListHeight(float height) {
             if (height < 0.0f) CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Cannot set the height of the item in the list");
-            if (height < font.GetFontSize()) CPPFX_WARN("Height of the item in the " + owner->GetFxID() + "'s " + owner->GetID() + " is smaller than the font's size.");
+            if (font.IsOverridden() && height < font.GetFontSize()) CPPFX_WARN("Height of the item in the " + owner->GetFxID() + "'s " + owner->GetID() + " is smaller than the font's size.");
             listItemHeight = height;
         }
         float GetItemInListHeight() const {
@@ -497,8 +497,6 @@ public:
     } list{this};
 
     DropDown() : Item("DropDown"), TextItem("DropDown"), order(insertion), currentLabel("") {
-        header.font = font;
-        list.font = font;
         list.SetItemInListHeight(height);
     }
 
@@ -521,7 +519,6 @@ public:
             SetCurrent(valuesInOrder[0]);
             if (expandsToTextAutomatically) ExpandToText();
         }
-        if (syncsToHeaderAutomatically) SyncToHeader();
     }
 
     bool WasIClicked(const Vector2& mousePosition) const override {
@@ -803,7 +800,8 @@ public:
     virtual void ExpandToText() override {
         text = currentLabel;
         TextItem::ExpandToText();
-        const float rowNeeds = list.font.GetInkSize(currentLabel).y + (2.0f * textMargin);
+        const CPPFX::Font& rowFont = list.font.IsOverridden() ? list.font.GetOverride() : font;
+        const float rowNeeds = rowFont.GetInkSize(currentLabel).y + (2.0f * textMargin);
         if (rowNeeds > list.GetItemInListHeight()) list.SetItemInListHeight(rowNeeds);
     }
     /**
@@ -813,7 +811,8 @@ public:
     void FitToText() override {
         text = currentLabel;
         TextItem::ExpandToText();
-        const float rowNeeds = list.font.GetInkSize(currentLabel).y + (2.0f * textMargin);
+        const CPPFX::Font& rowFont = list.font.IsOverridden() ? list.font.GetOverride() : font;
+        const float rowNeeds = rowFont.GetInkSize(currentLabel).y + (2.0f * textMargin);
         list.SetItemInListHeight(rowNeeds);
     }
 
@@ -880,46 +879,6 @@ public:
         return header.GetDividerThickness() + (float)valuesInOrder.size() * list.GetItemInListHeight() + (float)(values.size() - 1) * list.GetDividerThickness();
     }
 
-        /**
-     *  @brief Makes the list follow the header's font, colour and border.
-     *  @details The header draws with the inherited font and colour, so styling
-     *           a DropDown the obvious way restyles one rectangle and leaves the
-     *           list behind. With this on, the list reads them at draw time and
-     *           follows along, however often the header changes.
-     *  @note listFont, listColour and listBorder are left alone, not overwritten -
-     *        they are simply not consulted while this is on, and take effect again
-     *        the moment it is off. Setting them meanwhile does nothing visible.
-     */
-    void SyncToHeaderAutomatically() { syncsToHeaderAutomatically = true; }
-    /**
-     *  @brief Lets the list keep its own font, colour and border. Default.
-     *  @details Whatever listFont, listColour and listBorder were set to comes
-     *           back into use.
-     */
-    void DoNotSyncToHeaderAutomatically() { syncsToHeaderAutomatically = false; }
-    /**
-     *  @brief Sets whether the list follows the header's styling.
-     *  @param should true - list mirrors the header, false - list styles itself
-     *  @see DropDown::SyncToHeaderAutomatically
-     *  @see DropDown::DoNotSyncToHeaderAutomatically
-     */
-    void ShouldSyncToHeaderAutomatically(bool should) { syncsToHeaderAutomatically = should; }
-    /**
-     *  @brief Checks whether the list is following the header.
-     *  @returns true if the list draws with the header's styling.
-     */
-    bool IsSyncingToHeaderAutomatically() const { return syncsToHeaderAutomatically; }
-
-    /**
-     * @brief Copies the header's styling onto the list, once.
-     */
-    virtual void SyncToHeader() {
-        /*listFont = font;
-        listColour = colour;
-        listBorder.SetThickness(headerBorder.GetThickness());
-        listBorder.colour = headerBorder.colour;*/
-    }
-
     /** @brief Top of the list, where the header divider starts. */
     float GetListTop() const {
         return yAnchor + height + header.border.GetThickness() + list.border.GetThickness();
@@ -960,9 +919,11 @@ protected:
 
     /** @brief Draws the header - background, current pick, and its border. */
     virtual void DrawHeader(float elapsedTime) const {
-        DrawRectangle(xAnchor, yAnchor, width, height, header.colour.GetColour());
+        if (header.colour.IsOverridden()) DrawRectangle(xAnchor, yAnchor, width, height, header.colour.GetColour());
+        else DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
         if (!currentLabel.empty()) {
-            DrawAlignedText(Alignment::CENTRE, currentLabel, header.font);
+            if (header.font.IsOverridden()) DrawAlignedText(Alignment::CENTRE, currentLabel, header.font.GetOverride());
+            else DrawAlignedText(Alignment::CENTRE, currentLabel, font);
         }
         header.border.DrawMyself(xAnchor, yAnchor, width, height);
     }
@@ -974,17 +935,22 @@ protected:
      */
     virtual void DrawList(float elapsedTime) const {
         float yCurrent = GetListTop();
-        DrawRectangle(xAnchor, yCurrent, width, header.GetDividerThickness(), list.dividerColour.GetColour());
-        yCurrent += header.GetDividerThickness();
+        Color drawColour = colour.GetColour();
+        if (list.colour.IsOverridden()) drawColour = list.colour.GetColour();
+        CPPFX::Font drawFont = font;
+        if (list.font.IsOverridden()) drawFont = list.font.GetOverride();
 
+        DrawRectangle(xAnchor, yCurrent, width, header.GetDividerThickness(), drawColour);
+
+        yCurrent += header.GetDividerThickness();
         for (size_t i = 0; i < valuesInOrder.size(); ++i) {
             const std::string& label = valuesInOrder[i];
             const Color rowColour = labelToColour.contains(label)
                                   ? labelToColour.at(label).GetColour()
-                                  : list.colour.GetColour();
+                                  : drawColour;
 
             DrawRectangle(xAnchor, yCurrent, width, list.GetItemInListHeight(), rowColour);
-            DrawAlignedText(Alignment::CENTRE, label, list.font,
+            DrawAlignedText(Alignment::CENTRE, label, drawFont,
                             xAnchor + textMargin, yCurrent + textMargin,
                             width - (2.0f * textMargin),
                             list.GetItemInListHeight() - (2.0f * textMargin));
@@ -1167,11 +1133,6 @@ public:
      *  @returns true if addArea focuses on open
      */
     bool DoesAddAreaFocusOnOpen() const;
-
-    /**
-     * @brief Copies the header's styling onto the list and addArea, once.
-     */
-    virtual void SyncToHeader() override;
 
     const std::string GetClassID() const;
 

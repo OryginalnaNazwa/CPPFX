@@ -299,10 +299,11 @@ public:
      *  @return true if a colour is set, false otherwise.
      */
     bool IsOverridden() const;
+    Colour GetOverride() const;
     /**
      *  @brief Removes the colour, making the override unset.
      */
-    void ClearColour();
+    void ClearOverride();
 
 private:
     std::optional<Colour> colour = std::nullopt;
@@ -989,6 +990,117 @@ private:
      *  @returns Index, or -1 when there is nothing to index into.
      */
     static int SafeGlyphIndex(const ::Font& f, int codepoint);
+};
+
+/**
+ *  @brief Non-default font
+ *  @details Holds either a Font or nothing. When unset, the widget's default
+ *           font applies. Every method other than SetFont(const Font&),
+ *           IsOverriden and ClearOverride throws std::logic_error when no
+ *           font is set - check IsOverriden() first.
+ *  @see CPPFX::Font
+ */
+class OverrideFont {
+public:
+    OverrideFont() {}
+
+    /**
+     *  @brief Sets the overriding font.
+     *  @param font font to use instead of the default one
+     */
+    void SetFont(const Font& font);
+    /**
+     *  @brief Checks whether a font is set.
+     *  @return true if a font is set, false otherwise.
+     */
+    bool IsOverridden() const;
+    CPPFX::Font GetOverride() const;
+    /**
+     *  @brief Removes the font, making the override unset.
+     */
+    void ClearOverride();
+
+    /// @name Forwarded to Font
+    /// Each behaves as the Font method of the same name.
+    /// @throws std::logic_error if no font is set
+    ///@{
+    void SetFilePath(const std::string& path);
+    std::string GetFilePath() const;
+    void ClearFilePath();
+
+    void LoadFont();
+    void LoadFont(const std::string& fileName);
+    void UnloadFont();
+    bool IsFontValid() const;
+    bool IsDefaultFont() const;
+    long GetShareCount() const;
+
+    void SetFont(const ::Font& font);
+    ::Font GetFont() const;
+    void ClearFont();
+
+    void SetFontSize(float size);
+    float GetFontSize() const;
+    void SetLoadSize(int size);
+    int GetLoadSize() const;
+    int GetBaseSize() const;
+
+    void SetSpacing(float spacing);
+    float GetSpacing() const;
+    void SetAutoSpacing();
+    bool IsAutoSpacing() const;
+    void SetLineSpacing(float spacing);
+    float GetLineSpacing() const;
+
+    void SetCharset(Font::Charset preset);
+    void AddCharset(Font::Charset preset);
+    void SetCharset(const std::string& sampleText);
+    void SetCharset(const std::vector<int>& codepoints);
+    void AddCharset(const std::string& sampleText);
+    std::vector<int> GetCharset() const;
+    void ClearCharset();
+
+    bool HasGlyph(int codepoint) const;
+    std::vector<int> FindMissingGlyphs(const std::string& text) const;
+    bool CanRender(const std::string& text) const;
+    std::vector<int> ValidateCharset() const;
+    void WarnAboutMissingGlyphs(const std::string& text,
+                                const std::string& context = "") const;
+
+    void DrawText(const std::string& text, float x, float y) const;
+    void DrawText(const std::string& text, const Vector2& position) const;
+    void DrawText(const std::string& text, float x, float y, const Color& tint) const;
+    void DrawTextPro(const std::string& text, const Vector2& position,
+                     const Vector2& origin, float rotation) const;
+
+    float GetInkHeight(const std::string& text) const;
+    Vector2 GetInkSize(const std::string& text) const;
+    void DrawTextAt(const std::string& text, const Vector2& inkTopLeft) const;
+    void DrawTextAt(const std::string& text, const Vector2& inkTopLeft,
+                    const Color& tint) const;
+
+    Vector2 MeasureText(const std::string& text) const;
+    float MeasureTextWidth(const std::string& text) const;
+    float MeasureTextHeight(const std::string& text) const;
+
+    float GetCapHeight() const;
+    float GetCapOffset() const;
+    float GetVerticalCentreOffset(float boxHeight) const;
+
+    void DrawAligned(const std::string& text, const Alignment& alignment,
+                     float x, float y, float width, float height) const;
+    void DrawAligned(const std::string& text, const Alignment& alignment,
+                     float x, float y, float width, float height,
+                     const Color& tint) const;
+
+    std::string GetLoadedPath() const;
+    ///@}
+
+private:
+    std::optional<Font> font = std::nullopt;
+
+    Font& Checked(const char* func);
+    const Font& Checked(const char* func) const;
 };
 
 struct NestedProperty {

@@ -752,14 +752,6 @@ bool ComboBox::DoesAddAreaFocusOnOpen() const {
     return !opensOnSecondClick;
 }
 
-void ComboBox::SyncToHeader() {
-    DropDown<std::string>::SyncToHeader();
-
-    /*addArea.font = font;
-    addArea.colour = colour;
-    addArea.border = headerBorder;*/
-}
-
 const std::string ComboBox::GetClassID() const {
     return "ComboBox";
 }

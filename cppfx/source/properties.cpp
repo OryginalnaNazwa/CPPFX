@@ -282,8 +282,9 @@ bool  OverrideColour::IsHex() const     { return Checked(__func__).IsHex(); }
 bool OverrideColour::IsOverridden() const {
     return colour.has_value();
 }
+Colour OverrideColour::GetOverride() const { return Checked(__func__); }
 
-void OverrideColour::ClearColour() {
+void OverrideColour::ClearOverride() {
     colour.reset();
 }
 
@@ -929,3 +930,110 @@ bool CPPFX::Font::IsDrawable(const ::Font& f) {
 std::string CPPFX::Font::GetLoadedPath() const {
     return loadedFrom;
 }
+
+// - OverrideFont -
+void OverrideFont::SetFont(const Font& f) { font = f; }
+bool OverrideFont::IsOverridden() const    { return font.has_value(); }
+void OverrideFont::ClearOverride()        { font.reset(); }
+
+CPPFX::Font& OverrideFont::Checked(const char* func) {
+    if (!font) throw std::logic_error(std::string("OverrideFont::") + func + ": font not set");
+    return *font;
+}
+
+const CPPFX::Font& OverrideFont::Checked(const char* func) const {
+    if (!font) throw std::logic_error(std::string("OverrideFont::") + func + ": font not set");
+    return *font;
+}
+
+void OverrideFont::SetFilePath(const std::string& path) { Checked(__func__).SetFilePath(path); }
+std::string OverrideFont::GetFilePath() const           { return Checked(__func__).GetFilePath(); }
+void OverrideFont::ClearFilePath()                      { Checked(__func__).ClearFilePath(); }
+
+void OverrideFont::LoadFont()                           { Checked(__func__).LoadFont(); }
+void OverrideFont::LoadFont(const std::string& fileName){ Checked(__func__).LoadFont(fileName); }
+void OverrideFont::UnloadFont()                         { Checked(__func__).UnloadFont(); }
+bool OverrideFont::IsFontValid() const                  { return Checked(__func__).IsFontValid(); }
+bool OverrideFont::IsDefaultFont() const                { return Checked(__func__).IsDefaultFont(); }
+long OverrideFont::GetShareCount() const                { return Checked(__func__).GetShareCount(); }
+
+void OverrideFont::SetFont(const ::Font& f)             { Checked(__func__).SetFont(f); }
+::Font OverrideFont::GetFont() const                    { return Checked(__func__).GetFont(); }
+void OverrideFont::ClearFont()                          { Checked(__func__).ClearFont(); }
+
+void OverrideFont::SetFontSize(float size)              { Checked(__func__).SetFontSize(size); }
+float OverrideFont::GetFontSize() const                 { return Checked(__func__).GetFontSize(); }
+void OverrideFont::SetLoadSize(int size)                { Checked(__func__).SetLoadSize(size); }
+int OverrideFont::GetLoadSize() const                   { return Checked(__func__).GetLoadSize(); }
+int OverrideFont::GetBaseSize() const                   { return Checked(__func__).GetBaseSize(); }
+
+void OverrideFont::SetSpacing(float spacing)            { Checked(__func__).SetSpacing(spacing); }
+float OverrideFont::GetSpacing() const                  { return Checked(__func__).GetSpacing(); }
+void OverrideFont::SetAutoSpacing()                     { Checked(__func__).SetAutoSpacing(); }
+bool OverrideFont::IsAutoSpacing() const                { return Checked(__func__).IsAutoSpacing(); }
+void OverrideFont::SetLineSpacing(float spacing)        { Checked(__func__).SetLineSpacing(spacing); }
+float OverrideFont::GetLineSpacing() const              { return Checked(__func__).GetLineSpacing(); }
+
+void OverrideFont::SetCharset(Font::Charset preset)     { Checked(__func__).SetCharset(preset); }
+void OverrideFont::AddCharset(Font::Charset preset)     { Checked(__func__).AddCharset(preset); }
+void OverrideFont::SetCharset(const std::string& s)     { Checked(__func__).SetCharset(s); }
+void OverrideFont::SetCharset(const std::vector<int>& c){ Checked(__func__).SetCharset(c); }
+void OverrideFont::AddCharset(const std::string& s)     { Checked(__func__).AddCharset(s); }
+std::vector<int> OverrideFont::GetCharset() const       { return Checked(__func__).GetCharset(); }
+void OverrideFont::ClearCharset()                       { Checked(__func__).ClearCharset(); }
+
+bool OverrideFont::HasGlyph(int codepoint) const        { return Checked(__func__).HasGlyph(codepoint); }
+std::vector<int> OverrideFont::FindMissingGlyphs(const std::string& text) const {
+    return Checked(__func__).FindMissingGlyphs(text);
+}
+bool OverrideFont::CanRender(const std::string& text) const { return Checked(__func__).CanRender(text); }
+std::vector<int> OverrideFont::ValidateCharset() const  { return Checked(__func__).ValidateCharset(); }
+void OverrideFont::WarnAboutMissingGlyphs(const std::string& text, const std::string& context) const {
+    Checked(__func__).WarnAboutMissingGlyphs(text, context);
+}
+
+void OverrideFont::DrawText(const std::string& text, float x, float y) const {
+    Checked(__func__).DrawText(text, x, y);
+}
+void OverrideFont::DrawText(const std::string& text, const Vector2& position) const {
+    Checked(__func__).DrawText(text, position);
+}
+void OverrideFont::DrawText(const std::string& text, float x, float y, const Color& tint) const {
+    Checked(__func__).DrawText(text, x, y, tint);
+}
+void OverrideFont::DrawTextPro(const std::string& text, const Vector2& position,
+                               const Vector2& origin, float rotation) const {
+    Checked(__func__).DrawTextPro(text, position, origin, rotation);
+}
+
+float OverrideFont::GetInkHeight(const std::string& text) const { return Checked(__func__).GetInkHeight(text); }
+Vector2 OverrideFont::GetInkSize(const std::string& text) const { return Checked(__func__).GetInkSize(text); }
+void OverrideFont::DrawTextAt(const std::string& text, const Vector2& inkTopLeft) const {
+    Checked(__func__).DrawTextAt(text, inkTopLeft);
+}
+void OverrideFont::DrawTextAt(const std::string& text, const Vector2& inkTopLeft, const Color& tint) const {
+    Checked(__func__).DrawTextAt(text, inkTopLeft, tint);
+}
+
+Vector2 OverrideFont::MeasureText(const std::string& text) const     { return Checked(__func__).MeasureText(text); }
+float OverrideFont::MeasureTextWidth(const std::string& text) const  { return Checked(__func__).MeasureTextWidth(text); }
+float OverrideFont::MeasureTextHeight(const std::string& text) const { return Checked(__func__).MeasureTextHeight(text); }
+
+float OverrideFont::GetCapHeight() const                { return Checked(__func__).GetCapHeight(); }
+float OverrideFont::GetCapOffset() const                { return Checked(__func__).GetCapOffset(); }
+float OverrideFont::GetVerticalCentreOffset(float boxHeight) const {
+    return Checked(__func__).GetVerticalCentreOffset(boxHeight);
+}
+
+void OverrideFont::DrawAligned(const std::string& text, const Alignment& alignment,
+                               float x, float y, float width, float height) const {
+    Checked(__func__).DrawAligned(text, alignment, x, y, width, height);
+}
+void OverrideFont::DrawAligned(const std::string& text, const Alignment& alignment,
+                               float x, float y, float width, float height,
+                               const Color& tint) const {
+    Checked(__func__).DrawAligned(text, alignment, x, y, width, height, tint);
+}
+
+std::string OverrideFont::GetLoadedPath() const         { return Checked(__func__).GetLoadedPath(); }
+CPPFX::Font OverrideFont::GetOverride() const { return Checked(__func__); }
