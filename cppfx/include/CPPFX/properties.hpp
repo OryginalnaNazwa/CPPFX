@@ -1,13 +1,14 @@
 #ifndef PROPERTIES_H
 #define PROPERTIES_H
 
-#include <functional>     // for function
-#include <iostream>       // for operator<<, basic_ostream, char_traits, cerr
-#include <string>         // for string, allocator
-#include "raylib.h"       // for Color, BLACK, LIGHTGRAY, DARKGRAY, GRAY
-#include <memory>         // for shared_ptr
-#include <vector>         // for vector
-#include <set>            // for set
+#include <functional> // for function
+#include <iostream>   // for operator<<, basic_ostream, char_traits, cerr
+#include <string>     // for string, allocator
+#include "raylib.h"   // for Color, BLACK, LIGHTGRAY, DARKGRAY, GRAY
+#include <memory>     // for shared_ptr
+#include <vector>     // for vector
+#include <set>        // for set
+#include <optional>   // for optional
 
 /******************************************************************
  *  @file properties
@@ -16,6 +17,8 @@
  ******************************************************************/
 
 namespace CPPFX {
+
+class Item; // declaration for NestedProperty
 
 #define GREY GRAY //a hack to make British spelling work with Raylib colours.
 #define DARKGREY DARKGRAY
@@ -34,8 +37,8 @@ namespace CPPFX {
  *  @class Colour
  *  @brief Wrapper over raylib colours.
  *  @details Used in every widget and property. Accepts named raylib colours
- *           and custom literals in the form #RrrGggBbb[Aaa] (hex) or
- *           #RrrrGgggBbbb[Aaaa] (dec). Alpha is optional and defaults to opaque.
+ *           and custom literals in the form #RrrGggBbbAaa (hex) or
+ *           #RrrrGgggBbbbAaaa (dec). Alpha (Aaa or Aaaa) is optional and defaults to opaque.
  */
 class Colour {
 public:
@@ -180,6 +183,132 @@ private:
     static std::string Normalise(const std::string& str);
     static ColourLayout DetectLayout(const std::string& s);
     static Color ParseLiteral(const std::string& s);
+};
+
+/**
+ *  @brief Optional colour override.
+ *  @details Holds either a Colour or nothing. When unset, the widget's default
+ *           colour applies. Methods that read or modify the colour throw
+ *           std::logic_error when it is unset - check IsOverriden() first.
+ *  @see CPPFX::Colour
+ */
+class OverrideColour {
+public:
+    OverrideColour() {}
+
+    /**
+     *  @brief Sets colour using its name or a custom literal.
+     *  @param colour colour's name, or #RrrGggBbb[Aaa] / #RrrrGgggBbbb[Aaaa]
+     *  @details Ignores capitalisation. Both GRAY and GREY work.
+     *  @throws std::invalid_argument if the input is empty or the literal is malformed
+     *  @throws std::out_of_range if the name isn't a known colour
+     */
+    void SetColour(const std::string& colour);
+    /**
+     *  @brief Sets colour using its value.
+     *  @param colour colour's value - {R, G, B, A} or Raylib's defines.
+     */
+    void SetColour(Color colour);
+
+    /**
+     *  @brief Gets colour name.
+     *  @details Returns the canonical raylib spelling for known colours -
+     *           never the British aliases. Custom colours come back as literals.
+     *  @return The colour's name or literal, or "NONE" if no colour is set.
+     */
+    std::string GetColourString() const;
+    /**
+     *  @brief Gets colour.
+     *  @return Raylib's colour value.
+     *  @throws std::logic_error if no colour is set
+     */
+    Color GetColour() const;
+
+    /**
+     *  @brief Sets custom colour literals to be reported in hexadecimal.
+     *  @details Affects GetColourString only, and only for colours with no
+     *           name - #R1EG90BFF rather than #R030G144B255. Both forms are
+     *           always accepted on input.
+     *  @throws std::logic_error if no colour is set
+     *  @see SetLiteralBase
+     */
+    void SetHex();
+    /**
+     *  @brief Sets custom colour literals to be reported in decimal.
+     *  @details Affects GetColourString only, and only for colours with no
+     *           name - #R030G144B255 rather than #R1EG90BFF. Both forms are
+     *           always accepted on input.
+     *  @throws std::logic_error if no colour is set
+     *  @see SetLiteralBase
+     */
+    void SetDec();
+    /**
+     *  @brief Sets the base used when reporting custom colour literals.
+     *  @param hex true for hexadecimal, false for decimal.
+     *  @details Convenience for the two previous methods, for when the base
+     *           is held in a variable.
+     *  @throws std::logic_error if no colour is set
+     *  @see SetHex
+     *  @see SetDec
+     */
+    void SetLiteralBase(bool hex);
+    /**
+     *  @brief Checks which base custom colour literals are reported in.
+     *  @return true if hexadecimal, false if decimal.
+     *  @throws std::logic_error if no colour is set
+     */
+    bool IsHex() const;
+
+    /**
+     *  @brief Compares two overrides by value.
+     *  @param other the override to compare against
+     *  @return true if both are unset, or both are set and RGBA match.
+     *          false if only one is set.
+     *  @details Names are ignored - a colour built from "GRAY" equals one
+     *           built from "#R82G82B82".
+     */
+    bool operator==(const OverrideColour& other) const;
+    /**
+     *  @brief Negation of operator==.
+     */
+    bool operator!=(const OverrideColour& other) const;
+
+    /**
+     *  @brief Reduces the colour's opacity.
+     *  @param factor 0.0 fully transparent, 1.0 unchanged
+     *  @details Clamps the factor.
+     *  @throws std::logic_error if no colour is set
+     */
+    void Fade(float factor);
+
+    /**
+     *  @brief Blends this colour towards another.
+     *  @param target colour to blend towards
+     *  @param t 0.0 leaves the colour unchanged, 1.0 makes it the target
+     *  @details Clamps t. Blends all four channels, alpha included.
+     *  @throws std::logic_error if no colour is set
+     */
+    void Blend(const Color& target, float t);
+    /**
+     *  @overload
+     */
+    void Blend(const Colour& target, float t);
+
+    /**
+     *  @brief Checks whether a colour is set.
+     *  @return true if a colour is set, false otherwise.
+     */
+    bool IsOverridden() const;
+    /**
+     *  @brief Removes the colour, making the override unset.
+     */
+    void ClearColour();
+
+private:
+    std::optional<Colour> colour = std::nullopt;
+
+    Colour& Checked(const char* func);
+    const Colour& Checked(const char* func) const;
 };
 
 /**
@@ -860,6 +989,13 @@ private:
      *  @returns Index, or -1 when there is nothing to index into.
      */
     static int SafeGlyphIndex(const ::Font& f, int codepoint);
+};
+
+struct NestedProperty {
+    NestedProperty(Item* o) : owner(o) {}
+
+protected:
+    Item* owner;
 };
 
 }

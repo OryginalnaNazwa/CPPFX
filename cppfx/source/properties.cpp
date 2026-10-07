@@ -244,6 +244,59 @@ void Colour::Blend(const Colour& target, float t) {
     Blend(target.GetColour(), t);
 }
 
+// - OverrideColour -
+void OverrideColour::SetColour(const std::string& col) {
+    colour = Colour(col);
+}
+
+void OverrideColour::SetColour(Color col) {
+    colour = Colour(col);
+}
+
+std::string OverrideColour::GetColourString() const {
+    if (!colour) return "NONE";
+    return colour->GetColourString();
+}
+
+bool OverrideColour::operator==(const OverrideColour& other) const {
+    if (!colour && !other.IsOverridden()) return true;
+    if (!colour || !other.IsOverridden()) return false;
+    const Color a = colour->GetColour();
+    const Color b = other.colour->GetColour();
+    return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+}
+
+bool OverrideColour::operator!=(const OverrideColour& other) const {
+    return !(*this == other);
+}
+
+void OverrideColour::SetHex()                         { Checked(__func__).SetHex(); }
+void OverrideColour::SetDec()                         { Checked(__func__).SetDec(); }
+void OverrideColour::SetLiteralBase(bool hex)         { Checked(__func__).SetLiteralBase(hex); }
+void OverrideColour::Fade(float factor)               { Checked(__func__).Fade(factor); }
+void OverrideColour::Blend(const Color& target, float t)  { Checked(__func__).Blend(target, t); }
+void OverrideColour::Blend(const Colour& target, float t) { Checked(__func__).Blend(target, t); }
+Color OverrideColour::GetColour() const { return Checked(__func__).GetColour(); }
+bool  OverrideColour::IsHex() const     { return Checked(__func__).IsHex(); }
+
+bool OverrideColour::IsOverridden() const {
+    return colour.has_value();
+}
+
+void OverrideColour::ClearColour() {
+    colour.reset();
+}
+
+Colour& OverrideColour::Checked(const char* func) {
+    if (!colour) throw std::logic_error(std::string("OverrideColour::") + func + ": colour not set");
+    return *colour;
+}
+
+const Colour& OverrideColour::Checked(const char* func) const {
+    if (!colour) throw std::logic_error(std::string("OverrideColour::") + func + ": colour not set");
+    return *colour;
+}
+
 // --- Property ---
 
 std::string Property::GetFxID() const {

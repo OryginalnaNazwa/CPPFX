@@ -429,18 +429,77 @@ public:
         custom
     };
 
-    Colour headerDividerColour;
-    Colour dividerColour;
-    Colour listColour;
-    Border headerBorder;
-    Border listBorder;
-    Font listFont;
+    struct Header : public NestedProperty {
+        friend DropDown;
 
-    DropDown() : Item("DropDown"), TextItem("DropDown"), order(insertion), currentLabel(""), headerDividerThickness(10.0f), dividerThickness(5.0f), listItemHeight(height) {
-        headerDividerColour.SetColour(BLACK);
-        dividerColour.SetColour(BLACK);
-        listColour.SetColour(LIGHTGREY);
-        listFont = font;
+        OverrideColour colour;
+        Colour dividerColour;
+        Border border;
+        Font font;
+
+        /**
+         *  @brief Sets the thickness of the divider between the header and the list.
+         *  @details Drawn in dividerColour, full width. 0 turns it off.
+         *  @throws std::invalid_argument if thickness is negative
+         */
+        void SetDividerThickness(float thickness) {
+            if (thickness < 0.0f) CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Cannot set header divider thickness: cannot be negative.");
+            headerDividerThickness = thickness;
+        }
+        float GetDividerThickness() const {
+            return headerDividerThickness;
+        }
+
+        private:
+            explicit Header(Item* o) : NestedProperty(o), headerDividerThickness(10.0f) { dividerColour.SetColour(BLACK); }
+            float headerDividerThickness = 0.0f;
+    } header{this};
+
+    struct MenuList : public NestedProperty {
+        friend DropDown;
+
+        OverrideColour colour;
+        Border border;
+        Font font;
+        Colour dividerColour;
+
+        /**
+         *  @brief Sets the thickness of the dividers between list items.
+         *  @details Only between items - none after the last one.
+         *  @throws std::invalid_argument if thickness is negative
+         */
+        void SetDividerThickness(float thickness) {
+            if (thickness < 0.0f) CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Cannot set list divider thickness: cannot be negative.");
+            dividerThickness = thickness;
+        }
+        float GetDividerThickness() const {
+            return dividerThickness;
+        }
+        /**
+         *  @brief Sets the height of a row in the unrolled list.
+         *  @details Independent of the header's height.
+         *  @throws std::invalid_argument if height is negative
+         *  @warning throws a warning if height is below listFont's size.
+         */
+        void SetItemInListHeight(float height) {
+            if (height < 0.0f) CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Cannot set the height of the item in the list");
+            if (height < font.GetFontSize()) CPPFX_WARN("Height of the item in the " + owner->GetFxID() + "'s " + owner->GetID() + " is smaller than the font's size.");
+            listItemHeight = height;
+        }
+        float GetItemInListHeight() const {
+            return listItemHeight;
+        }
+
+        private:
+            explicit MenuList(Item* o) : NestedProperty(o), dividerThickness(5.0f) { dividerColour.SetColour(BLACK); }
+            float dividerThickness; ///< seam between rows; none after the last one
+            float listItemHeight = 50.0f;   ///< row height, independent of the header's
+    } list{this};
+
+    DropDown() : Item("DropDown"), TextItem("DropDown"), order(insertion), currentLabel("") {
+        header.font = font;
+        list.font = font;
+        list.SetItemInListHeight(height);
     }
 
     void DrawMyself(float elapsedTime) const override {
@@ -689,7 +748,7 @@ public:
      *  @see Item::GetTotalWidth
      */
     float GetTotalWidth() const override {
-        return Item::GetTotalWidth() + (2.0f * (headerBorder.GetThickness() > listBorder.GetThickness() ? headerBorder.GetThickness() : listBorder.GetThickness()));
+        return Item::GetTotalWidth() + (2.0f * (header.border.GetThickness() > list.border.GetThickness() ? header.border.GetThickness() : list.border.GetThickness()));
     }
 
     const std::vector<std::string>& GetLabelsInOrder() const {
@@ -744,8 +803,8 @@ public:
     virtual void ExpandToText() override {
         text = currentLabel;
         TextItem::ExpandToText();
-        const float rowNeeds = listFont.GetInkSize(currentLabel).y + (2.0f * textMargin);
-        if (rowNeeds > listItemHeight) listItemHeight = rowNeeds;
+        const float rowNeeds = list.font.GetInkSize(currentLabel).y + (2.0f * textMargin);
+        if (rowNeeds > list.GetItemInListHeight()) list.SetItemInListHeight(rowNeeds);
     }
     /**
      *  @see TextItem::FitToText.
@@ -754,8 +813,8 @@ public:
     void FitToText() override {
         text = currentLabel;
         TextItem::ExpandToText();
-        const float rowNeeds = listFont.GetInkSize(currentLabel).y + (2.0f * textMargin);
-        listItemHeight = rowNeeds;
+        const float rowNeeds = list.font.GetInkSize(currentLabel).y + (2.0f * textMargin);
+        list.SetItemInListHeight(rowNeeds);
     }
 
     /**
@@ -763,45 +822,6 @@ public:
      */
     static const std::string GetClassID() {
         return "DropDown";
-    }
-
-    /**
-     *  @brief Sets the thickness of the divider between the header and the list.
-     *  @details Drawn in dividerColour, full width. 0 turns it off.
-     *  @throws std::invalid_argument if thickness is negative
-     */
-    void SetHeaderDividerThickness(float thickness) {
-        if (thickness < 0.0f) CPPFX_THROW(std::invalid_argument, "Cannot set divider thickness: cannot be negative.");
-        headerDividerThickness = thickness;
-    }
-    float GetHeaderDividerThickness() const {
-        return headerDividerThickness;
-    }
-    /**
-     *  @brief Sets the thickness of the dividers between list items.
-     *  @details Only between items - none after the last one.
-     *  @throws std::invalid_argument if thickness is negative
-     */
-    void SetDividerThickness(float thickness) {
-        if (thickness < 0.0f) CPPFX_THROW(std::invalid_argument, "Cannot set  divider thickness: cannot be negative.");
-        dividerThickness = thickness;
-    }
-    float GetDividerThickness() const {
-        return dividerThickness;
-    }
-    /**
-     *  @brief Sets the height of a row in the unrolled list.
-     *  @details Independent of the header's height.
-     *  @throws std::invalid_argument if height is negative
-     *  @warning throws a warning if height is below listFont's size.
-     */
-    void SetItemInListHeight(float height) {
-        if (height < 0.0f) CPPFX_THROW(std::invalid_argument, "Cannot set height of an item in the list: cannot be negative.");
-        if (height < listFont.GetFontSize()) CPPFX_WARN("Height of the item in the " + GetFxID() + "'s " + GetID() + " is smaller than the font's size.");
-        listItemHeight = height;
-    }
-    float GetItemInListHeight() const {
-        return listItemHeight;
     }
 
     /**
@@ -839,7 +859,7 @@ public:
 
     /** @brief Combined height of the rows alone - no dividers, no borders. */
     float GetRowsHeight() const {
-        return (float)(GetNumberOfItems()) * listItemHeight;
+        return (float)(GetNumberOfItems()) * list.GetItemInListHeight();
     }
     /** @brief Number of items. The header shows one of them rather than being one. */
     size_t GetNumberOfItems() const {
@@ -847,7 +867,7 @@ public:
     }
      /** @brief Content height plus the list border on both sides. */
     float GetTotalListHeight() const {
-        return GetListContentHeight() + (2.0f * listBorder.GetThickness());
+        return GetListContentHeight() + (2.0f * list.border.GetThickness());
     }
     /**
      *  @brief Height of everything inside the list border.
@@ -856,8 +876,8 @@ public:
      *           shows a stub.
      */
     float GetListContentHeight() const {
-        if (values.empty()) return headerDividerThickness;
-        return headerDividerThickness + (float)valuesInOrder.size() * listItemHeight + (float)(values.size() - 1) * dividerThickness;
+        if (values.empty()) return header.GetDividerThickness();
+        return header.GetDividerThickness() + (float)valuesInOrder.size() * list.GetItemInListHeight() + (float)(values.size() - 1) * list.GetDividerThickness();
     }
 
         /**
@@ -894,19 +914,19 @@ public:
      * @brief Copies the header's styling onto the list, once.
      */
     virtual void SyncToHeader() {
-        listFont = font;
+        /*listFont = font;
         listColour = colour;
         listBorder.SetThickness(headerBorder.GetThickness());
-        listBorder.colour = headerBorder.colour;
+        listBorder.colour = headerBorder.colour;*/
     }
 
     /** @brief Top of the list, where the header divider starts. */
     float GetListTop() const {
-        return yAnchor + height + headerBorder.GetThickness() + listBorder.GetThickness();
+        return yAnchor + height + header.border.GetThickness() + list.border.GetThickness();
     }
     /** @brief Distance from one row's top to the next. */
     float GetRowPitch() const {
-        return listItemHeight + dividerThickness;
+        return list.GetItemInListHeight() + list.GetDividerThickness();
     }
     /**
      *  @brief Index of the row at a given y.
@@ -915,12 +935,12 @@ public:
      */
     int GetIndexAt(float y) const {
         if (values.empty()) return -1;
-        const float rowsTop = GetListTop() + headerDividerThickness;
+        const float rowsTop = GetListTop() + header.GetDividerThickness();
         if (y < rowsTop) return -1;
         const float offset = y - rowsTop;
         const int index = (int)(offset / GetRowPitch());
         if (index < 0 || index >= (int)values.size()) return -1;
-        if (fmod(offset, GetRowPitch()) >= listItemHeight) return -1;
+        if (fmod(offset, GetRowPitch()) >= list.GetItemInListHeight()) return -1;
         return index;
     }
 
@@ -934,20 +954,17 @@ protected:
     bool dirty = false;                             ///< lazy sorting - set on insert or reorder, consumed by DoPassiveAction
     std::function<bool(const std::string&, const std::string&)> customSort; ///< comparator for ORDER::custom
     bool justOpened = false;
+    std::unordered_map<std::string, Colour> labelToColour; ///< per-row background overrides; labels absent from here use listColour
 
-    float headerDividerThickness;                   ///< seam between header and list; 0 turns it off
-    float dividerThickness;                         ///< seam between rows; none after the last one
-    float listItemHeight;                           ///< row height, independent of the header's
-    std::unordered_map<std::string, Colour> labelToColour; ///< per-row background overrides; labels absent here use listColour
     bool syncsToHeaderAutomatically = false;        ///< if true, the list draws with the header's font, colour and border
 
     /** @brief Draws the header - background, current pick, and its border. */
     virtual void DrawHeader(float elapsedTime) const {
-        DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-        if (currentLabel != "") {
-            DrawAlignedText(Alignment::CENTRE, currentLabel, font);
+        DrawRectangle(xAnchor, yAnchor, width, height, header.colour.GetColour());
+        if (!currentLabel.empty()) {
+            DrawAlignedText(Alignment::CENTRE, currentLabel, header.font);
         }
-        headerBorder.DrawMyself(xAnchor, yAnchor, width, height);
+        header.border.DrawMyself(xAnchor, yAnchor, width, height);
     }
 
     /**
@@ -957,40 +974,40 @@ protected:
      */
     virtual void DrawList(float elapsedTime) const {
         float yCurrent = GetListTop();
-        DrawRectangle(xAnchor, yCurrent, width, headerDividerThickness, dividerColour.GetColour());
-        yCurrent += headerDividerThickness;
+        DrawRectangle(xAnchor, yCurrent, width, header.GetDividerThickness(), list.dividerColour.GetColour());
+        yCurrent += header.GetDividerThickness();
 
         for (size_t i = 0; i < valuesInOrder.size(); ++i) {
             const std::string& label = valuesInOrder[i];
             const Color rowColour = labelToColour.contains(label)
                                   ? labelToColour.at(label).GetColour()
-                                  : listColour.GetColour();
+                                  : list.colour.GetColour();
 
-            DrawRectangle(xAnchor, yCurrent, width, listItemHeight, rowColour);
-            DrawAlignedText(Alignment::CENTRE, label, listFont,
+            DrawRectangle(xAnchor, yCurrent, width, list.GetItemInListHeight(), rowColour);
+            DrawAlignedText(Alignment::CENTRE, label, list.font,
                             xAnchor + textMargin, yCurrent + textMargin,
                             width - (2.0f * textMargin),
-                            listItemHeight - (2.0f * textMargin));
+                            list.GetItemInListHeight() - (2.0f * textMargin));
 
             if (i + 1 < valuesInOrder.size()) {
-                DrawRectangle(xAnchor, yCurrent + listItemHeight, width,
-                              dividerThickness, dividerColour.GetColour());
+                DrawRectangle(xAnchor, yCurrent + list.GetItemInListHeight(), width,
+                              list.GetDividerThickness(), list.dividerColour.GetColour());
             }
             yCurrent += GetRowPitch();
         }
 
-        listBorder.DrawMyself(xAnchor, GetListTop(), width, GetListContentHeight());
+        list.border.DrawMyself(xAnchor, GetListTop(), width, GetListContentHeight());
     }
 
     /** @brief Draws the outer border around the header and, when open, the list. */
     virtual void DrawFrame() const {
-        const float outer = std::max(headerBorder.GetThickness(), listBorder.GetThickness());
+        const float outer = std::max(header.border.GetThickness(), list.border.GetThickness());
         const float listSpan = focused
-                             ? GetListContentHeight() + (2.0f * listBorder.GetThickness())
+                             ? GetListContentHeight() + (2.0f * list.border.GetThickness())
                              : 0.0f;
-        border.DrawMyself(xAnchor - outer, yAnchor - headerBorder.GetThickness(),
+        border.DrawMyself(xAnchor - outer, yAnchor - header.border.GetThickness(),
                           width + (2.0f * outer),
-                          height + (2.0f * headerBorder.GetThickness()) + listSpan);
+                          height + (2.0f * header.border.GetThickness()) + listSpan);
     }
 
     static bool NaturalLess(const std::string& a, const std::string& b) {
@@ -1162,6 +1179,11 @@ private:
     void CommitAddArea();
 
     bool opensOnSecondClick = true; ///< if true, the click that unrolls the dropdown doesn't reach addArea
+};
+
+class SearchableDropDown : public DropDown<std::string> {
+public:
+    EmbeddedTextField searchArea;
 };
 
 // --- Containers ---

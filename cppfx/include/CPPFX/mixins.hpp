@@ -178,7 +178,7 @@ protected:
 /**
  *  @brief Gives the padding functionality, used for spacing children inside an item.
  */
-class Padded : public virtual Item {
+class Padded : public virtual Item { // this doesn't need to be derived from Item - should be for simplicity, or decide per mixin?
 public:
 
     /**
