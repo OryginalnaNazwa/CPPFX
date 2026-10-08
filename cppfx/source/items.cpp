@@ -756,6 +756,185 @@ const std::string ComboBox::GetClassID() const {
     return "ComboBox";
 }
 
+// --- SearchableDropDown --
+
+void SearchableDropDown::DrawList(float elapsedTime) const {
+    float yCurrent = GetListTop();
+    Color drawColour = colour.GetColour();
+    if (list.colour.IsOverridden()) drawColour = list.colour.GetColour();
+    CPPFX::Font drawFont = font;
+    if (list.font.IsOverridden()) drawFont = list.font.GetOverride();
+
+    DrawRectangle(xAnchor, yCurrent, width, header.GetDividerThickness(), drawColour);
+
+    yCurrent += header.GetDividerThickness();
+    for (size_t i = 0; i < valuesInOrder.size(); ++i) {
+        const std::string& label = valuesInOrder[i];
+
+        if (customSearch && !customSearch(label, searchArea.GetText())) {
+            continue;
+        } else if (!customSearch && !label.starts_with(searchArea.GetText())) {
+            continue;
+        }
+
+        const Color rowColour = labelToColour.contains(label)
+                                ? labelToColour.at(label).GetColour()
+                                : drawColour;
+
+        DrawRectangle(xAnchor, yCurrent, width, list.GetItemInListHeight(), rowColour);
+        DrawAlignedText(Alignment::CENTRE, label, drawFont,
+                        xAnchor + textMargin, yCurrent + textMargin,
+                        width - (2.0f * textMargin),
+                        list.GetItemInListHeight() - (2.0f * textMargin));
+
+        if (i + 1 < valuesInOrder.size()) {
+            DrawRectangle(xAnchor, yCurrent + list.GetItemInListHeight(), width,
+                          list.GetDividerThickness(), list.dividerColour.GetColour());
+        }
+        yCurrent += GetRowPitch();
+    }
+
+    list.border.DrawMyself(xAnchor, GetListTop(), width, GetListContentHeight());
+}
+
+void SearchableDropDown::DrawMyself(float elapsedTime) const {
+    if (focused) {
+        searchArea.DrawMyself(elapsedTime);
+        DrawList(elapsedTime);
+    } else {
+        DrawHeader(elapsedTime);
+    }
+    DrawFrame();
+}
+
+void SearchableDropDown::DoFocusAction(float elapsedTime) {
+    justOpened = false;
+    if (!searchArea.IsFocused()) return;
+    else searchArea.DoFocusAction(elapsedTime);
+}
+
+void SearchableDropDown::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
+    if (justOpened) {
+        justOpened = false;
+        return;
+    }
+    if (!WasIClicked(mousePosition)) {
+        Defocus();
+        return;
+    }
+    if (mousePosition.y < GetListTop()) {
+        if (searchArea.WasIClicked(mousePosition)) searchArea.Focus();
+        DoFocusAction(elapsedTime);
+        return;
+    }
+    const int index = GetIndexAt(mousePosition.y);
+    if (index >= 0) {
+        const std::string label = valuesInOrder[index];
+        SetCurrent(label);
+        Defocus();
+    } else if (values.empty()) {
+        Defocus();
+    }
+}
+
+void SearchableDropDown::SetX(float x) {
+    DropDown<std::string>::SetX(x);
+    searchArea.SetX(xAnchor);
+}
+
+void SearchableDropDown::SetY(float y) {
+    DropDown<std::string>::SetY(y);
+    searchArea.SetY(yAnchor);
+}
+
+void SearchableDropDown::SetWidth(float value) {
+    DropDown<std::string>::SetWidth(value);
+    searchArea.SetWidth(width);
+}
+
+void SearchableDropDown::SetHeight(float value) {
+    DropDown<std::string>::SetHeight(value);
+    searchArea.SetHeight(height);
+}
+
+void SearchableDropDown::SetToWorld() {
+    DropDown<std::string>::SetToWorld();
+    searchArea.SetToWorld();
+}
+
+void SearchableDropDown::SetToScreen() {
+    DropDown<std::string>::SetToScreen();
+    searchArea.SetToScreen();
+}
+
+void SearchableDropDown::MakeVisible() {
+    DropDown<std::string>::MakeVisible();
+    searchArea.MakeVisible();
+}
+
+void SearchableDropDown::MakeInvisible() {
+    DropDown<std::string>::MakeInvisible();
+    searchArea.MakeInvisible();
+}
+
+void SearchableDropDown::SetVisible(bool flag) {
+    DropDown<std::string>::SetVisible(flag);
+    searchArea.SetVisible(flag);
+}
+
+void SearchableDropDown::MakeActive() {
+    DropDown<std::string>::MakeActive();
+    searchArea.MakeActive();
+}
+
+void SearchableDropDown::MakeInactive() {
+    DropDown<std::string>::MakeInactive();
+    searchArea.MakeInactive();
+}
+
+void SearchableDropDown::SetInactive(bool flag) {
+    DropDown<std::string>::SetInactive(flag);
+    searchArea.SetInactive(flag);
+}
+
+void SearchableDropDown::SetTextMargin(float margin) {
+    TextItem::SetTextMargin(margin);
+    searchArea.SetTextMargin(margin);
+}
+
+void SearchableDropDown::Focus() {
+    justOpened = true;
+    DropDown<std::string>::Focus();
+    searchArea.Show();
+}
+
+void SearchableDropDown::Defocus() {
+    searchArea.ClearText();
+    searchArea.Defocus();
+    searchArea.Hide();
+    DropDown<std::string>::Defocus();
+}
+
+const std::string SearchableDropDown::GetClassID() const {
+    return "SearchableDropDown";
+}
+
+void SearchableDropDown::ImmediatelyFocusSearchArea() {
+    opensOnSecondClick = false;
+}
+
+void SearchableDropDown::SearchAreaFocusesOnSecondClick() {
+    opensOnSecondClick = true;
+}
+
+void SearchableDropDown::AddAreaShouldFocusOnSecondClick(bool should) {
+    opensOnSecondClick = should;
+}
+
+bool SearchableDropDown::DoesSearchAreaFocusOnOpen() const {
+    return opensOnSecondClick;
+}
+
 // --- Containers ---
 
 void Workspace::SetPositionsOfItems() {

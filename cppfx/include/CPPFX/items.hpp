@@ -1105,7 +1105,7 @@ public:
     /** @see Item::Defocus @details Clears and defocuses addArea. */
     void Defocus() override;
 
-    /** @brief Hides TextItem::SetTextMargin - it isn't virtual. */
+    /** @brief Hides TextItem::SetTextMargin */
     void SetTextMargin(float margin);
 
     /**
@@ -1145,6 +1145,84 @@ private:
 class SearchableDropDown : public DropDown<std::string> {
 public:
     EmbeddedTextField searchArea;
+
+    SearchableDropDown() : Item("SearchableDropDown"), DropDown<std::string>() {
+        searchArea.ClearText();
+        searchArea.SetPromptText("Search");
+        searchArea.Hide();
+    }
+
+    void DrawMyself(float elapsedTime) const override;
+    void DoFocusAction(float elapsedTime) override;
+    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+
+    /** @see DropDown::SetX @details Moves searchArea. */
+    void SetX(float x) override;
+    /** @see DropDown::SetY @details Moves searchArea. */
+    void SetY(float y) override;
+    /** @see DropDown::SetWidth @details Resizes searchArea. */
+    void SetWidth(float value) override;
+    /** @see DropDown::SetHeight @details Resizes searchArea. */
+    void SetHeight(float value) override;
+
+    void SetToWorld() override;
+    void SetToScreen() override;
+
+    void MakeVisible() override;
+    void MakeInvisible() override;
+    void SetVisible(bool flag) override;
+
+    void MakeActive() override;
+    void MakeInactive() override;
+    void SetInactive(bool flag) override;
+
+    /**
+     *  @see Item::Focus
+     *  @details Unrolls the dropdown and reveals searchArea. Arms the click-swallowing flag,
+     *  unless the SearchableDropDown is set to focus searchArea immediately.
+     */
+    void Focus() override;
+    /** @see Item::Defocus @details Clears and defocuses searchArea. */
+    void Defocus() override;
+
+    /** @brief Hides TextItem::SetTextMargin */
+    void SetTextMargin(float margin);
+
+    /**
+     *  @brief Makes addArea take focus the moment the dropdown opens.
+     *  @details The opening click falls through to addArea, so the caret appears
+     *  and the prompt text gives way at once - one click to start typing.
+     */
+    void ImmediatelyFocusSearchArea();
+    /**
+     *  @brief Makes the opening click only unroll the dropdown.
+     *  @details The click that focuses the ComboBox is swallowed, so searchArea stays
+     *  unfocused and keeps showing its prompt text. A second click on the header
+     *  focuses it for input. Default.
+     */
+    void SearchAreaFocusesOnSecondClick();
+    /**
+     *  @brief Sets whether the opening click is swallowed.
+     *  @param should true - second click needed to type, false - searchArea focuses on open
+     */
+    void AddAreaShouldFocusOnSecondClick(bool should);
+    /**
+     *  @brief Checks whether searchArea takes focus as the dropdown unrolls.
+     *  @returns true if searchArea focuses on open
+     */
+    bool DoesSearchAreaFocusOnOpen() const;
+
+    const std::string GetClassID() const;
+
+private:
+     bool opensOnSecondClick = true; ///< if true, the click that unrolls the dropdown doesn't reach searchArea
+     /**
+      * @brief Decides whether the label (first argument) belongs in the list based on the value of TextField (second argument).
+      */
+     std::function<bool(const std::string&, const std::string&)> customSearch;
+
+     void DrawList(float elapsedTime) const override;
+     bool DefaultSearch(const std::string& value) const;
 };
 
 // --- Containers ---

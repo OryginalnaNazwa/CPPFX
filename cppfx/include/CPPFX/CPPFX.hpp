@@ -178,6 +178,10 @@ public:
     /**
      *  @copydoc AddTextField
      */
+    SearchableDropDown* AddSearchableDropDown(const std::string& ID = "");
+    /**
+     *  @copydoc AddTextField
+     */
     template <typename T>
     List<T>* AddList(const std::string& ID = "") {
         return AddItem<List<T>>(ID);
@@ -275,6 +279,10 @@ public:
      *  @copydoc GetTextField
      */
     ComboBox* GetComboBox(const std::string& ID) const;
+    /**
+     *  @copydoc GetTextField
+     */
+    SearchableDropDown* GetSearchableDropDown(const std::string& ID) const;
     template <typename T>
     List<T>* GetList(const std::string& ID) const {
        return GetItem<List<T>>(ID);
