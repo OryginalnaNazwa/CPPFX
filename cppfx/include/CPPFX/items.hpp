@@ -915,8 +915,6 @@ protected:
     bool justOpened = false;
     std::unordered_map<std::string, Colour> labelToColour; ///< per-row background overrides; labels absent from here use listColour
 
-    bool syncsToHeaderAutomatically = false;        ///< if true, the list draws with the header's font, colour and border
-
     /** @brief Draws the header - background, current pick, and its border. */
     virtual void DrawHeader(float elapsedTime) const {
         if (header.colour.IsOverridden()) DrawRectangle(xAnchor, yAnchor, width, height, header.colour.GetColour());

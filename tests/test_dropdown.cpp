@@ -54,15 +54,15 @@ std::string Joined(const std::vector<std::string>& v) {
 /**
  *  A dropdown with known geometry, used by most tests below.
  *
- *      header        y   0 .. 100
- *      headerBorder      100 .. 110
- *      listBorder top    110 .. 120
- *      headerDivider     120 .. 124
- *      row 0             124 .. 144
- *      divider           144 .. 146
- *      row 1             146 .. 166
- *      divider           166 .. 168
- *      row 2             168 .. 188
+ *      header              y   0 .. 100
+ *      header.border           100 .. 110
+ *      list.border top         110 .. 120
+ *      header divider          120 .. 124
+ *      row 0                   124 .. 144
+ *      divider                 144 .. 146
+ *      row 1                   146 .. 166
+ *      divider                 166 .. 168
+ *      row 2                   168 .. 188
  *
  *  So the list top is 120, the row pitch is 22, and the content height
  *  is 4 + 3*20 + 2*2 = 68.
@@ -73,11 +73,11 @@ DropDown<int> MakeFixture() {
     dd.SetXY(0.0f);
     dd.SetWidth(200.0f);
     dd.SetHeight(100.0f);
-    dd.headerBorder.SetThickness(10.0f);
-    dd.listBorder.SetThickness(10.0f);
-    dd.SetHeaderDividerThickness(4.0f);
-    dd.SetDividerThickness(2.0f);
-    dd.SetItemInListHeight(20.0f);
+    dd.header.border.SetThickness(10.0f);
+    dd.list.border.SetThickness(10.0f);
+    dd.header.SetDividerThickness(4.0f);
+    dd.list.SetDividerThickness(2.0f);
+    dd.list.SetItemInListHeight(20.0f);
     dd.AddItem("first", 1);
     dd.AddItem("second", 2);
     dd.AddItem("third", 3);
@@ -107,9 +107,9 @@ TEST(dropdown_content_height_counts_dividers_between_rows_only) {
 TEST(dropdown_content_height_of_one_item_has_no_dividers) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.SetHeaderDividerThickness(4.0f);
-    dd.SetDividerThickness(2.0f);
-    dd.SetItemInListHeight(20.0f);
+    dd.header.SetDividerThickness(4.0f);
+    dd.list.SetDividerThickness(2.0f);
+    dd.list.SetItemInListHeight(20.0f);
     dd.AddItem("only", 1);
     CHECK_NEAR(dd.GetListContentHeight(), 24.0f);
 }
@@ -117,9 +117,9 @@ TEST(dropdown_content_height_of_one_item_has_no_dividers) {
 TEST(dropdown_empty_list_measures_the_stub) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.SetHeaderDividerThickness(4.0f);
-    dd.SetDividerThickness(2.0f);
-    dd.SetItemInListHeight(20.0f);
+    dd.header.SetDividerThickness(4.0f);
+    dd.list.SetDividerThickness(2.0f);
+    dd.list.SetItemInListHeight(20.0f);
     // An open but empty dropdown still shows the header divider, so the
     // click registers visibly instead of appearing to do nothing.
     CHECK_NEAR(dd.GetListContentHeight(), 4.0f);
@@ -191,8 +191,8 @@ TEST(dropdown_index_at_survives_a_zero_pitch) {
     // listItemHeight and dividerThickness both zero would divide by zero.
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.SetItemInListHeight(0.0f);
-    dd.SetDividerThickness(0.0f);
+    dd.list.SetItemInListHeight(0.0f);
+    dd.list.SetDividerThickness(0.0f);
     dd.AddItem("first", 1);
     CHECK_EQ(dd.GetIndexAt(200.0f), -1);
 }
@@ -200,7 +200,7 @@ TEST(dropdown_index_at_survives_a_zero_pitch) {
 TEST(dropdown_index_at_on_empty_list) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    dd.SetItemInListHeight(20.0f);
+    dd.list.SetItemInListHeight(20.0f);
     CHECK_EQ(dd.GetIndexAt(150.0f), -1);
 }
 
@@ -529,71 +529,21 @@ TEST(dropdown_divider_setters_do_not_cross_wires) {
     // The neighbour is the point of this test - one setter wrote the
     // other's member for a while. Captured rather than hardcoded, so this
     // does not also assert what the defaults happen to be.
-    const float headerBefore = dd.GetHeaderDividerThickness();
-    dd.SetDividerThickness(7.0f);
-    CHECK_NEAR(dd.GetDividerThickness(), 7.0f);
-    CHECK_NEAR(dd.GetHeaderDividerThickness(), headerBefore);
+    const float headerBefore = dd.header.GetDividerThickness();
+    dd.list.SetDividerThickness(7.0f);
+    CHECK_NEAR(dd.list.GetDividerThickness(), 7.0f);
+    CHECK_NEAR(dd.header.GetDividerThickness(), headerBefore);
 
-    const float rowBefore = dd.GetDividerThickness();
-    dd.SetHeaderDividerThickness(3.0f);
-    CHECK_NEAR(dd.GetHeaderDividerThickness(), 3.0f);
-    CHECK_NEAR(dd.GetDividerThickness(), rowBefore);
+    const float rowBefore = dd.list.GetDividerThickness();
+    dd.header.SetDividerThickness(3.0f);
+    CHECK_NEAR(dd.header.GetDividerThickness(), 3.0f);
+    CHECK_NEAR(dd.list.GetDividerThickness(), rowBefore);
 }
 
 TEST(dropdown_rejects_negative_measurements) {
     DropDown<int> dd;
     dd.DoNotExpandToTextAutomatically();
-    CHECK_THROWS_AS(dd.SetDividerThickness(-1.0f), std::invalid_argument);
-    CHECK_THROWS_AS(dd.SetHeaderDividerThickness(-1.0f), std::invalid_argument);
-    CHECK_THROWS_AS(dd.SetItemInListHeight(-1.0f), std::invalid_argument);
-}
-
-// --- syncing -------------------------------------------------------------
-
-TEST(dropdown_does_not_sync_by_default) {
-    DropDown<int> dd = MakeFixture();
-    CHECK(!dd.IsSyncingToHeaderAutomatically());
-}
-
-TEST(dropdown_automatic_sync_follows_the_header) {
-    DropDown<int> dd = MakeFixture();
-    dd.listColour.SetColour(GREEN);
-    dd.SyncToHeaderAutomatically();
-    dd.colour.SetColour(RED);
-    dd.DoPassiveAction(0.0f);
-    CHECK(dd.listColour == CPPFX::Colour(RED));
-
-    // ... and keeps following, however often the header changes.
-    dd.colour.SetColour(BLUE);
-    dd.DoPassiveAction(0.0f);
-    CHECK(dd.listColour == CPPFX::Colour(BLUE));
-}
-
-TEST(dropdown_automatic_sync_stops_when_turned_off) {
-    DropDown<int> dd = MakeFixture();
-    dd.SyncToHeaderAutomatically();
-    dd.colour.SetColour(RED);
-    dd.DoPassiveAction(0.0f);
-
-    dd.DoNotSyncToHeaderAutomatically();
-    dd.listColour.SetColour(GREEN);
-    dd.colour.SetColour(BLUE);
-    dd.DoPassiveAction(0.0f);
-    CHECK(dd.listColour == CPPFX::Colour(GREEN));
-}
-
-TEST(dropdown_one_shot_sync_is_a_starting_point) {
-    DropDown<int> dd = MakeFixture();
-    dd.colour.SetColour(RED);
-    dd.headerBorder.SetThickness(6.0f);
-    dd.SyncToHeader();
-    CHECK(dd.listColour == CPPFX::Colour(RED));
-    CHECK_NEAR(dd.listBorder.GetThickness(), 6.0f);
-
-    // Adjustments after the call stay put - it is not a mode.
-    dd.SetItemInListHeight(12.0f);
-    dd.colour.SetColour(BLUE);
-    dd.DoPassiveAction(0.0f);
-    CHECK(dd.listColour == CPPFX::Colour(RED));
-    CHECK_NEAR(dd.GetItemInListHeight(), 12.0f);
+    CHECK_THROWS_AS(dd.list.SetDividerThickness(-1.0f), std::invalid_argument);
+    CHECK_THROWS_AS(dd.header.SetDividerThickness(-1.0f), std::invalid_argument);
+    CHECK_THROWS_AS(dd.list.SetItemInListHeight(-1.0f), std::invalid_argument);
 }
