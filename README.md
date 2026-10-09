@@ -81,6 +81,7 @@ Check out the examples provided in the Examples folder for more.
 - ProgressBar
 - Dropdown
 - ComboBox
+- SearchableDropDown
 - Checkbox (RadioButton)
 - RadioGroup
 - List
