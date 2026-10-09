@@ -748,8 +748,8 @@ void ComboBox::AddAreaShouldFocusOnSecondClick(bool should) {
     opensOnSecondClick = should;
 }
 
-bool ComboBox::DoesAddAreaFocusOnOpen() const {
-    return !opensOnSecondClick;
+bool ComboBox::DoesAddAreaFocusOnSecondClick() const {
+    return opensOnSecondClick;
 }
 
 const std::string ComboBox::GetClassID() const {
@@ -757,6 +757,29 @@ const std::string ComboBox::GetClassID() const {
 }
 
 // --- SearchableDropDown --
+
+float SearchableDropDown::GetListContentHeight(size_t number) const {
+    if (number == 0) return header.GetDividerThickness();
+    return header.GetDividerThickness() + ((float)(number) * list.GetItemInListHeight()) + ((float)(number - 1) * list.GetDividerThickness());
+}
+
+bool SearchableDropDown::DefaultSearch(const std::string& label, const std::string& query) const {
+    return label.starts_with(query);
+}
+
+void SearchableDropDown::FilterList() {
+    const std::string& query = searchArea.GetText();
+    if (!filterDirty && query == lastQuery) return;
+    lastQuery = query;
+    filterDirty = false;
+
+    filtered.clear();
+    for (size_t i = 0; i < valuesInOrder.size(); ++i) {
+        const std::string& value = valuesInOrder[i];
+        if (query.empty() || (customSearch ? customSearch(value, query) : DefaultSearch(value, query)))
+            filtered.push_back(i);
+    }
+}
 
 void SearchableDropDown::DrawList(float elapsedTime) const {
     float yCurrent = GetListTop();
@@ -768,14 +791,8 @@ void SearchableDropDown::DrawList(float elapsedTime) const {
     DrawRectangle(xAnchor, yCurrent, width, header.GetDividerThickness(), drawColour);
 
     yCurrent += header.GetDividerThickness();
-    for (size_t i = 0; i < valuesInOrder.size(); ++i) {
-        const std::string& label = valuesInOrder[i];
-
-        if (customSearch && !customSearch(label, searchArea.GetText())) {
-            continue;
-        } else if (!customSearch && !label.starts_with(searchArea.GetText())) {
-            continue;
-        }
+    for (size_t i = 0; i < filtered.size(); ++i) {
+        const std::string& label = valuesInOrder[filtered[i]];
 
         const Color rowColour = labelToColour.contains(label)
                                 ? labelToColour.at(label).GetColour()
@@ -787,15 +804,25 @@ void SearchableDropDown::DrawList(float elapsedTime) const {
                         width - (2.0f * textMargin),
                         list.GetItemInListHeight() - (2.0f * textMargin));
 
-        if (i + 1 < valuesInOrder.size()) {
+        if (i + 1 < filtered.size()) {
             DrawRectangle(xAnchor, yCurrent + list.GetItemInListHeight(), width,
                           list.GetDividerThickness(), list.dividerColour.GetColour());
         }
         yCurrent += GetRowPitch();
     }
 
-    list.border.DrawMyself(xAnchor, GetListTop(), width, GetListContentHeight());
+    list.border.DrawMyself(xAnchor, GetListTop(), width, GetListContentHeight(filtered.size()));
 }
+
+void SearchableDropDown::DrawFrame() const {
+        const float outer = std::max(header.border.GetThickness(), list.border.GetThickness());
+        const float listSpan = focused
+                             ? GetListContentHeight(filtered.size()) + (2.0f * list.border.GetThickness())
+                             : 0.0f;
+        border.DrawMyself(xAnchor - outer, yAnchor - header.border.GetThickness(),
+                          width + (2.0f * outer),
+                          height + (2.0f * header.border.GetThickness()) + listSpan);
+    }
 
 void SearchableDropDown::DrawMyself(float elapsedTime) const {
     if (focused) {
@@ -808,6 +835,7 @@ void SearchableDropDown::DrawMyself(float elapsedTime) const {
 }
 
 void SearchableDropDown::DoFocusAction(float elapsedTime) {
+    FilterList();
     justOpened = false;
     if (!searchArea.IsFocused()) return;
     else searchArea.DoFocusAction(elapsedTime);
@@ -829,7 +857,7 @@ void SearchableDropDown::DoFocusAction(float elapsedTime, const Vector2& mousePo
     }
     const int index = GetIndexAt(mousePosition.y);
     if (index >= 0) {
-        const std::string label = valuesInOrder[index];
+        const std::string label = valuesInOrder[filtered[index]];
         SetCurrent(label);
         Defocus();
     } else if (values.empty()) {
@@ -931,7 +959,7 @@ void SearchableDropDown::AddAreaShouldFocusOnSecondClick(bool should) {
     opensOnSecondClick = should;
 }
 
-bool SearchableDropDown::DoesSearchAreaFocusOnOpen() const {
+bool SearchableDropDown::DoesSearchAreaFocusOnSecondClick() const {
     return opensOnSecondClick;
 }
 

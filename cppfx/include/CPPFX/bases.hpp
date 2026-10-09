@@ -51,6 +51,11 @@ public:
      *  @returns text
      */
     virtual std::string GetText() const;
+    /**
+     *  @brief Checks whether the text is empty.
+     *  @returns true if text is an empty string
+     */
+    virtual bool IsEmpty() const;
 
     /**
      *  @brief Sets the distance between border and text in x axis.

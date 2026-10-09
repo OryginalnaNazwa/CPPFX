@@ -1132,7 +1132,7 @@ public:
      *  @brief Checks whether addArea takes focus as the dropdown unrolls.
      *  @returns true if addArea focuses on open
      */
-    bool DoesAddAreaFocusOnOpen() const;
+    bool DoesAddAreaFocusOnSecondClick() const;
 
     const std::string GetClassID() const;
 
@@ -1210,7 +1210,17 @@ public:
      *  @brief Checks whether searchArea takes focus as the dropdown unrolls.
      *  @returns true if searchArea focuses on open
      */
-    bool DoesSearchAreaFocusOnOpen() const;
+    bool DoesSearchAreaFocusOnSecondClick() const;
+
+    float GetListContentHeight() const; //override but not override
+    /**
+     *  @brief Height of N items inside the list border.
+     *  @details Header divider, rows, and the dividers between them. An empty
+     *           dropdown still measures the header divider, so opening one
+     *           shows a stub.
+     *  @param number number of items in the list
+     */
+    float GetListContentHeight(size_t number) const;
 
     const std::string GetClassID() const;
 
@@ -1218,11 +1228,17 @@ private:
      bool opensOnSecondClick = true; ///< if true, the click that unrolls the dropdown doesn't reach searchArea
      /**
       * @brief Decides whether the label (first argument) belongs in the list based on the value of TextField (second argument).
+      * @see DefaultSearch
       */
      std::function<bool(const std::string&, const std::string&)> customSearch;
+     std::vector<size_t> filtered;   ///< indices into valuesInOrder
+     std::string lastQuery;
+     bool filterDirty = true;        ///< set this wherever valuesInOrder changes
 
      void DrawList(float elapsedTime) const override;
-     bool DefaultSearch(const std::string& value) const;
+     void DrawFrame() const override;
+     void FilterList();
+     bool DefaultSearch(const std::string& label, const std::string& query) const; ///< simple filter, checks whether the label begins with the text in searchArea
 };
 
 // --- Containers ---

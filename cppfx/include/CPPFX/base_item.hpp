@@ -332,8 +332,8 @@ public:
 
 protected:
     std::string ID; ///< ID used by the user, variable.
-    float xAnchor; ///< top left x coordinate. Mutable for screen coordinate translation
-    float yAnchor; ///< top left y coordinate. Mutable for screen coordinate translation
+    float xAnchor; ///< top left x coordinate.
+    float yAnchor; ///< top left y coordinate.
     float height; ///< vertical length of the item
     float width; ///< horizontal length of the item
 

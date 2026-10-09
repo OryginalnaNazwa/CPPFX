@@ -69,6 +69,10 @@ std::string TextItem::GetText() const {
     return text;
 }
 
+bool TextItem::IsEmpty() const {
+    return text.empty();
+}
+
 void TextItem::SetTextMargin(float margin) {
     if (margin < 0.0f) {
         CPPFX_THROW(std::invalid_argument, "Negative text margin.");
