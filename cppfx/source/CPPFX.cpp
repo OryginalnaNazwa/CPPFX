@@ -28,7 +28,7 @@ void GUI::DoUI(const Camera2D& camera) {
     }
     Vector2 mousePos = {(float)GetMouseX(), (float)GetMouseY()};
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        onMouseClick(mousePos, camera);
+        OnMouseClick(mousePos, camera);
         DoClickedItemsActions(mousePos, camera);
     } else {
         DoItemsActions(mousePos, camera);
@@ -44,7 +44,7 @@ void GUI::Close() {
     needsSorting = false;
 }
 
-void GUI::onMouseClick(const Vector2& mousePos, const Camera2D& camera) {
+void GUI::OnMouseClick(const Vector2& mousePos, const Camera2D& camera) {
     bool somethingWasClicked = false;
     for (auto it = ItemsInDrawingOrder.rbegin(); it != ItemsInDrawingOrder.rend(); ++it) {
         Item* item = *it;
@@ -272,7 +272,6 @@ void GUI::RemoveItem(Item* item) {
             }
             ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&item](const Item* i) { return i->GetID() == item->GetID(); }),ItemsInDrawingOrder.end());
             Items.erase(item->GetID());
-            item = nullptr;
         } else CPPFX_THROW_GUI(std::out_of_range, "Item with the ID " + item->GetID() + " is not in the GUI.");
     } else CPPFX_THROW_GUI(std::invalid_argument, "Cannot delete Item: doesn't exist");
 }

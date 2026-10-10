@@ -1,59 +1,47 @@
 #ifndef CPPFX_H
 #define CPPFX_H
 
-#include <cstddef>       // for size_t
-#include <unordered_map> // for unordered_map
+#include <cstddef>        // for size_t
+#include <unordered_map>  // for unordered_map
 #include <memory>         // for allocator, unique_ptr, make_unique
 #include <stdexcept>      // for out_of_range, runtime_error
 #include <string>         // for string, basic_string, operator+, char_traits
-#include <typeinfo>       // for type_info
-#include <unordered_set>  // for unordered_set, operator==, _Node_const_iter...
+#include <unordered_set>  // for unordered_set, operator==
 #include <vector>         // for vector
-#include "base_item.hpp"    // for Item
-#include "properties.hpp"   // for Colour
+#include <concepts>       // for concepts
+
+#include "base_item.hpp"  // for Item
+#include "properties.hpp" // for Colour
 #include "raylib.h"       // for Camera2D, Vector2, Color
-#include <concepts>
-/*// declarations
-namespace CPPFX { class AnchorPane; }
-namespace CPPFX { class Button; }
-namespace CPPFX { class CheckBox; }
-namespace CPPFX { class Circle; }
-namespace CPPFX { class Container; }
-namespace CPPFX { class EditableSpinner; }
-namespace CPPFX { class HBox; }
-namespace CPPFX { class Label; }
-namespace CPPFX { class Line; }
-namespace CPPFX { class PasswordField; }
-namespace CPPFX { class PieChart; }
-namespace CPPFX { class PressedButton; }
-namespace CPPFX { class ProgressBar; }
-namespace CPPFX { class ProgressIndicator; }
-namespace CPPFX { class Rectangle; }
-namespace CPPFX { class Spinner; }
-namespace CPPFX { class Square; }
-namespace CPPFX { class TextField; }
-namespace CPPFX { class VBox; }
-namespace CPPFX { class Workspace; }
-namespace CPPFX { template <typename T> class DropDown; }
-namespace CPPFX { template <typename T> class List; }
-namespace CPPFX { class RadioGroup; }
-namespace CPPFX { class Sprite; }*/
 #include "items.hpp" // for items. Needs it, otherwise you'd need to include more files than just this one.
 
-/******************************************************************************
- *  @file CPPFX
- *  @brief This file contains the controller class for use in raylib's loop.
- *****************************************************************************/
+/**
+ *  @file
+ *  @brief Entry point of CPPFX: the GUI controller.
+ *  @details The only header users need to include. Defines CPPFX::GUI, which
+ *           owns every widget it creates. Call DoUI once per frame between BeginMode2D
+ *           and EndMode2D, and Close before CloseWindow.
+ *           Also defines the CPPFX_VERSION macros for compile-time checks.
+ */
 
-namespace CPPFX {
 
+/**
+ * @name Version
+ * @brief CPPFX version
+ * @details CPPFX_VERSION = MAJOR * 10000 + MINOR * 100 + PATCH, so 1.23.4 would be 102304.
+ * @{
+ */
 #define CPPFX_VERSION_MAJOR 0
 #define CPPFX_VERSION_MINOR 23
 #define CPPFX_VERSION_PATCH 1
 #define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
-extern const char* const CPPFX_VERSION_STRING;
+/** @} */
 
-#define CPPFX_THROW_GUI(ex, msg) throw ex(std::string("In GUI ") + this->ID + ": " + msg)
+#define CPPFX_THROW_GUI(ex, msg) throw ex(std::string("In GUI ") + this->ID + ": " + (msg))
+
+namespace CPPFX {
+
+extern const char* const CPPFX_VERSION_STRING;
 
 /**
  * @class GUI
@@ -73,18 +61,23 @@ public:
         }
     }
 
+    /**
+     *  @brief Calls Close()
+     */
     ~GUI() { Close(); }
 
     /**
      *  @brief Primary UI drawing and interaction loop.
-     *  @details Put in your main loop.
-     *  @param camera Camera
+     *  @details Controls everything else.
+     *  @param camera raylib's camera instance, the one being passed to BeginMode2D()
+     *  @note Use this in your main loop.
+     *  @warning Must be between Begin/EndMode2D if screenBased items or GUI is used.
      */
     void DoUI(const Camera2D& camera);
 
     /**
      *  @brief Closes the GUI
-     *  @details Call in OpenGL context (before CloseWindow). Cleans up, so you can also reuse it, if you want for some reason, instead of just letting it get destructed.
+     *  @details Call in OpenGL context (before CloseWindow). Cleans up and destroys items.
      */
     void Close();
 
@@ -93,6 +86,9 @@ public:
      *  @details If the parameter is empty, ID is created automatically.
      *  @param ID ID of the created item, defaults to empty.
      *  @returns a pointer to the newly created item.
+     *  @warning Do not use the auto-generated prefix ("GUI_AUTO_") as a parameter, it's reserved. See: GetAutomaticPrefix()
+     *  @throws std::invalid_argument if ID is taken
+     *  @tparam T widget type, must be derived from Item.
      */
     template <typename T>
     T* AddItem(const std::string& ID = "") requires std::derived_from<T, Item> && std::default_initializable<T> {
@@ -103,9 +99,12 @@ public:
         return pointer;
     }
     /**
-     *  @brief Creates the item.
+     *  @brief Adds a widget of this type.
      *  @param ID ID of the created item. Defaults to "", the library creates the ID then.
-     *  @returns raw pointer to the created item.
+     *  @returns raw pointer to the created item, owned by GUI. Valid until Close or RemoveItem.
+     *  @throws std::invalid_argument if ID is taken
+     *  @warning Do not use the auto-generated prefix ("GUI_AUTO_") as a parameter, it's reserved.
+     *  @see AddItem
      */
     TextField* AddTextField(const std::string& ID = "");
     /**
@@ -166,6 +165,7 @@ public:
     PieChart* AddPieChart(const std::string& ID = "");
     /**
      *  @copydoc AddTextField
+     *  @tparam T type of values held in the DropDown. std::string adds methods for when label and value are the same.
      */
     template <typename T>
     DropDown<T>* AddDropDown(const std::string& ID = "") {
@@ -181,6 +181,7 @@ public:
     SearchableDropDown* AddSearchableDropDown(const std::string& ID = "");
     /**
      *  @copydoc AddTextField
+     *  @tparam T type of values held in the list. Must be able to be turned into std::string, either by type or by supplied method.
      */
     template <typename T>
     List<T>* AddList(const std::string& ID = "") {
@@ -217,24 +218,27 @@ public:
 
     /**
      *  @brief Removes an item.
-     *  @details Safe removes from all containers.
+     *  @details Also removes from any containers that hold it.
      *  @param ID ID of the item to be removed.
      *  @throws std::out_of_range if the item of given ID doesn't exist.
+     *  @warning Makes any pointer to the item invalid after successful removal.
      */
     void RemoveItem(const std::string& ID);
     /**
      *  @brief Removes an item.
-     *  @details Safe removes from all containers.
+     *  @details Also removes from any containers that hold it.
      *  @param item pointer to the item to be deleted.
      *  @throws std::invalid_argument if the item doesn't exist.
-     *  @throws std::out_of_range if the item doesn't exist in this GUI.
+     *  @throws std::out_of_range if there's no such item in this GUI
+     *  @warning Makes any pointer to the item invalid after successful removal.
      */
     void RemoveItem(Item* item);
 
     /**
      *  @brief Gets an item of the specified type.
      *  @param ID ID of the item to be returned.
-     *  @returns A pointer to the item.
+     *  @tparam T type of the item to be returned
+     *  @returns A pointer to the item, owned by GUI, valid until Close or RemoveItem.
      *  @throws std::runtime_error if the type is incorrect for the given item.
      *  @throws std::out_of_range if no item with given ID exists.
      */
@@ -242,16 +246,16 @@ public:
     T* GetItem(const std::string& ID) const requires std::derived_from<T, Item> {
         try {
             auto* ptr = dynamic_cast<T*>(Items.at(ID).get());
-            if (!ptr) CPPFX_THROW_GUI(std::runtime_error, "Item with the ID " + ID + " is not a " + typeid(T).name());
+            if (!ptr) CPPFX_THROW_GUI(std::runtime_error, "Item with the ID " + ID + " is not a " + T::GetClassID());
             return ptr;
         } catch (const std::out_of_range&) {
             CPPFX_THROW_GUI(std::out_of_range, "No item with ID " + ID + " exists");
         }
     }
     /**
-     *  @brief Gets an usable item of the specified ID.
+     *  @brief Gets an item of this widget type.
      *  @param ID ID of the wanted item.
-     *  @return Pointer to the specified item.
+     *  @return Pointer to the specified item, owned by GUI, valid until Close or RemoveItem.
      *  @throws std::out_of_range if the item of given ID doesn't exist.
      *  @throws std::runtime_error if the item isn't of the right type.
      */
@@ -270,6 +274,7 @@ public:
     CheckBox* GetCheckBox(const std::string& ID) const;
     /**
      *  @copydoc GetTextField
+     *  @tparam T type of value held in DropDown.
      */
     template <typename T>
     DropDown<T>* GetDropDown(const std::string& ID) const {
@@ -283,6 +288,10 @@ public:
      *  @copydoc GetTextField
      */
     SearchableDropDown* GetSearchableDropDown(const std::string& ID) const;
+    /**
+     *  @copydoc GetTextField
+     *  @tparam T type of value held in the List.
+     */
     template <typename T>
     List<T>* GetList(const std::string& ID) const {
        return GetItem<List<T>>(ID);
@@ -349,6 +358,7 @@ public:
     Circle* GetCircle(const std::string& ID) const;
     /**
      *  @copydoc GetTextField
+     *  @note It's a CheckBox with shape.
      */
     RadioButton* GetRadioButton(const std::string& ID) const;
     /**
@@ -361,57 +371,73 @@ public:
     Sprite* GetSprite(const std::string& ID) const;
 
     /**
-     *  @brief Sets the item's priority to highest available.
-     *  @details Sorts the items before setting, if needed.
-     *  @param ID the ID of the Item which priority will be changed.
-     *  @throws std::out_of_range if item with the ID doesn't exist.
-     *  @warning warns if the item already has priority 0.
+     *  @brief Gives the item the highest priority any item currently has.
+     *  @details The item ties with the current highest; use SetAboveHighestPriority
+     *           to put it strictly on top. Sorts the drawing order first, if needed.
+     *  @param ID ID of the item whose priority will be changed.
+     *  @throws std::out_of_range if no item with the ID exists.
+     *  @note Prints a warning (debug builds only) if the item already has priority 0.
+     *  @see Item::SetPriority
      */
     void SetHighestPriority(const std::string& ID);
     /**
-     *  @brief Sets the item's priority to be the highest of all items.
-     *  @details Sorts the items before setting, if needed. If another item has priority of 0 already, this item will have new priority equal to it.
-     *  @param ID the ID of the Item which priority will be changed.
-     *  @throws std::out_of_range if item with the ID doesn't exist.
-     *  @warning warns if the item already has priority 0 or if other items already have priority 0.
+     *  @brief Gives the item a priority one above the highest any item currently has.
+     *  @details Sorts the drawing order first, if needed. If the highest is already 0,
+     *           the item ties at 0 instead.
+     *  @param ID ID of the item whose priority will be changed.
+     *  @throws std::out_of_range if no item with the ID exists.
+     *  @note Prints a warning (debug builds only) if the item already has
+     *        priority 0, or if it has to tie at 0.
+     *  @see Item::SetPriority
      */
     void SetAboveHighestPriority(const std::string& ID);
     /**
-     *  @brief Sets the item's priority to as low as other items get.
-     *  @details Sorts the items before setting, if needed.
-     *  @param ID the ID of the Item which priority will be changed.
-     *  @throws std::out_of_range if item with the ID doesn't exist.
+     *  @brief Gives the item the lowest priority any item currently has.
+     *  @details The item ties with the current lowest; use SetBelowLowestPriority
+     *           to put it strictly at the bottom. Sorts the drawing order first, if needed.
+     *  @param ID ID of the item whose priority will be changed.
+     *  @throws std::out_of_range if no item with the ID exists.
+     *  @see Item::SetPriority
      */
     void SetLowestPriority(const std::string& ID);
     /**
-     *  @brief Sets the item's priority to be the lowest of all items.
-     *  @details Sorts the items before setting, if needed.
-     *  @param ID the ID of the Item which priority will be changed.
-     *  @throws std::out_of_range if item with the ID doesn't exist.
+     *  @brief Gives the item a priority one below the lowest any item currently has.
+     *  @details Sorts the drawing order first, if needed.
+     *  @param ID ID of the item whose priority will be changed.
+     *  @throws std::out_of_range if no item with the ID exists.
+     *  @see Item::SetPriority
      */
     void SetBelowLowestPriority(const std::string& ID);
 
     /**
-     *  @brief Sorts the drawing order by priority. Sorting is done automatically on first frame after adding an item.
+     *  @brief Sorts the drawing order by priority.
+     *  @details Done automatically on the next DoUI after adding an item or
+     *           using the priority methods above. Call it yourself after
+     *           changing priority directly on an item (Item::SetPriority),
+     *           which the GUI can't detect.
      */
     void SortOrder();
 
     /**
      *  @brief Sets primary colour of all items.
-     *  @details Primary is the base colour inherited after Item.
+     *  @details Primary is the Item::colour field. Sets ALL and only currently existing items.
      *  @param colour colour to be set
      */
-    void SetGlobalPrimaryColour(const Colour& colour);
-    /// @copydoc SetGlobalPrimaryColour
+    void SetGlobalPrimaryColour(const Colour& colour); //TODO make them actually useful
+    /// @copydoc SetGlobalPrimaryColour(const Colour&)
     void SetGlobalPrimaryColour(const Color& colour);
-    /// @copydoc SetGlobalPrimaryColour
-    void SetGlobalPrimaryColour(const std::string& colour);
+    /**
+     *  @copydoc SetGlobalPrimaryColour(const Colour&)
+     *  @throws std::invalid_argument if colour is empty
+     *  @throws std::out_of_range if colour is not one of known colours
+     */
+    void SetGlobalPrimaryColour(const std::string& colour); //TODO colours are handled now, fix
 
     /**
-     * @brief Check how many widgets of this type were created in total.
-     * @param fxID ID in internal use; Widget default name
+     * @brief Checks how many widgets of this type were created in total since creation or last Close.
+     * @param fxID widget type name
      * @return number of widgets created
-     * @throws std::out_of_range if such fxID doesn't exist
+     * @throws std::invalid_argument if such fxID doesn't exist
      */
     size_t GetTotalItemCount(const std::string& fxID) const;
 
@@ -431,21 +457,21 @@ public:
 
     /**
      * @brief Checks whether the item of specified ID is a container.
-     * @details {Workspace, Anchorpane, VBox, HBox}
-     * @param ID Item to be checked
-     * @returns true if is a container.
+     * @see GetContainersFxIDs
+     * @param ID ID of the item to be checked
+     * @returns true if the item is a container.
      * @throws std::out_of_range if item doesn't exist.
      */
     bool IsItemContainer(const std::string& ID) const;
 
     /**
      *  @brief Checks whether the widget type is a container
-     *  @param fxID widget name
+     *  @param fxID widget type name, e.g "VBox"
      *  @returns true if it is a container
      */
     static bool IsContainer(const std::string& fxID);
     /**
-     * @brief Checks whether the ID is one of the library's internal use identificators.
+     * @brief Checks whether the ID is one of the library's internal use identifiers.
      * @details fxIDs are the names of the classes of widgets.
      * @param fxID string to be checked.
      * @returns true if it is an fxID
@@ -453,8 +479,8 @@ public:
     static bool IsFxID(const std::string& fxID);
 
     /**
-     *  @brief Returns a set of fxIDs.
-     *  @returns fxIDs.
+     *  @brief Returns the names of all widget types the GUI can create.
+     *  @returns an unordered set of fxIDs.
      */
     static const std::unordered_set<std::string>& GetFxIDs();
 
@@ -466,12 +492,14 @@ public:
 
     /**
      *  @brief Returns the prefix used to create IDs when user has specified none.
-     *  @returns the prefix
+     *  @returns the prefix (GUI_AUTO_)
      */
     static const std::string& GetAutomaticIDPrefix();
 
     /**
      *  @brief Checks whether the given ID has been generated automatically.
+     *  @details Checks if it starts with the prefix.
+     *  @see GetAutomaticIDPrefix
      *  @returns true if yes.
      */
     static bool IsIDAutomatic(const std::string& ID);
@@ -483,11 +511,13 @@ public:
     static const std::unordered_set<std::string>& GetContainersFxIDs();
 
     /**
-     *  @brief Sets every item coordinate system to Screen based.
+     *  @brief Overrides the items so all work in Screen coordinates.
      */
     void SetGlobalScreenBased();
     /**
-     *  @brief Sets every item coordinate system to World based.
+     *  @brief Turns of the override so every item works in its own coordinate system.
+     *  @see SetGlobalScreenBased
+     *  @see Item::SetScreenBased
      */
     void SetGlobalWorldBased();
     /**
@@ -502,43 +532,43 @@ public:
     bool IsGlobalScreenBased() const;
 
 private:
-    bool screenBased; ///< global flag for whether the items are drawn in world or screen coordinates
+    bool screenBased; ///< global flag for whether the items are drawn in screen coordinates or their own
 
     std::unordered_map<std::string, std::unique_ptr<Item>> Items; ///< lookup map by ID
-    std::vector<Item*> ItemsInDrawingOrder; ///< items in reverse priority order — back is the highest priority. Which is indeed the correct drawing order
+    std::vector<Item*> ItemsInDrawingOrder; ///< items in reverse priority order — back is the highest priority, so that the items with highest priority end up drawn on top
 
-    std::unordered_map<std::string, size_t> ItemsCounter; ///< each new created item increments its counter. Used for auto IDs.
+    std::unordered_map<std::string, size_t> ItemsCounter; ///< each newly created item increments its counter. Used for auto IDs.
 
     float elapsedTime = 0.0f; ///< total elapsed time of all frames
     bool needsSorting = false; ///< lazy sort
 
     void DrawUI(const Camera2D& camera) const; ///< draws the items
-    void onMouseClick(const Vector2& mousePos, const Camera2D& camera); ///< defocuses nad does onClick
-    void DoItemsActions(const Vector2& mousePos, const Camera2D& camera); ///< does focused and passive actions
+    void OnMouseClick(const Vector2& mousePos, const Camera2D& camera); ///< defocuses and does onClick
+    void DoItemsActions(const Vector2& mousePos, const Camera2D& camera); ///< does focused and passive actions and onHover
     void DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera); ///< does actions that require mouse input
 
-    void DefocusItems(); /// defocuses all items after a click.
+    void DefocusItems(); ///< defocuses all items after a click.
 
     Container* GetContainer(const std::string& ID) const; ///< returns a polymorphic pointer to Container
 
     /**
-     *  @brief Pushes a pointer to the items in order and moves the unique_ptr to the map.
+     *  @brief Adds item to the drawing order and moves its ownership into the map
      *  @details Sets needsSorting to true.
-     *  @param item unique pointer to the item created elsewhere.
+     *  @param item unique pointer to the item created elsewhere. Left empty afterwards.
      */
     void CreateItem(std::unique_ptr<Item>& item);
     /**
      *  @brief Creates an ID for a new item.
-     *  @details The default ID follows a pattern: GUI_AUTO_ + fxID + (number of items with the fxID + 1).
+     *  @details The default ID follows a pattern: GUI_AUTO_ + fxID + number of items of this type created so far (first item doesn't get any number), e.g GUI_AUTO_Label, GUI_AUTO_Label1...
      *  @param item unique pointer to the newly created item.
-     *  @param ID ID to be given to the new item. If empty, defaults.
+     *  @param ID ID to be given to the new item. If empty, an automatic ID is generated.
      *  @throws std::invalid_argument on duplicate IDs
      */
     void CreateItemID(std::unique_ptr<Item>& item, const std::string& ID = "");
 
     static const std::unordered_set<std::string> FXIDs; ///< list of widget names
 
-    static const std::string AUTOMATIC_ID_PREFIX; ///< how are automatic IDs created
+    static const std::string AUTOMATIC_ID_PREFIX; ///< prefix of every automatic ID
 
     static const std::unordered_set<std::string> CONTAINERS; ///< list of which widgets are containers
 };

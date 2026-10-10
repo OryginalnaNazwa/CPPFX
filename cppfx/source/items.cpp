@@ -752,7 +752,7 @@ bool ComboBox::DoesAddAreaFocusOnSecondClick() const {
     return opensOnSecondClick;
 }
 
-const std::string ComboBox::GetClassID() const {
+const std::string ComboBox::GetClassID() {
     return "ComboBox";
 }
 
@@ -943,7 +943,7 @@ void SearchableDropDown::Defocus() {
     DropDown<std::string>::Defocus();
 }
 
-const std::string SearchableDropDown::GetClassID() const {
+const std::string SearchableDropDown::GetClassID() {
     return "SearchableDropDown";
 }
 

@@ -1132,7 +1132,7 @@ public:
      */
     bool DoesAddAreaFocusOnSecondClick() const;
 
-    const std::string GetClassID() const;
+    static const std::string GetClassID();
 
 private:
     void CommitAddArea();
@@ -1220,7 +1220,7 @@ public:
      */
     float GetListContentHeight(size_t number) const;
 
-    const std::string GetClassID() const;
+    static const std::string GetClassID();
 
 private:
      bool opensOnSecondClick = true; ///< if true, the click that unrolls the dropdown doesn't reach searchArea
@@ -1996,7 +1996,7 @@ public:
 
 private:
     std::vector<T> items; ///< objects in the list
-    std::function<std::string(const T&)> displayMethod; ///< how the items will be displayed. By default, just spaced out strings.
+    std::function<std::string(const T&)> displayMethod; ///< how the items will be displayed. By default, just spaced out strings. //TODO that is not true.
 
     bool vertical; ///< whether the next item in the list will be next to or under the previous one
 };
