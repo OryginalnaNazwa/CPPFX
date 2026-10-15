@@ -69,7 +69,7 @@ void GUI::DrawUI(const Camera2D& camera) const {
     for (auto& item : ItemsInDrawingOrder) {
         if (item->IsVisible()) {
             if (screenBased || item->IsScreenBased()) {
-                EndMode2D(); // THIS WILL CRASH IF THE MODE HAS NOT BEEN BEGUN EARLIER!!!
+                EndMode2D();
                 item->DrawMyself(elapsedTime);
                 BeginMode2D(camera);
             } else item->DrawMyself(elapsedTime);

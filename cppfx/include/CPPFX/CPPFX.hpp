@@ -37,6 +37,11 @@
 #define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
 /** @} */
 
+/**
+ *  @brief Throws an exception with ID of the GUI
+ *  @param ex exception type
+ *  @param msg exception message
+ */
 #define CPPFX_THROW_GUI(ex, msg) throw ex(std::string("In GUI ") + this->ID + ": " + (msg))
 
 namespace CPPFX {

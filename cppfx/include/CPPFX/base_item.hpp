@@ -1,27 +1,35 @@
 #ifndef ITEM_H
 #define ITEM_H
 
+/**
+ *  @file
+ *  @brief Item, the abstract base of every widget.
+ *  @details Holds what all widgets share: position, size, colour, border,
+ *           visibility, activity, focus, priority and the click/hover callbacks.
+ *           Included through CPPFX.hpp.
+ */
+
 #include "properties.hpp"
 #include <stddef.h>      // for size_t
 #include <functional>    // for function
 #include <string>        // for allocator, string
-#include "raylib.h"      // for Vector2, Camera2D
+#include <raylib.h>      // for Vector2, Camera2D
 
 namespace CPPFX {
 
 /**
  *  @class Item
- *  @brief Virtual widget class.
+ *  @brief Abstract base of every widget.
  */
 class Item {
 public:
-    Colour colour;
+    Colour colour; ///< primary colour
     Colour hoverColour; ///< you can also use it for other things, it's legal!
-    Border border; //all but a few items have it.
+    Border border; ///< all but a few items have it.
 
     Item() : ID(""), xAnchor(0.0f), yAnchor(0.0f), height(0.0f), width(0.0f), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID("") {} ///< for vectors and stuff, don't use normally
     /**
-     *  @brief Default constructor.
+     *  @brief Constructor with the default size (200 x 100).
      *  @param i fxID of the new item.
      */
     Item(const std::string& i)
@@ -38,7 +46,7 @@ public:
     virtual ~Item() = default;
 
     /**
-     *  @brief Draws the item in world coordinates.
+     *  @brief Draws the item.
      *  @param elapsedTime total elapsed time of all frames
      */
     virtual void DrawMyself(float elapsedTime) const = 0;
@@ -50,20 +58,21 @@ public:
      */
     virtual bool WasIClicked(const Vector2& mousePosition) const;
     /**
-     *  @brief Action done every frame in world coordinates.
+     *  @brief Action done every frame.
      *  @param elapsedTime total elapsed time of all frames
      */
     virtual void DoPassiveAction(float elapsedTime);
     /**
-     *  @brief Action done while the item is focused in world coordinates.
+     *  @brief Action done while the item is focused.
      *  @param elapsedTime total elapsed time of all frames
      */
     virtual void DoFocusAction(float elapsedTime) = 0;
     /**
-     *  @brief Action done while the item is focused and it depends on mouse click in world coordinates.
+     *  @brief Action done while the item is focused and it depends on mouse click.
      *  @details Defaults to the previous DoFocusAction().
      *  @param elapsedTime total elapsed time of all frames
-     *  @param mousePosition vector2 of mouse's x and y world coordinates during the recent click.
+     *  @param mousePosition mouse's x and y during the recent click, in the item's
+     *         own coordinate system (screen or world).
      */
     virtual void DoFocusAction(float elapsedTime, const Vector2& mousePosition);
     /**
@@ -163,12 +172,12 @@ public:
 
     /**
      *  @brief Launches on click.
-     *  @details Lambda, put in your own.
+     *  @details Lambda, put in your own. Not called while the item is inactive.
      */
     std::function<void()> onClick;
     /**
-     *  @brief Launches when cursor is over the item.
-     *  @details Lambda, put in your own.
+     *  @brief Launches every frame the cursor is over the item.
+     *  @details Lambda, put in your own. Not called while the item is inactive.
      */
     std::function<void()> onHover;
 
@@ -251,18 +260,24 @@ public:
      */
     virtual void SetID(const std::string& id);
     /**
-     *  @brief Sets the priority in the order of drawing of the item.
-     *  @param value The new priority.
-     *  @throws std::invalid_argument If the value is negative.
+     *  @brief Sets the item's priority.
+     *  @details Lower number means higher priority: 0 is the top. Higher-priority
+     *           items are drawn later, so they appear on top, and get clicks first.
+     *           Default is 3. The GUI re-sorts on its own only after its own
+     *           priority methods, so call GUI::SortOrder after using this.
+     *  @param value new priority
+     *  @throws std::invalid_argument if value is negative
      */
     virtual void SetPriority(int value);
     /**
-     *  @brief Increases order by one, decreasing the priority by one.
+     *  @brief Raises the priority by one (decreases the number).
      *  @details If priority is 0, does nothing.
+     *  @see SetPriority
      */
     virtual void MoveUpPriority();
     /**
-     *  @brief Decreases order by one, increasing the priority by one.
+     *  @brief Lowers the priority by one (increases the number).
+     *  @see SetPriority
      */
     virtual void MoveDownPriority();
 
@@ -316,17 +331,18 @@ public:
     virtual std::string GetID() const;
 
     /**
-     *  @brief Returns the internal library identificator of the item.
+     *  @brief Returns the internal library identifier of the item.
      *  @details Roughly the name of the class.
      *  @returns Internal ID
      */
     std::string GetFxID() const;
     /**
-     *  @brief Returns the internal library identificator of the item.
+     *  @brief Returns the internal library identifier of the item.
      *  @details The same as GetFxID, but static.
      *  @returns Internal ID
      *  @see Item::GetFxID
-     *  @note It's pointless here, but it cannot be inherited. It's just a reminder here - add this to other items.
+     *  @note Static members are inherited: every widget must define its own,
+     *        or it reports its base class's name.
      */
     static const std::string GetClassID();
 
@@ -337,13 +353,13 @@ protected:
     float height; ///< vertical length of the item
     float width; ///< horizontal length of the item
 
-    bool focused; ///< whether the item is currently doing something; was it clicked.
+    bool focused; ///< whether the item is currently doing something; was it the last item clicked.
     bool visible; ///< invisible items are still interactable
     bool inactive; ///< inactive items are not interactable
     bool eatsClick; ///< if false, allows the click to continue under it
-    size_t priority; ///< order of drawing. Set to 3 by default for convenience of moving priority around. The higher the priority, the quicker it gets done - but gets drawn under.
+    size_t priority; ///< drawing order; see SetPriority.
 
-    bool screenBased; ///< if true, item is drawn based on screen, so follows camera.
+    bool screenBased; ///< if true, item stays fixed on screen and ignores the camera.
     const std::string fxID; ///< ID for the library.
     float timer = 0.0f; ///< in case a widget needs to measure out time. Fully internal.
 };

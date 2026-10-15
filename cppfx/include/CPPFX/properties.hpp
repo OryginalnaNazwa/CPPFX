@@ -4,34 +4,64 @@
 #include <functional> // for function
 #include <iostream>   // for operator<<, basic_ostream, char_traits, cerr
 #include <string>     // for string, allocator
-#include "raylib.h"   // for Color, BLACK, LIGHTGRAY, DARKGRAY, GRAY
+#include <raylib.h>   // for Color, BLACK, LIGHTGRAY, DARKGRAY, GRAY
 #include <memory>     // for shared_ptr
 #include <vector>     // for vector
 #include <set>        // for set
 #include <optional>   // for optional
 
-/******************************************************************
- *  @file properties
- *  @brief This file contains the properties used in the FX items.
- *  @details And also some helpers.
- ******************************************************************/
+/**
+ *  @file
+ *  @brief Contains properties composed into widgets and some helpers.
+ *  @details Colour, Font and their Override versions, Border, Alignment and NestedProperty. Also British spelling hacks and THROW and WARN macros.
+ */
 
-namespace CPPFX {
-
-class Item; // declaration for NestedProperty
-
-#define GREY GRAY //a hack to make British spelling work with Raylib colours.
+/**
+ *  @name Colour hacks
+ *  @brief A hacky macro to make British spelling work
+ *  @details raylib uses American spelling (e.g GRAY), but British English uses a different one (e.g GREY).
+ *  These simple macros map British spelling to the American one for seamless use anywhere.
+ *  For parity, Colour methods return the original raylib spellings, even if British are handled in input.
+ *  @{
+ */
+#define GREY GRAY
 #define DARKGREY DARKGRAY
 #define LIGHTGREY LIGHTGRAY
+/** @} */
 
+/**
+ *  @def CPPFX_WARN(msg)
+ *  @brief Prints a warning to std::cerr, prefixed with "[CPPFX Warning]".
+ *  @details Debug builds only; compiles to nothing under NDEBUG.
+ *  @param msg streamed into std::cerr, so it can be a << chain
+ */
 #ifdef NDEBUG
 #define CPPFX_WARN(msg)
 #else
 #define CPPFX_WARN(msg) std::cerr << "[CPPFX Warning] " << msg << "\n"
 #endif
 
-#define CPPFX_THROW(ex, msg) throw ex(std::string("In ") + this->fxID + " " + this->ID + ": " + msg)
-#define CPPFX_THROW_NO_ITEM(ex, fxID, ID, msg) throw ex(std::string("In ") + fxID + " " + ID + ": " + msg)
+/**
+ *  @brief Throws an exception within a widget.
+ *  @details Creates an error message from widget type and widget ID.
+ *  @param ex exception type
+ *  @param msg exception message
+ */
+#define CPPFX_THROW(ex, msg) throw ex(std::string("In ") + (this->fxID) + " " + (this->ID) + ": " + (msg))
+/**
+ *  @brief Throws an exception outside a widget.
+ *  @details Creates an error message from given widget type and widget ID. Manual version of CPPFX_THROW for standarisation of exceptions. Used in properties.
+ *  @param ex exception type
+ *  @param fxID widget type
+ *  @param ID widget ID
+ *  @param msg exception message
+ *  @see CPPFX_THROW
+ */
+#define CPPFX_THROW_NO_ITEM(ex, fxID, ID, msg) throw ex(std::string("In ") + (fxID) + " " + (ID) + ": " + (msg))
+
+namespace CPPFX {
+
+class Item; // declaration for NestedProperty
 
 /**
  *  @class Colour
@@ -72,7 +102,7 @@ public:
 
     /**
      *  @brief Sets colour using its name or a custom literal.
-     *  @param colour colour's name, or #RrrGggBbb[Aaa] / #RrrrGgggBbbb[Aaaa]
+     *  @param colour colour's name, or #RrrGggBbbAaa / #RrrrGgggBbbbAaaa. Alpha (aaa) is optional. E.g #R12G34B56, #R12G34B56A78, #R123G456B789 or #R123G456B789A123
      *  @details Ignores capitalisation. Both GRAY and GREY work.
      *  @throws std::invalid_argument if the input is empty or the literal is malformed
      *  @throws std::out_of_range if the name isn't a known colour
