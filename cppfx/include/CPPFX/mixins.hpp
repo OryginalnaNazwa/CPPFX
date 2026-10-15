@@ -219,7 +219,6 @@ protected:
 
     Embedded() : Item() {}
 
-private:
     void SetX(float x) override { Item::SetX(x); }
     void SetY(float y) override { Item::SetY(y); }
     void SetXY(float x, float y) override { Item::SetXY(x, y); }
