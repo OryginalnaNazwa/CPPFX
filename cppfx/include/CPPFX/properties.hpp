@@ -3,6 +3,7 @@
 
 #include <functional> // for function
 #include <iostream>   // for operator<<, basic_ostream, char_traits, cerr
+#include <stdexcept>  // for invalid_argument
 #include <string>     // for string, allocator
 #include <raylib.h>   // for Color, BLACK, LIGHTGRAY, DARKGRAY, GRAY
 #include <memory>     // for shared_ptr
@@ -18,7 +19,7 @@
 
 /**
  *  @name Colour hacks
- *  @brief A hacky macro to make British spelling work
+ *  @brief Hacky macros to make British spelling work
  *  @details raylib uses American spelling (e.g GRAY), but British English uses a different one (e.g GREY).
  *  These simple macros map British spelling to the American one for seamless use anywhere.
  *  For parity, Colour methods return the original raylib spellings, even if British are handled in input.
@@ -44,13 +45,14 @@
 /**
  *  @brief Throws an exception within a widget.
  *  @details Creates an error message from widget type and widget ID.
+ *           Needs fxID and ID in scope, so only works inside Item's member functions.
  *  @param ex exception type
  *  @param msg exception message
  */
 #define CPPFX_THROW(ex, msg) throw ex(std::string("In ") + (this->fxID) + " " + (this->ID) + ": " + (msg))
 /**
  *  @brief Throws an exception outside a widget.
- *  @details Creates an error message from given widget type and widget ID. Manual version of CPPFX_THROW for standarisation of exceptions. Used in properties.
+ *  @details Creates an error message from given widget type and widget ID. Manual version of CPPFX_THROW for standardisation of exceptions. Used in properties.
  *  @param ex exception type
  *  @param fxID widget type
  *  @param ID widget ID
@@ -87,9 +89,9 @@ public:
      *  @throws std::out_of_range if the name isn't a known colour
      */
     explicit Colour(const std::string& colour) {
-                value = StringToColour(Normalise(colour));
-                name  = ColourToString(value);
-            }
+        value = StringToColour(Normalise(colour));
+        name  = ColourToString(value);
+    }
     /**
      *  @brief Constructor for setting colour by value.
      *  @param colour value of the colour.
@@ -102,7 +104,7 @@ public:
 
     /**
      *  @brief Sets colour using its name or a custom literal.
-     *  @param colour colour's name, or #RrrGggBbbAaa / #RrrrGgggBbbbAaaa. Alpha (aaa) is optional. E.g #R12G34B56, #R12G34B56A78, #R123G456B789 or #R123G456B789A123
+     *  @param colour colour's name, or #RrrGggBbbAaa / #RrrrGgggBbbbAaaa. Alpha (aaa) is optional. E.g #R12G34B56, #R12G34B56A78, #R012G034B056 or #R012G034B056A078
      *  @details Ignores capitalisation. Both GRAY and GREY work.
      *  @throws std::invalid_argument if the input is empty or the literal is malformed
      *  @throws std::out_of_range if the name isn't a known colour
@@ -145,7 +147,7 @@ public:
     void SetDec();
     /**
      *  @brief Sets the base used when reporting custom colour literals.
-     *  @param base true for hexadecimal, false for decimal.
+     *  @param hex true for hexadecimal, false for decimal.
      *  @details Convenience for the two previous methods, for when the base
      *           is held in a variable.
      *  @see SetHex
@@ -163,14 +165,17 @@ public:
      *  @param other the colour to compare against
      *  @returns true if RGBA match
      *  @details Names are ignored - a colour built from "GRAY" equals one
-     *           built from "#R80G80B80".
+     *           built from "#R82G82B82".
      */
     bool operator==(const Colour& other) const;
+    /**
+     *  @brief Negation of operator==.
+     */
     bool operator!=(const Colour& other) const;
 
     /**
      *  @brief Reduces the colour's opacity.
-     *  @details Clamps the factor
+     *  @details Clamps the factor.
      *  @param factor 0.0 fully transparent, 1.0 unchanged
      */
     void Fade(float factor);
@@ -182,14 +187,24 @@ public:
      *  @details Clamps t. Blends all four channels, alpha included.
      */
     void Blend(const Color& target, float t);
+    /**
+     *  @overload
+     */
     void Blend(const Colour& target, float t);
 
-    static unsigned char Lerp(unsigned char a, unsigned char b, float t); ///< lerps from one colour to the other. One colour channel
+    /**
+     *  @brief Linearly interpolates a single channel from a to b.
+     *  @param a starting value
+     *  @param b target value
+     *  @param t must be within [0, 1] - not clamped, unlike Blend
+     *  @returns The interpolated channel, rounded.
+     */
+    static unsigned char Lerp(unsigned char a, unsigned char b, float t);
 
 private:
     std::string name;   ///< colour's canonical name, or a custom literal
     Color value;        ///< Raylib's colour
-    bool hex = false;   ///< whether it holds the string value in hex or dec form
+    bool hex = false;   ///< whether custom literals are reported in hex or dec
 
     /// How the literal is laid out: digits per channel, and how many channels.
     struct ColourLayout;
@@ -201,14 +216,14 @@ private:
      *  @throws std::invalid_argument if str is empty or the literal is malformed
      *  @throws std::out_of_range if the name isn't a known colour
      */
-    Color StringToColour(const std::string& str);
+    static Color StringToColour(const std::string& str);
     /**
      *  @brief Gets the name of a colour from its value.
      *  @details Falls back to a custom literal when the value isn't a known colour.
      *  @param c color value
      *  @returns canonical name, or a literal
      */
-    std::string ColourToString(Color c);
+    std::string ColourToString(Color c) const;
     /// Normalises a potential colour name for further validity check.
     static std::string Normalise(const std::string& str);
     static ColourLayout DetectLayout(const std::string& s);
@@ -218,8 +233,9 @@ private:
 /**
  *  @brief Optional colour override.
  *  @details Holds either a Colour or nothing. When unset, the widget's default
- *           colour applies. Methods that read or modify the colour throw
- *           std::logic_error when it is unset - check IsOverriden() first.
+ *           colour applies. Every method other than SetColour, GetColourString,
+ *           IsOverridden, ClearOverride and the comparison operators throws
+ *           std::logic_error when no colour is set - check IsOverridden() first.
  *  @see CPPFX::Colour
  */
 class OverrideColour {
@@ -329,6 +345,11 @@ public:
      *  @return true if a colour is set, false otherwise.
      */
     bool IsOverridden() const;
+    /**
+     *  @brief Gets a copy of the overriding colour.
+     *  @return The colour.
+     *  @throws std::logic_error if no colour is set
+     */
     Colour GetOverride() const;
     /**
      *  @brief Removes the colour, making the override unset.
@@ -344,14 +365,14 @@ private:
 
 /**
  *  @class Property
- *  @brief Base for other properties
- *  @note Is it even needed?
+ *  @brief Base for other properties.
+ *  @details Holds the property's colour and its name.
  */
 class Property {
 public:
     Colour colour;
 
-    Property(const std::string& i) : fxID(i) {}
+    explicit Property(const std::string& i) : fxID(i) {}
     Property(const std::string& i, const Color& colour) : colour(colour), fxID(i)  {}
     Property(const std::string& i, const std::string& colour) : colour(colour), fxID(i) {}
 
@@ -371,7 +392,7 @@ protected:
 /**
  *  @class Border
  *  @brief The outline around an item.
- *  @details Draws outside the item, thickness radiating outwards, rather than into the item by default. Allows to override default behaviour by a lambda.
+ *  @details Draws outside the item, thickness radiating outwards, rather than into the item by default. Allows overriding default behaviour by a lambda.
  */
 class Border : public Property {
 public:
@@ -385,7 +406,7 @@ public:
     /**
      * @brief Sets the thickness value.
      * @param thickness new thickness value.
-     * @throw std::invalid_argument If thickness is negative.
+     * @throws std::invalid_argument If thickness is negative.
      */
     void SetThickness(float thickness);
     /**
@@ -397,6 +418,7 @@ public:
     /**
      *  @brief Sets drawing method to one specified.
      *  @param drawMyself how the border should draw itself around an item. Takes in item's basic dimensions as parameters.
+     *  @note Only called when thickness is greater than 0, so set the thickness too.
      */
     void SetDrawingMethod(const std::function<void(float x, float y, float width, float height)>& drawMyself);
     /**
@@ -459,8 +481,13 @@ public:
     Alignment(const Alignments& a) : Property("Alignment"), alignment(a) {}
     /**
      *  @brief Constructor for setting alignment using string.
+     *  @throws std::invalid_argument if the string is not a known alignment
+     *  @see StringToAlignment
      */
     Alignment(const std::string& a) : Property("Alignment"), alignment(StringToAlignment(a)) {}
+    /**
+     *  @overload
+     */
     Alignment(const char* a) : Property("Alignment"), alignment(StringToAlignment(a)) {}
 
     /**
@@ -497,12 +524,12 @@ public:
      */
     bool IsLeftAlignment() const;
     /**
-     *  @brief Checks whether the current alignment is X_CENTRE.
+     *  @brief Checks whether the current alignment is X_CENTRE or CENTRE.
      *  @returns true if centre column
      */
     bool IsCentreColumnAlignment() const;
     /**
-     *  @brief Checks whether the current alignment is CENTRE_X.
+     *  @brief Checks whether the current alignment is CENTRE_X or CENTRE.
      *  @returns true if centre row
      */
     bool IsCentreRowAlignment() const;
@@ -519,9 +546,9 @@ public:
 
     /**
      *  @brief Gets x coordinate aligned according to current alignment.
-     *  @details Assumes top left is the default and doesn't have to do anything.
+     *  @details Left-column alignments return boxX unchanged.
      *  @param boxX x coordinate of the box
-     *  @param contentWidth width of the object to align, for properly centering it
+     *  @param contentWidth width of the object to align, for properly centring it
      *  @param boxWidth width of the space in which aligning is happening
      *  @returns content's x aligned to the current alignment
      *  @throws std::invalid_argument if contentWidth or boxWidth is negative
@@ -529,9 +556,9 @@ public:
     float GetAlignedX(float boxX, float contentWidth, float boxWidth) const;
     /**
      *  @brief Gets y coordinate aligned according to current alignment.
-     *  @details Assumes top left is the default and doesn't have to do anything.
+     *  @details Top-row alignments return boxY unchanged.
      *  @param boxY y coordinate of the box
-     *  @param contentHeight height of the object to align, for properly centering it
+     *  @param contentHeight height of the object to align, for properly centring it
      *  @param boxHeight height of the space in which aligning is happening
      *  @returns content's y aligned to the current alignment
      *  @throws std::invalid_argument if contentHeight or boxHeight is negative
@@ -547,6 +574,7 @@ public:
      *  @param contentWidth width of the thing being placed
      *  @param contentHeight height of the thing being placed
      *  @returns Top-left corner for the content.
+     *  @throws std::invalid_argument if any width or height is negative
      */
     Vector2 GetAlignedXY(float boxX, float boxY, float boxWidth, float boxHeight,
                          float contentWidth, float contentHeight) const;
@@ -556,13 +584,15 @@ public:
      *  @details Returns only the 9 base values.
      *  @param alignment alignment value
      *  @returns string with the alignment's name
+     *  @throws std::invalid_argument if the value is outside the enum
      */
     static std::string AlignmentToString(const Alignments& alignment);
     /**
      *  @brief Gets alignment based on a name.
-     *  @details Take in aliases, but overwrites them.
+     *  @details Ignores capitalisation. Accepts aliases and returns the base value they map to.
      *  @param alignment name of the alignment
      *  @returns Alignment
+     *  @throws std::invalid_argument if the name is not a known alignment
      */
     static Alignments StringToAlignment(const std::string& alignment);
 
@@ -617,7 +647,8 @@ public:
     /**
      *  @brief Constructor for custom size.
      *  @param fS size of the font to be set.
-     *  @warning throws a warning if size is 0.
+     *  @throws std::invalid_argument if the size is negative.
+     *  @note Prints a warning if size is 0.
      */
     explicit Font(float fS) : Font() {
         if (fS < 0.0f) {
@@ -641,7 +672,8 @@ public:
      *  @brief Constructor for custom size and colour.
      *  @param fS size of the font to be set.
      *  @param c colour to be set.
-     *  @warning throws a warning if size is 0.
+     *  @throws std::invalid_argument if the size is negative.
+     *  @note Prints a warning if size is 0.
      */
     explicit Font(float fS, const Color& c) : Font(fS) {
         colour.SetColour(c);
@@ -653,7 +685,15 @@ public:
      *  @throws std::invalid_argument if path is empty
      */
     void SetFilePath(const std::string& path);
+    /**
+     *  @brief Gets the stored file path.
+     *  @returns Path LoadFont() will load from. Empty if none is set.
+     */
     std::string GetFilePath() const;
+    /**
+     *  @brief Clears the stored file path.
+     *  @details Doesn't unload the current font.
+     */
     void ClearFilePath();
 
     /**
@@ -662,7 +702,7 @@ public:
      *           load size. Must be called after InitWindow.
      *  @see ::LoadFontEx
      *  @throws std::runtime_error if the path is empty or the font did not load.
-     *  @warning throws a warning listing any requested glyphs the file lacks.
+     *  @note Prints a warning listing any requested glyphs the file lacks.
      */
     void LoadFont();
     /**
@@ -671,6 +711,7 @@ public:
      *  @param fileName path to the file
      *  @throws std::invalid_argument if fileName is empty
      *  @throws std::runtime_error if the font did not load properly.
+     *  @note Prints a warning listing any requested glyphs the file lacks.
      */
     void LoadFont(const std::string& fileName);
     /**
@@ -713,13 +754,17 @@ public:
      *  @returns The loaded atlas, or the default font if none was loaded.
      */
     ::Font GetFont() const;
+    /**
+     *  @brief Same as UnloadFont.
+     *  @see UnloadFont
+     */
     void ClearFont();
 
     /**
      *  @brief Sets font size.
      *  @param size size to be set.
      *  @throws std::invalid_argument if the size is negative.
-     *  @warning throws a warning if size is 0.
+     *  @note Prints a warning if size is 0.
      */
     void SetFontSize(float size);
     /**
@@ -740,6 +785,10 @@ public:
      *  @throws std::invalid_argument if size is negative.
      */
     void SetLoadSize(int size);
+    /**
+     *  @brief Gets the requested load size.
+     *  @returns Load size, or 0 for automatic.
+     */
     int GetLoadSize() const;
     /**
      *  @brief Gets the size the current atlas was actually rasterised at.
@@ -759,7 +808,15 @@ public:
      *  @returns Spacing in pixels, with automatic already resolved.
      */
     float GetSpacing() const;
+    /**
+     *  @brief Sets spacing to automatic.
+     *  @see SetSpacing
+     */
     void SetAutoSpacing();
+    /**
+     *  @brief Checks whether spacing is automatic.
+     *  @returns true if automatic.
+     */
     bool IsAutoSpacing() const;
 
     /**
@@ -778,13 +835,14 @@ public:
     void SetCharset(Charset preset);
     /**
      *  @brief Adds a preset to the current charset.
+     *  @details Reloads the font if one is already loaded from a path.
      */
     void AddCharset(Charset preset);
     /**
      *  @brief Sets the charset from a sample of text.
      *  @details Every distinct character in the sample is baked into the atlas,
-     *           on top of ASCII. This is the easy way in:
-     *           SetCharset("AaCcEeLlNnOoSsZzZz" with the diacritics you need).
+     *           on top of ASCII. Reloads the font if one is already loaded from
+     *           a path. E.g SetCharset("ĄąĆćĘęŁłŃńÓóŚśŹźŻż").
      *  @param sampleText text containing the characters that must be renderable
      *  @throws std::invalid_argument if sampleText is empty
      *  @see ::LoadCodepoints
@@ -793,17 +851,25 @@ public:
     /**
      *  @brief Sets the charset from raw Unicode codepoints.
      *  @details The escape hatch. Prefer the preset or sample text overloads.
+     *           Reloads the font if one is already loaded from a path.
      *  @param codepoints codepoints to bake into the atlas
      *  @throws std::invalid_argument if codepoints is empty
      */
     void SetCharset(const std::vector<int>& codepoints);
     /**
      *  @brief Adds a sample of text to the current charset.
+     *  @details Reloads the font if one is already loaded from a path.
+     *  @throws std::invalid_argument if sampleText is empty
      */
     void AddCharset(const std::string& sampleText);
+    /**
+     *  @brief Gets the charset.
+     *  @returns Sorted, deduplicated codepoints.
+     */
     std::vector<int> GetCharset() const;
     /**
      *  @brief Resets the charset to LATIN_EXTENDED.
+     *  @details Reloads the font if one is already loaded from a path.
      */
     void ClearCharset();
 
@@ -836,7 +902,7 @@ public:
     /**
      *  @brief Warns once per missing codepoint found in the text.
      *  @details Meant for text mutation points such as SetText, not for the
-     *           draw loop. Compiles to nothing under NDEBUG.
+     *           draw loop. Does nothing under NDEBUG.
      *  @param text text to check
      *  @param context item ID or similar, included in the message
      */
@@ -853,14 +919,20 @@ public:
      *  @see ::DrawTextEx
      */
     void DrawText(const std::string& text, float x, float y) const;
+    /**
+     *  @overload
+     */
     void DrawText(const std::string& text, const Vector2& position) const;
     /**
-     *  @brief Draws text with an overridden tint.
+     *  @overload
      *  @param tint colour to use instead of this font's colour
      */
     void DrawText(const std::string& text, float x, float y, const Color& tint) const;
     /**
      *  @brief Draws rotated text.
+     *  @details Uses this font's colour.
+     *  @param text text to draw
+     *  @param position top-left of the line box
      *  @param origin rotation origin, relative to position
      *  @param rotation rotation in degrees
      *  @see ::DrawTextPro
@@ -868,11 +940,17 @@ public:
     void DrawTextPro(const std::string& text, const Vector2& position,
                      const Vector2& origin, float rotation) const;
 
+    /**
+     *  @brief Gets the height of the visible text.
+     *  @details Cap height for a single line; each further line adds a line box.
+     *  @param text text to measure
+     *  @returns Ink height in pixels.
+     */
     float GetInkHeight(const std::string& text) const;
     /**
      *  @brief Gets the visible size of the text.
-     *  @details Width as measured, height as cap height rather than the line
-     *           box, so alignment centres what a reader actually sees.
+     *  @details Width as measured, height from GetInkHeight rather than the
+     *           line box, so alignment centres what a reader actually sees.
      *  @param text text to measure
      *  @returns Ink width and height in pixels.
      */
@@ -886,17 +964,25 @@ public:
      *  @param inkTopLeft where the top-left of the visible text should land
      */
     void DrawTextAt(const std::string& text, const Vector2& inkTopLeft) const;
+    /**
+     *  @overload
+     *  @param tint colour to use instead of this font's colour
+     */
     void DrawTextAt(const std::string& text, const Vector2& inkTopLeft,
                     const Color& tint) const;
 
     /**
      *  @brief Measures text with this font.
-     *  @details Wrapper over MeasureTextEx.
+     *  @details Wrapper over MeasureTextEx. Returns {0, 0} before InitWindow.
      *  @param text text to measure
      *  @returns Width and line box height in pixels.
      *  @see ::MeasureTextEx
      */
     Vector2 MeasureText(const std::string& text) const;
+    /**
+     *  @brief Measures the width of the text.
+     *  @see MeasureText
+     */
     float MeasureTextWidth(const std::string& text) const;
     /**
      *  @brief Measures the line box height of the text.
@@ -909,6 +995,7 @@ public:
      *  @brief Gets the ink height of a capital letter.
      *  @details Unlike font size, this is what a reader actually sees. Font
      *           size is the em box, which includes empty descender space.
+     *           Returns 0 before InitWindow.
      *  @returns Height of 'H' in pixels at the current font size.
      */
     float GetCapHeight() const;
@@ -930,7 +1017,7 @@ public:
     /**
      *  @brief Appends a Unicode codepoint to a UTF-8 string.
      *  @details Wrapper over raylib's CodepointToUTF8. Use this instead of casting
-     *           to char - a cast truncates anything above U+007F, so 'z' becomes
+     *           to char - a cast truncates anything above U+007F, so 'ż' becomes
      *           '|'.
      *  @param text string to append to
      *  @param codepoint Unicode codepoint, e.g. as returned by GetCharPressed
@@ -960,6 +1047,10 @@ public:
      */
     void DrawAligned(const std::string& text, const Alignment& alignment,
                      float x, float y, float width, float height) const;
+    /**
+     *  @overload
+     *  @param tint colour to use instead of this font's colour
+     */
     void DrawAligned(const std::string& text, const Alignment& alignment,
                      float x, float y, float width, float height,
                      const Color& tint) const;
@@ -967,7 +1058,7 @@ public:
     /// True when this font can actually be measured and drawn.
     static bool IsDrawable(const ::Font& f);
 
-        /**
+    /**
      *  @brief Gets the path the current atlas was loaded from.
      *  @details Empty when the default font is in use or the atlas was
      *           borrowed via SetFont. Unlike GetFilePath this reflects what
@@ -1026,8 +1117,8 @@ private:
  *  @brief Non-default font
  *  @details Holds either a Font or nothing. When unset, the widget's default
  *           font applies. Every method other than SetFont(const Font&),
- *           IsOverriden and ClearOverride throws std::logic_error when no
- *           font is set - check IsOverriden() first.
+ *           IsOverridden and ClearOverride throws std::logic_error when no
+ *           font is set - check IsOverridden() first.
  *  @see CPPFX::Font
  */
 class OverrideFont {
@@ -1044,6 +1135,11 @@ public:
      *  @return true if a font is set, false otherwise.
      */
     bool IsOverridden() const;
+    /**
+     *  @brief Gets a copy of the overriding font.
+     *  @return The font. Shares the atlas with the override.
+     *  @throws std::logic_error if no font is set
+     */
     CPPFX::Font GetOverride() const;
     /**
      *  @brief Removes the font, making the override unset.
@@ -1133,11 +1229,15 @@ private:
     const Font& Checked(const char* func) const;
 };
 
+/**
+ *  @brief Base for properties nested inside a widget.
+ *  @details Keeps a pointer to the owning item, e.g. for error messages.
+ */
 struct NestedProperty {
-    NestedProperty(Item* o) : owner(o) {}
+    explicit NestedProperty(Item* o) : owner(o) {}
 
 protected:
-    Item* owner;
+    Item* owner; ///< item this property belongs to
 };
 
 }

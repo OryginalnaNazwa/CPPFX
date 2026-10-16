@@ -8,6 +8,7 @@
 #include <sstream>          // for ostringstream
 #include <set>              // for set
 #include <vector>           // for vector
+#include <cstdio>           // for snprintf
 
 using namespace CPPFX;
 
@@ -119,7 +120,7 @@ Color Colour::StringToColour(const std::string& s) {
     throw std::out_of_range("No colour found.");
 }
 
-std::string Colour::ColourToString(Color c) {
+std::string Colour::ColourToString(Color c) const {
     static const std::pair<Color, const char*> NAMED_COLOURS[] = {
         {BLANK,      "BLANK"},
         {WHITE,      "WHITE"},
@@ -163,7 +164,7 @@ std::string Colour::ColourToString(Color c) {
         else            std::snprintf(buf, sizeof(buf), "#R%03uG%03uB%03uA%03u", c.r, c.g, c.b, c.a);
     }
     return buf;
-};
+}
 
 void Colour::SetColour(const std::string& col) {
     const std::string norm = Normalise(col);
@@ -432,7 +433,7 @@ float Alignment::GetAlignedX(float boxX, float contentWidth, float boxWidth) con
         case CENTRE_RIGHT:
         case BOTTOM_RIGHT: return (boxX + boxWidth) - contentWidth; // move to the far right, go back by alignee's width
     }
-    return boxX; // should't happen
+    return boxX; // shouldn't happen
 }
 
 float Alignment::GetAlignedY(float boxY, float contentHeight, float boxHeight) const {
@@ -454,7 +455,7 @@ float Alignment::GetAlignedY(float boxY, float contentHeight, float boxHeight) c
         case BOTTOM_LEFT:
         case BOTTOM_RIGHT: return (boxY + boxHeight) - contentHeight; // move to the far down, go back by alignee's height
     }
-    return boxY; // should't happen
+    return boxY; // shouldn't happen
 }
 
 Vector2 Alignment::GetAlignedXY(float boxX, float boxY, float boxWidth, float boxHeight,
@@ -818,7 +819,7 @@ void CPPFX::Font::WarnAboutMissingGlyphs(const std::string& text,
     std::size_t fresh = 0;
 
     for (int cp : missing) {
-        if (!warnedCodepoints.insert(cp).second) continue;   // already moaned about it
+        if (!warnedCodepoints.insert(cp).second) continue;
         std::string glyph;
         AppendCodepoint(glyph, cp);
         out << " " << glyph << " (U+" << std::uppercase << std::hex << cp
