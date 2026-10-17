@@ -8,5 +8,6 @@
 /lib
 /.objs
 /build
+/build-ci
 /release
 /doxygen

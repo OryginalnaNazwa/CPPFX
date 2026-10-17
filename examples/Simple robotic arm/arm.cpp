@@ -72,7 +72,7 @@ int main() {
     InitWindow(800, 600, "Robotic arm");
     SetTargetFPS(60);
 
-    Camera2D camera = {0};
+    Camera2D camera = {};
     camera.zoom = 1.0f;
 
     CPPFX::GUI gui;

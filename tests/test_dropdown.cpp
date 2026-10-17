@@ -23,21 +23,6 @@
 
 using CPPFX::DropDown;
 
-/// CHECK on a float comparison prints only the expression, which is no help
-/// when a geometry figure is off by a divider. This prints both sides.
-#define CHECK_NEAR(a, b)                                                       \
-    do {                                                                       \
-        ::fxtest::CountCheck();                                                \
-        const float _a = (float)(a);                                           \
-        const float _b = (float)(b);                                           \
-        if (!((_a > _b ? _a - _b : _b - _a) < 0.001f)) {                       \
-            std::ostringstream _os;                                            \
-            _os << #a " ~= " #b "\n    got:      " << _a                       \
-                << "\n    expected: " << _b;                                   \
-            ::fxtest::ReportFailure(_os.str(), __FILE__, __LINE__);            \
-        }                                                                      \
-    } while (0)
-
 namespace {
 
 /// Renders an order as one string, so a failing CHECK_EQ prints both
@@ -101,7 +86,7 @@ TEST(dropdown_content_height_counts_dividers_between_rows_only) {
     DropDown<int> dd = MakeFixture();
     // header divider + three rows + two dividers. Not three dividers:
     // nothing is drawn after the last row.
-    CHECK_NEAR(dd.GetListContentHeight(), 4.0f + (3.0f * 20.0f) + (2.0f * 2.0f));
+    CHECK_NEAR(dd.GetListContentHeight(), 4.0f + (3.0f * 20.0f) + (2.0f * 2.0f), 0.001);
 }
 
 TEST(dropdown_content_height_of_one_item_has_no_dividers) {
@@ -111,7 +96,7 @@ TEST(dropdown_content_height_of_one_item_has_no_dividers) {
     dd.list.SetDividerThickness(2.0f);
     dd.list.SetItemInListHeight(20.0f);
     dd.AddItem("only", 1);
-    CHECK_NEAR(dd.GetListContentHeight(), 24.0f);
+    CHECK_NEAR(dd.GetListContentHeight(), 24.0f, 0.001);
 }
 
 TEST(dropdown_empty_list_measures_the_stub) {
@@ -122,12 +107,12 @@ TEST(dropdown_empty_list_measures_the_stub) {
     dd.list.SetItemInListHeight(20.0f);
     // An open but empty dropdown still shows the header divider, so the
     // click registers visibly instead of appearing to do nothing.
-    CHECK_NEAR(dd.GetListContentHeight(), 4.0f);
+    CHECK_NEAR(dd.GetListContentHeight(), 4.0f, 0.001);
 }
 
 TEST(dropdown_total_list_height_adds_the_list_border_twice) {
     DropDown<int> dd = MakeFixture();
-    CHECK_NEAR(dd.GetTotalListHeight(), dd.GetListContentHeight() + 20.0f);
+    CHECK_NEAR(dd.GetTotalListHeight(), dd.GetListContentHeight() + 20.0f, 0.001);
 }
 
 TEST(dropdown_opening_grows_total_height_by_the_list) {
@@ -137,17 +122,17 @@ TEST(dropdown_opening_grows_total_height_by_the_list) {
     const float open = dd.GetTotalHeight();
     // Asserts the relationship rather than the absolute figure, so this
     // survives a change to how the outer border is accounted for.
-    CHECK_NEAR(open - closed, dd.GetTotalListHeight());
+    CHECK_NEAR(open - closed, dd.GetTotalListHeight(), 0.001);
 }
 
 TEST(dropdown_list_top_clears_both_borders) {
     DropDown<int> dd = MakeFixture();
-    CHECK_NEAR(dd.GetListTop(), 120.0f);
+    CHECK_NEAR(dd.GetListTop(), 120.0f, 0.001);
 }
 
 TEST(dropdown_row_pitch_is_row_plus_divider) {
     DropDown<int> dd = MakeFixture();
-    CHECK_NEAR(dd.GetRowPitch(), 22.0f);
+    CHECK_NEAR(dd.GetRowPitch(), 22.0f, 0.001);
 }
 
 // --- hit testing ---------------------------------------------------------
@@ -531,13 +516,13 @@ TEST(dropdown_divider_setters_do_not_cross_wires) {
     // does not also assert what the defaults happen to be.
     const float headerBefore = dd.header.GetDividerThickness();
     dd.list.SetDividerThickness(7.0f);
-    CHECK_NEAR(dd.list.GetDividerThickness(), 7.0f);
-    CHECK_NEAR(dd.header.GetDividerThickness(), headerBefore);
+    CHECK_NEAR(dd.list.GetDividerThickness(), 7.0f, 0.001);
+    CHECK_NEAR(dd.header.GetDividerThickness(), headerBefore, 0.001);
 
     const float rowBefore = dd.list.GetDividerThickness();
     dd.header.SetDividerThickness(3.0f);
-    CHECK_NEAR(dd.header.GetDividerThickness(), 3.0f);
-    CHECK_NEAR(dd.list.GetDividerThickness(), rowBefore);
+    CHECK_NEAR(dd.header.GetDividerThickness(), 3.0f, 0.001);
+    CHECK_NEAR(dd.list.GetDividerThickness(), rowBefore, 0.001);
 }
 
 TEST(dropdown_rejects_negative_measurements) {

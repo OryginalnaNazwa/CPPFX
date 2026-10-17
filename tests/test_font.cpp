@@ -120,7 +120,7 @@ TEST(font_rejects_missing_file) {
 
 TEST(font_rejects_invalid_borrowed_font) {
     fx::Font f;
-    ::Font empty = {0};
+    ::Font empty = {};
     CHECK_THROWS_AS(f.SetFont(empty), std::invalid_argument);
     CHECK(f.IsDefaultFont());
 }

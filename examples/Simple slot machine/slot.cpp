@@ -115,7 +115,7 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_MAXIMIZED);
     InitWindow(GetScreenWidth(), GetScreenHeight(), "Slot Machine");
     SetTargetFPS(60);
-    Camera2D camera = {0};
+    Camera2D camera = {};
     camera.zoom = 1.0f;
 
     // UI configuration

@@ -71,7 +71,7 @@ int main() {
     InitWindow(2000, 2000, "TODO app");
     SetTargetFPS(60);
 
-    Camera2D camera = {0};
+    Camera2D camera = {};
     camera.zoom = 1.0f;
 
     CPPFX::GUI gui;

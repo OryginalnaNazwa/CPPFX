@@ -17,10 +17,10 @@ int main()
     InitWindow(0, 0, "Simple simulation - clock");
     SetTargetFPS(60);
     Camera2D camera;
-    camera = {0};
+    camera = {};
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
-    camera.target = (Vector2){0, 0};
+    camera.target = Vector2{0, 0};
     CPPFX::GUI gui;
 
     //gui initialisation
