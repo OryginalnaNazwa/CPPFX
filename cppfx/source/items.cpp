@@ -9,7 +9,7 @@ using namespace CPPFX;
 
 //--- Label ---
 
-void Label::DrawMyself(float elapsedTime) const {
+void Label::DrawMyself(float /*elapsedTime*/) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     if (text != "") {
         DrawAlignedText(alignment);
@@ -17,7 +17,7 @@ void Label::DrawMyself(float elapsedTime) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Label::DoFocusAction(float elapsedTime) {
+void Label::DoFocusAction(float /*elapsedTime*/) {
     Defocus();
     return;
 }
@@ -83,7 +83,7 @@ const std::string TextField::GetClassID() {
 
 //--- Button ---
 
-void Button::DrawMyself(float elapsedTime) const {
+void Button::DrawMyself(float /*elapsedTime*/) const {
     if (timer > 0.0f) {
         DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour()); //button during click
     } else DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
@@ -115,7 +115,7 @@ const std::string Button::GetClassID() {
 
 // --- CheckBox ---
 
-void CheckBox::DrawMyself(float elapsedTime) const {
+void CheckBox::DrawMyself(float /*elapsedTime*/) const {
     if (shape != CheckBox::RADIO) {
         if (!pressed) {
             DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
@@ -171,7 +171,7 @@ void CheckBox::DrawMyself(float elapsedTime) const {
     }
 }
 
-void CheckBox::DoFocusAction(float elapsedTime) {
+void CheckBox::DoFocusAction(float /*elapsedTime*/) {
    if (focused) {
         pressed = !pressed;
         focused = false;
@@ -273,11 +273,11 @@ void RadioGroup::DrawMyself(float elapsedTime) const {
     }
 }
 
-void RadioGroup::DoFocusAction(float elapsedTime) {
+void RadioGroup::DoFocusAction(float /*elapsedTime*/) {
     return;
 }
 
-void RadioGroup::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
+void RadioGroup::DoFocusAction(float /*elapsedTime*/, const Vector2& mousePosition) {
     for (auto& [key, button] : buttons) {
         if (button->WasIClicked(mousePosition)) {
             UnpressButtons();
@@ -287,7 +287,7 @@ void RadioGroup::DoFocusAction(float elapsedTime, const Vector2& mousePosition) 
     }
 }
 
-void RadioGroup::DoPassiveAction(float elapsedTime) {
+void RadioGroup::DoPassiveAction(float /*elapsedTime*/) {
     if (needsOrdering) {
         SetButtonsPositions();
     }
@@ -785,7 +785,7 @@ void SearchableDropDown::FilterList() {
     }
 }
 
-void SearchableDropDown::DrawList(float elapsedTime) const {
+void SearchableDropDown::DrawList(float /*elapsedTime*/) const {
     float yCurrent = GetListTop();
     Color drawColour = colour.GetColour();
     if (list.colour.IsOverridden()) drawColour = list.colour.GetColour();
@@ -1562,7 +1562,7 @@ bool ProgressIndicator::IsComplete() const {
     return false;
 }
 
-void ProgressIndicator::DoFocusAction(float elapsedTime) {
+void ProgressIndicator::DoFocusAction(float /*elapsedTime*/) {
     return;
 }
 
@@ -1795,7 +1795,7 @@ const std::string ProgressBar::GetClassID() {
 
 // --- Pressed button ---
 
-void PressedButton::DrawMyself(float elapsedTime) const {
+void PressedButton::DrawMyself(float /*elapsedTime*/) const {
     std::string textToDisplay;
     if (pressed) {
         DrawRectangle(xAnchor, yAnchor, width, height, PersistentState::pressedColour.GetColour());
@@ -1811,11 +1811,11 @@ void PressedButton::DrawMyself(float elapsedTime) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void PressedButton::DoFocusAction(float elapsedTime) {
+void PressedButton::DoFocusAction(float /*elapsedTime*/) {
     return;
 }
 
-void PressedButton::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
+void PressedButton::DoFocusAction(float /*elapsedTime*/, const Vector2& /*mousePosition*/) {
     pressed = !pressed;
 }
 
@@ -1837,11 +1837,11 @@ const std::string PressedButton::GetClassID() {
 
 // ---------- Pie chart -----------
 
-void PieChart::DoFocusAction(float elapsedTime) {
+void PieChart::DoFocusAction(float /*elapsedTime*/) {
     return;
 }
 
-void PieChart::DrawMyself(float elapsedTime) const {
+void PieChart::DrawMyself(float /*elapsedTime*/) const {
     if (values.empty()) {
         return;
     }
@@ -1940,7 +1940,7 @@ float Line::CalculateMyArea() const {
     return GetLength();
 }
 
-void Line::DrawMyself(float elapsedTime) const {
+void Line::DrawMyself(float /*elapsedTime*/) const {
     if (pointToPoint) {
         DrawLineEx({xAnchor, yAnchor}, {xEnd, yEnd}, thickness, colour.GetColour());
     } else {
@@ -2092,7 +2092,7 @@ const std::string Line::GetClassID() {
 
 // --- Square ---
 
-void CPPFX::Square::DrawMyself(float elapsedTime) const {
+void CPPFX::Square::DrawMyself(float /*elapsedTime*/) const {
     DrawRectangle(xAnchor, yAnchor, width, width, colour.GetColour());
     border.DrawMyself(xAnchor, yAnchor, width, width);
 }
@@ -2124,7 +2124,7 @@ const std::string CPPFX::Square::GetClassID() {
 
 // --- Rectangle ---
 
-void CPPFX::Rectangle::DrawMyself(float elapsedTime) const {
+void CPPFX::Rectangle::DrawMyself(float /*elapsedTime*/) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
@@ -2139,7 +2139,7 @@ const std::string CPPFX::Rectangle::GetClassID() {
 
 // --- Circle ---
 
-void CPPFX::Circle::DrawMyself(float elapsedTime) const {
+void CPPFX::Circle::DrawMyself(float /*elapsedTime*/) const {
     border.DrawMyself(TranslateXToCentre(), TranslateYToCentre(), GetRadius(), GetRadius());
     DrawCircle(TranslateXToCentre(), TranslateYToCentre(), GetRadius(), colour.GetColour());
 }
@@ -2154,14 +2154,14 @@ const std::string Circle::GetClassID() {
 
 // --- Sprite ---
 
-void Sprite::DrawMyself(float elapsedTime) const {
+void Sprite::DrawMyself(float /*elapsedTime*/) const {
     if (!textureHasBeenLoaded) {
         return;
     }
     DrawTextureEx(texture, Vector2{xAnchor + xShift, yAnchor + yShift}, rotation, scale, colour.GetColour());
 }
 
-void Sprite::DoFocusAction(float elapsedTime) {
+void Sprite::DoFocusAction(float /*elapsedTime*/) {
     return;
 }
 
