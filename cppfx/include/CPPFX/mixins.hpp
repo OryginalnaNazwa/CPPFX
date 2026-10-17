@@ -1,22 +1,25 @@
 #ifndef MIXINS_H
 #define MIXINS_H
 
-#include <functional>    // for function
-#include "base_item.hpp"   // for Item
-#include "properties.hpp"  // for Border, Colour, GREY
-#include "raylib.h"      // for Vector2, DrawCircle, Camera2D
+#include <functional>
+#include <raylib.h>
 
-/**************************************************************************************
- *  @file mixins.h
- *  @brief This file contains mixins used to give widgets appropriate functionalities.
- **************************************************************************************/
+#include "base_item.hpp"
+#include "properties.hpp"
 
-namespace CPPFX {
-class EditableSpinner; //forward declare for Embedded
 
 /**
+ *  @file
+ *  @brief Contains mixins that give widgets extra functionality.
+ *  @details Circular, PersistentState, Padded and Embedded.
+ */
+
+namespace CPPFX {
+
+/**
+ *  @class Circular
  *  @brief Used for items in shape of a circle.
- *  @details Radius-based or top left based. Width is radius.
+ *  @details Anchored at the centre or at the top-left corner. Width is the diameter.
  */
 class Circular : public virtual Item {
 public:
@@ -24,6 +27,8 @@ public:
     /**
      *  @brief Checks whether the item was clicked.
      *  @details Uses circle collision check.
+     *  @param mousePosition position of mouse during the click
+     *  @returns true if the click was inside the circle.
      */
     virtual bool WasIClicked(const Vector2& mousePosition) const override;
 
@@ -33,7 +38,7 @@ public:
     void MakeRadiusBased();
     /**
      *  @brief Sets x,y as the top left corner of the circle.
-     *  @details Circle inside a square of width by width.
+     *  @details Circle inside a square of width by width. Default.
      */
     void MakeTopLeftBased();
     /**
@@ -48,39 +53,39 @@ public:
     bool IsAnchoredAtCentre() const;
 
     /**
-     *  @brief Gives x if it was moved to the centre.
-     *  @details returns just x if it is centre, moves by radius otherwise.
+     *  @brief Gets x of the circle's centre.
+     *  @details x unchanged if anchored at the centre, x + radius otherwise.
      *  @returns x coordinate of the circle's centre.
      */
     virtual float TranslateXToCentre() const;
     /**
-     *  @brief Gives y if it was moved to the centre.
-     *  @details returns just y if it is centre, moves by radius otherwise.
+     *  @brief Gets y of the circle's centre.
+     *  @details y unchanged if anchored at the centre, y + radius otherwise.
      *  @returns y coordinate of the circle's centre.
      */
     virtual float TranslateYToCentre() const;
     /**
-     *  @brief Gives x,y if it was moved to the centre.
-     *  @details returns just x,y if it is centre, moves by radius otherwise.
-     *  @returns x,y coordinate of the circle's centre.
+     *  @brief Gets x,y of the circle's centre.
+     *  @details x,y unchanged if anchored at the centre, moved by radius otherwise.
+     *  @returns x,y coordinates of the circle's centre.
      */
     virtual Vector2 TranslateXYToCentre() const;
     /**
-     *  @brief Gives x if it was moved to the corner.
-     *  @details returns just x if it is corner, moves by radius otherwise.
+     *  @brief Gets x of the circle's top-left corner.
+     *  @details x unchanged if anchored at the corner, x - radius otherwise.
      *  @returns x coordinate of the circle's corner.
      */
     virtual float TranslateXToCorner() const;
     /**
-     *  @brief Gives y if it was moved to the corner.
-     *  @details returns just y if it is corner, moves by radius otherwise.
+     *  @brief Gets y of the circle's top-left corner.
+     *  @details y unchanged if anchored at the corner, y - radius otherwise.
      *  @returns y coordinate of the circle's corner.
      */
     virtual float TranslateYToCorner() const;
     /**
-     *  @brief Gives x,y if it was moved to the corner.
-     *  @details returns just x,y if it is corner, moves by radius otherwise.
-     *  @returns x,y coordinate of the circle's corner.
+     *  @brief Gets x,y of the circle's top-left corner.
+     *  @details x,y unchanged if anchored at the corner, moved by radius otherwise.
+     *  @returns x,y coordinates of the circle's corner.
      */
     virtual Vector2 TranslateXYToCorner() const;
     /**
@@ -91,10 +96,10 @@ public:
     virtual float GetRadius() const;
     /**
      *  @brief Sets radius of the circle.
-     *  @details Sets width to twice the radius.
+     *  @details Sets width and height to twice the radius.
      *  @param radius new radius
      *  @throws std::invalid_argument if radius is negative
-     *  @warning if radius is 0.
+     *  @note Prints a warning if radius is 0.
      */
     virtual void SetRadius(float radius);
     /**
@@ -119,16 +124,16 @@ public:
      */
     virtual Vector2 GetXYTransformed() const;
 
-
 protected:
     /**
      *  @brief Constructor for circular items.
      *  @details Sets a custom border drawing method.
-     *  @note Rembember to put the border drawing first! It's just a solid circle.
-     *  @see CPPFX::Border in properties.h
+     *  @note Remember to draw the border first! It's drawn as a filled circle of
+     *        radius + thickness, so draw it before the item itself.
+     *  @see Border
      */
     Circular() : Item(), xyIsCentre(false) {
-        border.SetDrawingMethod([this](float x, float y, float w, float h){
+        border.SetDrawingMethod([this](float, float, float, float){
             DrawCircle(TranslateXToCentre(), TranslateYToCentre(), GetRadius() + border.GetThickness(), border.colour.GetColour());
         });
     }
@@ -137,11 +142,12 @@ protected:
 };
 
 /**
+ *  @class PersistentState
  *  @brief Used for widgets with persistent state, ones that remember whether they have been clicked, for example.
  */
 class PersistentState : public virtual Item {
 public:
-    Colour pressedColour; ///< colour after press
+    Colour pressedColour; ///< colour while pressed
 
     /**
      *  @brief Sets whether the item is pressed.
@@ -157,7 +163,7 @@ public:
      */
     void Unpress();
     /**
-     *  @brief Sets pressed to the opposite logical state to the current one.
+     *  @brief Toggles pressed.
      */
     void SwitchPress();
     /**
@@ -168,14 +174,15 @@ public:
 
 protected:
     /**
-     *  @brief Sets pressed colour to GREY (as darker default colour)
+     *  @brief Sets pressed colour to GRAY (as darker default colour)
      */
-    PersistentState() : Item(), pressedColour(GREY), pressed(false) {}
+    PersistentState() : Item(), pressedColour(GRAY), pressed(false) {}
 
-    bool pressed; ///< whether the item is clicked.
+    bool pressed; ///< whether the item is pressed.
 };
 
 /**
+ *  @class Padded
  *  @brief Gives the padding functionality, used for spacing children inside an item.
  */
 class Padded : public virtual Item { // this doesn't need to be derived from Item - should be for simplicity, or decide per mixin?
@@ -184,6 +191,7 @@ public:
     /**
      *  @brief Sets padding.
      *  @param value new padding value
+     *  @throws std::invalid_argument if the padding is negative
      */
     virtual void SetPadding(float value);
     /**
@@ -204,8 +212,12 @@ protected:
 /**
  *  @class Embedded
  *  @brief For embedded widgets forming composite widgets.
- *  @details Hides unsafe Item methods into private. These aren't actually overrides, they just call the original method - it's done for explicit privateness only. Uses friends to limit boilerplate in the constructors using the methods made private.
- *  @note Doesn't hide them fully actually, a bit of a C++ limitation (out of the solutions I found), these methods can still be called using Item:: prefix. But at that point you're actively trying to break things. It stops accidental misuse and that's important.
+ *  @details Hides unsafe Item methods as protected. The overrides only forward to Item -
+ *           they exist to restrict access. Uses friends to limit boilerplate in the
+ *           composites using the restricted methods.
+ *  @note Doesn't hide them fully, a C++ limitation: they can still be called with the
+ *        Item:: prefix, or through an Item pointer or reference, since access is checked
+ *        against the static type. It stops accidental misuse and that's important.
  */
 class Embedded : public virtual Item {
 public:
@@ -241,12 +253,6 @@ protected:
     void MoveDownPriority() override { Item::MoveDownPriority(); }
     size_t GetPriority() const override { return Item::GetPriority(); }
 };
-
-/*class DoesPromptText : public virtual Item {
-public:
-
-    DoesPromptText() : promptText("") {}
-};*/ //just one item does it (for now), no need to abstract it
 
 }
 
