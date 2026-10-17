@@ -52,8 +52,9 @@ void TextItem::ExpandToText() {
 }
 
 void TextItem::FitToText() {
-    SetWidth(font.MeasureTextWidth(text) + (2.0f * textMargin));
-    SetHeight(font.MeasureTextHeight(text) + (2.0f * textMargin));
+    const Vector2 ink = font.GetInkSize(text);
+    SetWidth(ink.x + (2.0f * textMargin));
+    SetHeight(ink.y + (2.0f * textMargin));
 }
 
 void TextItem::SetText(const std::string& text) {
@@ -149,7 +150,7 @@ const std::string TextItem::GetClassID() {
 
 const std::unordered_set<std::string> Container::CONTAINERS = {"AnchorPane", "VBox", "HBox", "Workspace"};
 
-bool Container::IsContainer(const std::string& fxID) const {
+bool Container::IsContainer(const std::string& fxID) {
     return CONTAINERS.contains(fxID);
 }
 
@@ -281,7 +282,7 @@ void Container::RemoveItem(const std::string& ID) {
         ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&ID](const Item* item) { return item->GetID() == ID; }),ItemsInDrawingOrder.end());
         Items.erase(ID);
     } else {
-        CPPFX_THROW(std::invalid_argument, "Item is not in container - cannot remove item.");
+        CPPFX_THROW(std::out_of_range, "Item is not in container - cannot remove item.");
     }
     needsOrdering = true;
 }
