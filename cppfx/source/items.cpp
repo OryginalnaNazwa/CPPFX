@@ -3,7 +3,7 @@
 #include <numeric>        // for accumulate
 #include <unordered_map>  // for unordered_map, operator==, _Node_const_iter...
 #include <utility>        // for pair
-#include <numeric>        // for numeric_limits
+#include <limits>         // for numeric_limits
 
 using namespace CPPFX;
 
@@ -182,7 +182,7 @@ void CheckBox::SetLabelMargin(float value) {
     if (value >= 0.0f) {
         labelMargin = value;
     } else {
-        throw std::invalid_argument("In " + this->ID + ": negative value of label margin.");
+        CPPFX_THROW(std::invalid_argument, "Negative label margin.");
     }
 }
 
@@ -231,7 +231,7 @@ CheckBox::Shapes CheckBox::StringToShape(const std::string& shape) const {
     };
 
     std::string normal = shape;
-    std::transform(normal.begin(), normal.end(), normal.begin(), ::toupper);
+    std::transform(normal.begin(), normal.end(), normal.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 
     auto it = stringMap.find(normal);
     if (it != stringMap.end()) return it->second;
@@ -763,6 +763,10 @@ float SearchableDropDown::GetListContentHeight(size_t number) const {
     return header.GetDividerThickness() + ((float)(number) * list.GetItemInListHeight()) + ((float)(number - 1) * list.GetDividerThickness());
 }
 
+float SearchableDropDown::GetListContentHeight() const {
+    return GetListContentHeight(filtered.size());
+}
+
 bool SearchableDropDown::DefaultSearch(const std::string& label, const std::string& query) const {
     return label.starts_with(query);
 }
@@ -815,14 +819,14 @@ void SearchableDropDown::DrawList(float elapsedTime) const {
 }
 
 void SearchableDropDown::DrawFrame() const {
-        const float outer = std::max(header.border.GetThickness(), list.border.GetThickness());
-        const float listSpan = focused
-                             ? GetListContentHeight(filtered.size()) + (2.0f * list.border.GetThickness())
-                             : 0.0f;
-        border.DrawMyself(xAnchor - outer, yAnchor - header.border.GetThickness(),
-                          width + (2.0f * outer),
-                          height + (2.0f * header.border.GetThickness()) + listSpan);
-    }
+    const float outer = std::max(header.border.GetThickness(), list.border.GetThickness());
+    const float listSpan = focused
+                         ? GetListContentHeight(filtered.size()) + (2.0f * list.border.GetThickness())
+                         : 0.0f;
+    border.DrawMyself(xAnchor - outer, yAnchor - header.border.GetThickness(),
+                      width + (2.0f * outer),
+                      height + (2.0f * header.border.GetThickness()) + listSpan);
+}
 
 void SearchableDropDown::DrawMyself(float elapsedTime) const {
     if (focused) {
@@ -856,7 +860,7 @@ void SearchableDropDown::DoFocusAction(float elapsedTime, const Vector2& mousePo
         return;
     }
     const int index = GetIndexAt(mousePosition.y);
-    if (index >= 0) {
+    if (index >= 0 && (size_t)index < filtered.size()) {
         const std::string label = valuesInOrder[filtered[index]];
         SetCurrent(label);
         Defocus();
@@ -931,7 +935,7 @@ void SearchableDropDown::SetTextMargin(float margin) {
 }
 
 void SearchableDropDown::Focus() {
-    justOpened = true;
+    if (opensOnSecondClick) justOpened = true;
     DropDown<std::string>::Focus();
     searchArea.Show();
 }
@@ -955,7 +959,7 @@ void SearchableDropDown::SearchAreaFocusesOnSecondClick() {
     opensOnSecondClick = true;
 }
 
-void SearchableDropDown::AddAreaShouldFocusOnSecondClick(bool should) {
+void SearchableDropDown::SearchAreaShouldFocusOnSecondClick(bool should) {
     opensOnSecondClick = should;
 }
 
@@ -1435,7 +1439,6 @@ void EditableSpinner::SetHeight(float value) {
 
 void EditableSpinner::SetValueMargin(float value) {
     if (value < 0.0f) {
-        //throw std::invalid_argument("In Spinner " + ID + ": Negative value margin.");
         CPPFX_THROW(std::invalid_argument, "Negative value margin");
     }
     editArea.SetTextMargin(value);
@@ -1582,7 +1585,7 @@ ProgressIndicator::Shapes ProgressIndicator::StringToShape(const std::string& sh
     };
 
     std::string normal = shape;
-    std::transform(normal.begin(), normal.end(), normal.begin(), ::toupper);
+    std::transform(normal.begin(), normal.end(), normal.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 
     auto it = shapeMap.find(normal);
     if (it != shapeMap.end()) return it->second;
@@ -1601,7 +1604,7 @@ std::string ProgressIndicator::ShapeToString(const ProgressIndicator::Shapes& sh
     auto it = stringMap.find(shape);
     if (it != stringMap.end()) return it->second;
 
-    CPPFX_THROW(std::invalid_argument, "Invalid shape)");
+    CPPFX_THROW(std::invalid_argument, "Invalid shape");
 }
 
 void ProgressIndicator::SetShape(const std::string& shape) {
@@ -1740,8 +1743,8 @@ float ProgressBar::GetBarMargin() const {
 }
 
 void ProgressBar::SetNumberOfSegments(int value) {
-    if (value < 0) {
-        CPPFX_THROW(std::invalid_argument, "Negative number of segments.");
+    if (value < 1) {
+        CPPFX_THROW(std::invalid_argument, "Number of segments less than 1.");
     } else {
         numberOfSegments = value;
     }
@@ -1778,7 +1781,7 @@ void ProgressBar::Solid() {
     segmented = false;
 }
 
-void ProgressBar::SetSegemented(const bool& flag) {
+void ProgressBar::SetSegmented(const bool& flag) {
     segmented = flag;
 }
 
@@ -1806,7 +1809,7 @@ void PressedButton::DrawMyself(float elapsedTime) const {
        DrawAlignedText(Alignment::CENTRE, textToDisplay, font);
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);
-};
+}
 
 void PressedButton::DoFocusAction(float elapsedTime) {
     return;
@@ -2243,7 +2246,7 @@ void Sprite::SetScale(float scale) {
 
     this->scale = scale;
 
-    if (autoFits) FitToTexture();
+    if (autoFits && textureHasBeenLoaded) FitToTexture();
 }
 
 float Sprite::GetScale() const {
@@ -2267,14 +2270,14 @@ Texture2D Sprite::GetTexture() const {
 
 void Sprite::ClearTexture() {
     if (textureHasBeenLoaded && ownsTexture) { UnloadTexture(); }
-    texture = {0};
+    texture = {};
     textureHasBeenLoaded = false;
     ownsTexture = false;
 }
 
 void Sprite::FitToTexture() {
     if (!::IsTextureValid(texture)) {
-        CPPFX_THROW(std::runtime_error, "New texture was not loaded correctly.");
+        CPPFX_THROW(std::runtime_error, "No valid texture to fit to.");
     }
 
     SetWidth(texture.width * scale);
@@ -2325,4 +2328,8 @@ void Sprite::SetXYShift(const Vector2& xyShift) {
 
 Vector2 Sprite::GetXYShift() const {
     return Vector2{xShift, yShift};
+}
+
+const std::string Sprite::GetClassID() {
+    return "Sprite";
 }

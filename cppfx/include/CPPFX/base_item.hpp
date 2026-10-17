@@ -10,10 +10,10 @@
  */
 
 #include "properties.hpp"
-#include <stddef.h>      // for size_t
+#include <cstddef>       // for size_t
 #include <functional>    // for function
-#include <string>        // for allocator, string
-#include <raylib.h>      // for Vector2, Camera2D
+#include <string>        // for string
+#include <raylib.h>      // for Vector2
 
 namespace CPPFX {
 

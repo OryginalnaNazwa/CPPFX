@@ -1,27 +1,29 @@
 #ifndef ITEMS_H
 #define ITEMS_H
 
-#include <stddef.h>      // for size_t
-#include <algorithm>     // for sort, reverse
-#include <functional>    // for function
-#include <iterator>      // for next
-#include <map>           // for map
-#include <stdexcept>     // for out_of_range, invalid_argument, runtime_error
-#include <string>        // for allocator, string, operator+, basic_string
-#include <vector>        // for vector
-#include "base_item.hpp"   // for Item
-#include "bases.hpp"       // for TextItem, Shape, Box, Container, Chart
-#include "mixins.hpp"      // for Circular, PersistentState, Padded
-#include "properties.hpp"  // for Font, Colour, Border, GREY, Alignment, CPPFX...
-#include "raylib.h"      // for MeasureText, Vector2, DrawText, Camera2D
-#include <memory>       // for unique_ptr
-#include <cmath>        // for fmod
+#include <cstddef>
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+#include <concepts>
+#include <functional>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
+#include <unordered_map>
+#include <vector>
+#include <raylib.h>
 
+#include "base_item.hpp"
+#include "bases.hpp"
+#include "mixins.hpp"
+#include "properties.hpp"
 
-/*********************************************************************************
- *  @file items
- *  @brief This file contains the widgets.
- ********************************************************************************/
+/**
+ *  @file
+ *  @brief Contains the widgets.
+ */
 
 namespace CPPFX {
 
@@ -59,14 +61,18 @@ public:
     using TextItem::Truncate;
     using TextItem::DrawAlignedText;
 
-    Font promptFont; ///< mostly here for colour, but maybe you want other font for your prompt text, why not
+    Font promptFont; ///< font of the prompt text, mostly here for its colour
 
-    TextField() : Item("TextField"), TextItem("TextField"), promptFont(height / 4.0f, GREY), promptText("Text goes here...") {ClearText();}
-    TextField(const std::string& i) : Item("TextField"), TextItem(i), promptFont(height / 4.0f, GREY), promptText("Text goes here...") {ClearText();}
+    TextField() : Item("TextField"), TextItem("TextField"), promptFont(height / 4.0f, GRAY), promptText("Text goes here...") {ClearText();}
+    explicit TextField(const std::string& i) : Item("TextField"), TextItem(i), promptFont(height / 4.0f, GRAY), promptText("Text goes here...") {ClearText();}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
 
+    /**
+     *  @brief Sets the text shown while the field is empty and unfocused.
+     *  @param text new prompt text
+     */
     void SetPromptText(const std::string& text);
     void ClearPromptText();
     std::string GetPromptText() const;
@@ -78,7 +84,7 @@ public:
 
     /**
      *  @see TextItem::Truncate
-     *  @details Includes blinker in truncation
+     *  @details Leaves room for the caret.
      */
     virtual std::string Truncate(const std::string& text, const CPPFX::Font& font, float maxWidth) const override;
 
@@ -86,6 +92,11 @@ protected:
     std::string promptText; ///< string displayed when the text is empty
 };
 
+/**
+ *  @class EmbeddedTextField
+ *  @brief TextField used as a part of composite widgets.
+ *  @see Embedded
+ */
 class EmbeddedTextField : public TextField, public virtual Embedded {
 public:
 
@@ -95,14 +106,14 @@ public:
 /**
  * @class Button
  * @brief A single click pushable item.
- * @details Unpushes after a click. Has border. Has a different colour for clicked state.
+ * @details Shows pressedColour for a moment after a click. Has border.
  */
 class Button : public TextItem {
 public:
-    Colour pressedColour;
+    Colour pressedColour; ///< colour shown right after a click
 
-    Button() : Item("Button"), TextItem("Button"), pressedColour(GREY) {}
-    Button(const std::string& id) : Item("Button"), TextItem(id), pressedColour(GREY) {}
+    Button() : Item("Button"), TextItem("Button"), pressedColour(GRAY) {}
+    explicit Button(const std::string& id) : Item("Button"), TextItem(id), pressedColour(GRAY) {}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -113,6 +124,11 @@ public:
     static const std::string GetClassID();
 };
 
+/**
+ *  @class EmbeddedButton
+ *  @brief Button used as a part of composite widgets.
+ *  @see Embedded
+ */
 class EmbeddedButton : public Button, public virtual Embedded {
 public:
 
@@ -122,12 +138,12 @@ public:
 /**
  *  @class CheckBox
  *  @brief A turn on - turn off button.
- *  @details Width is the length of the box, not the total one. Total length is width + MeasureText(text) + textMargin + labelMargin.
- *  Has border. Border includes label. Has border for the click area only.
- *  Has alignment. Works based on two axes. Overrides the alignments accordingly.
- *  Total height is height + textMargin + labelMargin + font's size.
- *  Has shapes. All shapes but RADIO use colour for the drawn shape.
- *  Pressed colour changes the background colour.
+ *  @details Width and height are the box's. Alignment sets which side of the box the label is on.
+ *  With the label left or right, total width is width + label width + labelMargin + 2 * textMargin, plus borders.
+ *  With the label above or below, total height is height + label height + labelMargin + 2 * textMargin, plus borders.
+ *  border goes around the box and the label, clickBorder around the box only.
+ *  The mark is drawn in colour, and pressedColour fills the box while pressed.
+ *  RADIO is the exception: colour fills the circle and pressedColour is the dot.
  *  @note Probably works best for equal width and height, but X and TICK should work correctly nonetheless at least.
  */
 class CheckBox : public TextItem, public virtual PersistentState {
@@ -144,8 +160,8 @@ public:
         CIRCLE = O,
         MARU = O,
         GONGPYO = O
-    }; ///< the mark that will be display on pressed checkbox
-    Alignment alignment; ///< where will the label display
+    }; ///< mark shown while pressed
+    Alignment alignment; ///< which side of the box the label is on
 
     CheckBox() : Item("CheckBox", 50.0f, 50.0f), PersistentState(), TextItem("CheckBox", 50.0f, 50.0f), alignment(Alignment::RIGHT), labelMargin(10.0f), shape(CheckBox::X) {
                     font.SetFontSize(height / 2.0f);
@@ -198,7 +214,7 @@ public:
     static const std::string GetClassID();
 
 protected:
-    float labelMargin; ///<distance between the box and the label text.
+    float labelMargin; ///< distance between the box and the label
     Shapes shape;
 
     Shapes StringToShape(const std::string& shape) const;
@@ -241,7 +257,7 @@ public:
     /**
      *  @brief Removes button with specified label.
      *  @param label label of the button to be deleted
-     *  @throws std::runtime_error if the are no buttons
+     *  @throws std::runtime_error if there are no buttons
      *  @throws std::out_of_range if the button wasn't found
      */
     void RemoveButton(const std::string& label);
@@ -250,7 +266,7 @@ public:
      *  @brief Presses the given button
      *  @details Unpresses other buttons
      *  @param label label of the button to be pressed
-     *  @throws std::runtime_error if the are no buttons
+     *  @throws std::runtime_error if there are no buttons
      *  @throws std::out_of_range if the button wasn't found
      */
     void PressButton(const std::string& label);
@@ -258,7 +274,7 @@ public:
      *  @brief Checks whether the given button is pressed.
      *  @param label label of the button to be checked
      *  @returns State of the given button
-     *  @throws std::runtime_error if the are no buttons
+     *  @throws std::runtime_error if there are no buttons
      *  @throws std::out_of_range if the button wasn't found
      */
     bool IsButtonPressed(const std::string& label) const;
@@ -271,12 +287,14 @@ public:
 
     /**
      *  @brief Sets primary colour of the buttons.
+     *  @details Only affects buttons already in the group.
      *  @param colour new colour
      *  @see CheckBox
      */
     void SetButtonsBackgroundColour(const Color& colour);
     /**
      *  @brief Sets pressed colour of the buttons.
+     *  @details Only affects buttons already in the group.
      *  @param colour new colour
      *  @see CheckBox::pressedColour
      */
@@ -306,6 +324,7 @@ public:
     void SetTextMargins(float margin);
     /**
      *  @brief Sets buttons' alignment.
+     *  @details Only affects buttons already in the group.
      *  @param alignment new alignment.
      *  @see CheckBox::alignment
      */
@@ -324,7 +343,7 @@ public:
     bool IsLabelTaken(const std::string& label) const;
 
     /**
-     *  @brief Orders buttons around
+     *  @brief Arranges the buttons.
      *  @details Gets called automatically on the first frame after getting dirty.
      */
     void SetButtonsPositions();
@@ -360,7 +379,7 @@ public:
     /**
      *  @brief Sets the number of groups the buttons will be divided into.
      *  @param number the new number of columns or rows
-     *  @throws std::invalid_argument if the number is lesser than 1
+     *  @throws std::invalid_argument if the number is less than 1
      */
     void SetGroupsNumber(int number);
     /**
@@ -380,12 +399,12 @@ public:
      */
     size_t GetGroupsNumber() const;
     /**
-     *  @details @details Wrapper over groups, solely for convenience. Does the same.
+     *  @details Same as GetGroupsNumber.
      *  @returns The number of columns the buttons will be divided into.
      */
     size_t GetColumnsNumber() const;
     /**
-     *  @details @details Wrapper over groups, solely for convenience. Does the same.
+     *  @details Same as GetGroupsNumber.
      *  @returns The number of rows the buttons will be divided into.
      */
     size_t GetRowsNumber() const;
@@ -404,10 +423,10 @@ private:
 };
 
 /**
- *  @class Dropdown
+ *  @class DropDown
  *  @brief A choice menu dropping down after a click.
- *  @details Has border. Works as template <>. Unrolled height is = height * number of items inside.
- *  @note You probably want to set its priority to top, to make sure that unrolled it will remain on top.
+ *  @details Template over the type of the stored values. Has border.
+ *  @note You probably want to give it top priority, so the unrolled list draws over other items.
  */
 template <typename T>
 class DropDown : public TextItem {
@@ -422,7 +441,7 @@ public:
         alphabeticCaseInsensitive,
         reverseAlphabetic,
         reverseAlphabeticCaseInsensitive,
-        natural, ///< item10 < item9 (as in, higher in the dropdown)
+        natural, ///< item9 before item10
         reverseNatural,
         naturalCaseInsensitive,
         reverseNaturalCaseInsensitive,
@@ -479,7 +498,7 @@ public:
          *  @brief Sets the height of a row in the unrolled list.
          *  @details Independent of the header's height.
          *  @throws std::invalid_argument if height is negative
-         *  @warning throws a warning if height is below listFont's size.
+         *  @note Prints a warning if height is below the list font's size (only when list.font is overridden).
          */
         void SetItemInListHeight(float height) {
             if (height < 0.0f) CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Cannot set the height of the item in the list");
@@ -506,11 +525,11 @@ public:
         DrawFrame();
     }
 
-    void DoFocusAction(float elapsedTime) override {
+    void DoFocusAction(float /*elapsedTime*/) override {
         return;
     }
 
-    void DoPassiveAction(float elapsedTime) override {
+    void DoPassiveAction(float /*elapsedTime*/) override {
         if (dirty) {
             Sort();
             dirty = false;
@@ -533,7 +552,7 @@ public:
         justOpened = true;
     }
 
-    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override {
+    void DoFocusAction(float /*elapsedTime*/, const Vector2& mousePosition) override {
         if (justOpened) { justOpened = false; return; }
         if (!WasIClicked(mousePosition)) { Defocus(); return; }
         if (mousePosition.y < GetListTop()) { Defocus(); return; }
@@ -571,7 +590,7 @@ public:
    /**
     *  @brief Inserts a value that is its own label.
     *  @note Only available for DropDown<std::string>.
-    *  @see InsertItem(std::string, T)
+    *  @see AddItem(const std::string&, const T&)
     */
     void AddItem(const std::string& label) requires std::same_as<T, std::string> {
         AddItem(label, label);
@@ -679,6 +698,10 @@ public:
         return currentValue;
     }
 
+    /**
+     *  @brief Returns the currently picked label.
+     *  @throws std::runtime_error if nothing is picked.
+     */
     std::string GetCurrentLabel() const {
         if (currentLabel == "") {
             CPPFX_THROW(std::runtime_error, "No current label");
@@ -688,6 +711,7 @@ public:
 
     /**
      *  @brief Returns current label and value.
+     *  @throws std::runtime_error if nothing is picked.
      */
     std::pair<std::string, T> GetCurrentChoice() const {
         if (currentLabel == "") {
@@ -698,8 +722,8 @@ public:
 
     /**
      *   @brief Returns the current pick.
-     *   @details For DropDown<std::string> the label and the value are the same
-     *           when inserted via InsertItem(label); identical to GetCurrentLabel().
+     *   @details Same as GetCurrentLabel(). Label and value are the same when
+     *            added with AddItem(label).
      *   @note Only available for DropDown<std::string>.
      *   @throws std::runtime_error if there is no current pick.
      *   @see GetCurrentChoice
@@ -731,9 +755,7 @@ public:
     }
 
     /**
-     *  @brief Height of all the items combined.
-     *  @details height times number of items + 1 (for the default).
-     *  @returns Height when rolled out.
+     *  @brief Header height, plus the list while open.
      *  @see Item::GetTotalHeight
      */
     float GetTotalHeight() const override {
@@ -741,17 +763,23 @@ public:
         return Item::GetTotalHeight() + GetTotalListHeight();
     }
     /**
-     *  @details Takes into account the header or list border, whatever is greater.
+     *  @brief Width plus the thicker of the header and list borders, on both sides.
      *  @see Item::GetTotalWidth
      */
     float GetTotalWidth() const override {
         return Item::GetTotalWidth() + (2.0f * (header.border.GetThickness() > list.border.GetThickness() ? header.border.GetThickness() : list.border.GetThickness()));
     }
 
+    /** @brief Labels in the order they are drawn. */
     const std::vector<std::string>& GetLabelsInOrder() const {
         return valuesInOrder;
     }
 
+    /**
+     *  @brief Sorts the labels by the current order.
+     *  @details Called automatically on the next frame after a change.
+     *  @throws std::runtime_error if the order is custom and no comparator is set.
+     */
     void Sort() {
         if (order == ORDER::insertion || order == ORDER::reverseInsertion) {
             valuesInOrder = insertionOrder;
@@ -780,6 +808,7 @@ public:
         if (rev) std::reverse(valuesInOrder.begin(), valuesInOrder.end());
     }
 
+    /** @brief Sets the sorting order. Applied on the next frame. */
     void SetOrder(DropDown::ORDER orderType) {
         order = orderType;
         dirty = true;
@@ -789,13 +818,14 @@ public:
         return order;
     }
 
+    /** @brief Sets the comparator used by ORDER::custom. */
     void SetCustomSort(const std::function<bool(const std::string&, const std::string&)>& custom) {
         customSort = custom;
     }
 
     /**
-     *  @see TextItem::ExpandToText.
-     *  @details Works based on currentLabel. Works per font.
+     *  @see TextItem::ExpandToText
+     *  @details Measures currentLabel. Also grows the list's row height to fit it.
      */
     virtual void ExpandToText() override {
         text = currentLabel;
@@ -805,12 +835,12 @@ public:
         if (rowNeeds > list.GetItemInListHeight()) list.SetItemInListHeight(rowNeeds);
     }
     /**
-     *  @see TextItem::FitToText.
-     *  @details Works based on currentLabel. Works per font.
+     *  @see TextItem::FitToText
+     *  @details Measures currentLabel. Also sets the list's row height to fit it.
      */
     void FitToText() override {
         text = currentLabel;
-        TextItem::ExpandToText();
+        TextItem::FitToText();
         const CPPFX::Font& rowFont = list.font.IsOverridden() ? list.font.GetOverride() : font;
         const float rowNeeds = rowFont.GetInkSize(currentLabel).y + (2.0f * textMargin);
         list.SetItemInListHeight(rowNeeds);
@@ -824,9 +854,9 @@ public:
     }
 
     /**
-     *  @brief Gives one label its own background colour, overriding listColour.
-     *  @warning throws a warning if the label isn't in the dropdown - the colour
-     *           is still stored, and applies if the label is inserted later.
+     *  @brief Gives one label its own background colour, overriding list.colour.
+     *  @note Prints a warning if the label isn't in the dropdown. The colour is
+     *        still stored and applies if the label is added later.
      */
     void SetColourToLabel(const std::string& label, const Colour& colour) {
         if (!IsLabelTaken(label)) CPPFX_WARN("Label " + label + " is not in the " + GetFxID() + " " + GetID());
@@ -837,8 +867,8 @@ public:
         }
     }
     /**
-     *  @brief Drops a label's colour, returning that row to listColour.
-     *  @warning throws a warning if the label had no colour set.
+     *  @brief Drops a label's colour, returning that row to list.colour.
+     *  @note Prints a warning if the label had no colour set.
      */
     void RemoveColourFromLabel(const std::string& label) {
         if (labelToColour.contains(label)) {
@@ -864,7 +894,7 @@ public:
     size_t GetNumberOfItems() const {
         return values.size();
     }
-     /** @brief Content height plus the list border on both sides. */
+    /** @brief Content height plus the list border on both sides. */
     float GetTotalListHeight() const {
         return GetListContentHeight() + (2.0f * list.border.GetThickness());
     }
@@ -874,7 +904,7 @@ public:
      *           dropdown still measures the header divider, so opening one
      *           shows a stub.
      */
-    float GetListContentHeight() const {
+    virtual float GetListContentHeight() const {
         if (values.empty()) return header.GetDividerThickness();
         return header.GetDividerThickness() + (float)valuesInOrder.size() * list.GetItemInListHeight() + (float)(values.size() - 1) * list.GetDividerThickness();
     }
@@ -912,11 +942,11 @@ protected:
     T currentValue;                                 ///< value behind currentLabel, kept alongside it to avoid a lookup per frame
     bool dirty = false;                             ///< lazy sorting - set on insert or reorder, consumed by DoPassiveAction
     std::function<bool(const std::string&, const std::string&)> customSort; ///< comparator for ORDER::custom
-    bool justOpened = false;
-    std::unordered_map<std::string, Colour> labelToColour; ///< per-row background overrides; labels absent from here use listColour
+    bool justOpened = false;                        ///< swallows the click that opened the list
+    std::unordered_map<std::string, Colour> labelToColour; ///< per-row background overrides; labels absent from here use list.colour
 
     /** @brief Draws the header - background, current pick, and its border. */
-    virtual void DrawHeader(float elapsedTime) const {
+    virtual void DrawHeader(float /*elapsedTime*/) const {
         if (header.colour.IsOverridden()) DrawRectangle(xAnchor, yAnchor, width, height, header.colour.GetColour());
         else DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
         if (!currentLabel.empty()) {
@@ -931,7 +961,7 @@ protected:
      *  @details Advances by GetRowPitch, the same figure GetIndexAt divides by,
      *           so what is drawn and what is clickable cannot drift apart.
      */
-    virtual void DrawList(float elapsedTime) const {
+    virtual void DrawList(float /*elapsedTime*/) const {
         float yCurrent = GetListTop();
         Color drawColour = colour.GetColour();
         if (list.colour.IsOverridden()) drawColour = list.colour.GetColour();
@@ -974,7 +1004,9 @@ protected:
                           height + (2.0f * header.border.GetThickness()) + listSpan);
     }
 
-    static bool NaturalLess(const std::string& a, const std::string& b) {
+    /// Natural comparison; key maps each non-digit character before comparing.
+    template <typename Key>
+    static bool NaturalLessBy(const std::string& a, const std::string& b, Key key) {
         size_t i = 0, j = 0;
         while (i < a.size() && j < b.size()) {
             if (std::isdigit((unsigned char)a[i]) && std::isdigit((unsigned char)b[j])) {
@@ -997,42 +1029,20 @@ protected:
                     return (iNum - iStart) < (jNum - jStart);
                 }
             } else {
-                if (a[i] != b[j]) return a[i] < b[j];
+                const auto ka = key((unsigned char)a[i]), kb = key((unsigned char)b[j]);
+                if (ka != kb) return ka < kb;
                 ++i; ++j;
             }
         }
         return (a.size() - i) < (b.size() - j);
     }
 
+    static bool NaturalLess(const std::string& a, const std::string& b) {
+        return NaturalLessBy(a, b, [](unsigned char c) { return c; });
+    }
+
     static bool NaturalLessCaseInsensitive(const std::string& a, const std::string& b) {
-        size_t i = 0, j = 0;
-        while (i < a.size() && j < b.size()) {
-            if (std::isdigit((unsigned char)a[i]) && std::isdigit((unsigned char)b[j])) {
-                // skip leading zeros
-                size_t iStart = i, jStart = j;
-                while (i < a.size() && a[i] == '0') ++i;
-                while (j < b.size() && b[j] == '0') ++j;
-
-                size_t iNum = i, jNum = j;
-                while (i < a.size() && std::isdigit((unsigned char)a[i])) ++i;
-                while (j < b.size() && std::isdigit((unsigned char)b[j])) ++j;
-
-                size_t iLen = i - iNum, jLen = j - jNum;
-                if (iLen != jLen) return iLen < jLen;          // fewer digits = smaller
-                int cmp = a.compare(iNum, iLen, b, jNum, jLen); // same length: lexical works
-                if (cmp != 0) return cmp < 0;
-
-                // equal numerically: fewer leading zeros sorts first, as a tiebreak
-                if ((iNum - iStart) != (jNum - jStart)) {
-                    return (iNum - iStart) < (jNum - jStart);
-                }
-            } else {
-                auto lowa = std::tolower((unsigned char)(a[i])), lowb = std::tolower((unsigned char)(b[j]));
-                if (lowa != lowb) return lowa < lowb;
-                ++i; ++j;
-            }
-        }
-        return (a.size() - i) < (b.size() - j);
+        return NaturalLessBy(a, b, [](unsigned char c) { return std::tolower(c); });
     }
 
     static bool CaseInsensitiveLess(const std::string& a, const std::string& b) {
@@ -1057,8 +1067,8 @@ private:
 
 /**
  *  @class ComboBox
- *  @brief DropDown with addable items. Only labels.
- *  @details addArea is a text field for adding items. Inherits after the std::string variant, adding assumes the label is also the value.
+ *  @brief DropDown<std::string> you can add items to.
+ *  @details Type into addArea and press Enter to add a label and pick it. An added label is also its value.
  */
 class ComboBox : public DropDown<std::string> {
 public:
@@ -1103,7 +1113,7 @@ public:
     /** @see Item::Defocus @details Clears and defocuses addArea. */
     void Defocus() override;
 
-    /** @brief Hides TextItem::SetTextMargin */
+    /** @brief Sets the text margin, addArea's included. */
     void SetTextMargin(float margin);
 
     /**
@@ -1132,6 +1142,9 @@ public:
      */
     bool DoesAddAreaFocusOnSecondClick() const;
 
+    /**
+     *  @see Item::GetClassID()
+     */
     static const std::string GetClassID();
 
 private:
@@ -1140,6 +1153,11 @@ private:
     bool opensOnSecondClick = true; ///< if true, the click that unrolls the dropdown doesn't reach addArea
 };
 
+/**
+ *  @class SearchableDropDown
+ *  @brief DropDown<std::string> with a search field.
+ *  @details Typing into searchArea filters the list. By default a label stays if it starts with the typed text.
+ */
 class SearchableDropDown : public DropDown<std::string> {
 public:
     EmbeddedTextField searchArea;
@@ -1183,18 +1201,18 @@ public:
     /** @see Item::Defocus @details Clears and defocuses searchArea. */
     void Defocus() override;
 
-    /** @brief Hides TextItem::SetTextMargin */
+    /** @brief Sets the text margin, searchArea's included. */
     void SetTextMargin(float margin);
 
     /**
-     *  @brief Makes addArea take focus the moment the dropdown opens.
-     *  @details The opening click falls through to addArea, so the caret appears
+     *  @brief Makes searchArea take focus the moment the dropdown opens.
+     *  @details The opening click falls through to searchArea, so the caret appears
      *  and the prompt text gives way at once - one click to start typing.
      */
     void ImmediatelyFocusSearchArea();
     /**
      *  @brief Makes the opening click only unroll the dropdown.
-     *  @details The click that focuses the ComboBox is swallowed, so searchArea stays
+     *  @details The click that focuses the SearchableDropDown is swallowed, so searchArea stays
      *  unfocused and keeps showing its prompt text. A second click on the header
      *  focuses it for input. Default.
      */
@@ -1203,14 +1221,14 @@ public:
      *  @brief Sets whether the opening click is swallowed.
      *  @param should true - second click needed to type, false - searchArea focuses on open
      */
-    void AddAreaShouldFocusOnSecondClick(bool should);
+    void SearchAreaShouldFocusOnSecondClick(bool should);
     /**
      *  @brief Checks whether searchArea takes focus as the dropdown unrolls.
      *  @returns true if searchArea focuses on open
      */
     bool DoesSearchAreaFocusOnSecondClick() const;
 
-    float GetListContentHeight() const; //override but not override
+    float GetListContentHeight() const override; ///< height of the filtered list.
     /**
      *  @brief Height of N items inside the list border.
      *  @details Header divider, rows, and the dividers between them. An empty
@@ -1220,6 +1238,9 @@ public:
      */
     float GetListContentHeight(size_t number) const;
 
+    /**
+     *  @see Item::GetClassID()
+     */
     static const std::string GetClassID();
 
 private:
@@ -1243,7 +1264,7 @@ private:
 
 /**
  *  @class Workspace
- *  @brief A simple container that keeps items in-bound.
+ *  @brief A simple container that keeps items in bounds.
  *  @details If item is outside the workspace, it gets pushed back to the nearest side inside the area.
  */
 class Workspace : public Container {
@@ -1317,12 +1338,12 @@ public:
     void SetPositionsOfItems() override;
     /**
      *  @see Item::GetTotalHeight
-     *  @details (heights + padding) * number of items, roughly
+     *  @details Height, or the children's total height if that's greater.
      */
     float GetTotalHeight() const override;
 
     float GetChildrenTotalLength() const override;
-    float GetItemsTotalHeight() const;
+    float GetItemsTotalHeight() const; ///< same as GetChildrenTotalLength
 
     /**
      *  @see Item::GetClassID()
@@ -1342,13 +1363,13 @@ public:
 
     void SetPositionsOfItems() override;
     /**
-     *  @see Item::GetTotalHeight
-     *  @details (widths + padding) * number of items, roughly
+     *  @see Item::GetTotalWidth
+     *  @details Width, or the children's total width if that's greater.
      */
     float GetTotalWidth() const override;
 
     float GetChildrenTotalLength() const override;
-    float GetItemsTotalWidth() const;
+    float GetItemsTotalWidth() const; ///< same as GetChildrenTotalLength
 
     /**
      *  @see Item::GetClassID()
@@ -1373,7 +1394,7 @@ public:
             hasMin(false), hasMax(false), minValue(0.0f), maxValue(100.0f), allowWrap(false)  {
                 Initialise();
     }
-    Spinner(const std::string& i)
+    explicit Spinner(const std::string& /*fxID*/)
         : Item("Spinner", 200.0f, 100.0f), font(height / 2.0f), valueMargin(10.0f), value(0.0f), stepValue(1.0f),
             hasMin(false), hasMax(false), minValue(0.0f), maxValue(100.0f), allowWrap(false) {
                 Initialise();
@@ -1389,13 +1410,13 @@ public:
 
     /**
      *  @brief Sets the current value.
-     *  @warning Warns if the value is set outside the specified range (UB).
+     *  @note Prints a warning if the value is outside the enabled bounds. It's set anyway.
      */
     virtual void SetValue(float value);
     float GetValue() const;
     /**
      *  @brief Sets by how much will the value be incremented/decremented after a button press.
-     *  @warning Wars if the step is more than the difference between upper and lower bound.
+     *  @note Prints a warning if the step is bigger than max - min, with both bounds enabled.
      */
     void SetStep(float step);
     float GetStep() const;
@@ -1407,26 +1428,24 @@ public:
     /**
      *  @brief Sets max value.
      *  @param value new value to be set
-     *  @details Does NOT set hasMax. maxValue lesser than minValue is undefined behaviour.
-     *  @warning Warns if upper bound is smaller than lower bound.
+     *  @details Doesn't enable the bound - see SetMax. Max below min isn't supported.
+     *  @note Prints a warning if max is below min.
      */
     void SetMaxValue(float value);
     /**
-     *  @brief Gives max value.
-     *  @details Does NOT set hasMax.
+     *  @brief Gets max value.
      *  @returns maxValue
      */
     float GetMaxValue() const;
     /**
      *  @brief Sets min value.
      *  @param value new value to be set
-     *  @details Does NOT set hasMin. minValue greater than maxValue is undefined behaviour.
-     *  @warning Warns if lower bound is greater than upper bound.
+     *  @details Doesn't enable the bound - see SetMin. Min above max isn't supported.
+     *  @note Prints a warning if min is above max.
      */
     void SetMinValue(float value);
     /**
-     *  @brief Gives min value.
-     *  @details Does NOT set hasMin.
+     *  @brief Gets min value.
      *  @returns minValue
      */
     float GetMinValue() const;
@@ -1472,17 +1491,17 @@ public:
 
     /**
      *  @see Item::SetX
-     *  @details Updates buttons
+     *  @details Moves the buttons too.
      */
     void SetX(float x) override;
     /**
      *  @see Item::SetY
-     *  @details Updates buttons
+     *  @details Moves the buttons too.
      */
     void SetY(float y) override;
     /**
      *  @see Item::SetWidth
-     *  @details Moves buttons away.
+     *  @details Moves the buttons to the new right edge.
      */
     void SetWidth(float value) override;
     /**
@@ -1552,7 +1571,7 @@ public:
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
     /**
      *  @brief Defocuses and loads value.
-     *  @details Retains old value at invalid input. Puts in max float value at out of range error. Clamps the value to bounds.
+     *  @details Keeps the old value on invalid input. A number too big for a float becomes the float max. Then clamps to the enabled bounds.
      */
     void Defocus() override;
 
@@ -1587,12 +1606,12 @@ public:
 
     /**
      *  @see Spinner::SetValueMargin
-     *  @details Interface for text field.
+     *  @details Sets editArea's text margin.
      */
     void SetValueMargin(float margin) override;
     /**
-     *  @see Spinner::SetValueMargin
-     *  @details Interface for text field.
+     *  @see Spinner::GetValueMargin
+     *  @details Returns editArea's text margin.
      */
     float GetValueMargin() const override;
 
@@ -1605,7 +1624,7 @@ public:
 /**
  *  @class PasswordField
  *  @brief TextField with masked input.
- *  @details Can change with what the input is masked. By default with an asterisk.
+ *  @details The mask character can be changed. Default is '*'.
  */
 class PasswordField : public TextField {
 public:
@@ -1628,8 +1647,9 @@ private:
 
 /**
  *  @class ProgressIndicator
- *  @brief Shows some progress.
- *  @details Has font. Dots are circling dots - only shape for indefinite. Circle is a pie filling. Ring is a cirlce with empty inside.
+ *  @brief Shows progress, or that something is ongoing.
+ *  @details Has font. DOTS are circling dots, also drawn for indefinite progress whatever the shape.
+ *  CIRCLE fills like a pie, RING like a ring. For a bar, use ProgressBar.
  */
 class ProgressIndicator : public Item {
 public:
@@ -1638,24 +1658,24 @@ public:
     Font font;
 
     ProgressIndicator() : Item("ProgressIndicator"), font(height / 4.0f), shape(ProgressIndicator::Shapes::DOTS), displayValue(true), value(-1.0f)  {}
-    ProgressIndicator(const std::string& i) : Item(i), font(height / 4.0f), shape(ProgressIndicator::Shapes::BAR), displayValue(true), value(-1.0f) {}
+    explicit ProgressIndicator(const std::string& i) : Item(i), font(height / 4.0f), shape(ProgressIndicator::Shapes::BAR), displayValue(true), value(-1.0f) {}
 
     /**
-     *  @brief Sets progress value;
+     *  @brief Sets progress value.
      *  @param value 0 - 1, -1 is indefinite progress
      *  @throws std::out_of_range if parameter is beyond the range.
      */
     void SetProgress(float value);
     /**
-     *  @brief Increases the progress value;
-     *  @details Accounts for overflow.
-     *  @param value how much it will increase
+     *  @brief Increases the progress value.
+     *  @details Clamps to 0 - 1.
+     *  @param change how much it will increase
      */
     void IncreaseProgress(float change);
     /**
-     *  @brief Decreases the progress value;
-     *  @details Accounts for underflow.
-     *  @param value how much it will decrease
+     *  @brief Decreases the progress value.
+     *  @details Clamps to 0 - 1.
+     *  @param change how much it will decrease
      */
     void DecreaseProgress(float change);
     /**
@@ -1670,7 +1690,7 @@ public:
     float GetProgress() const;
     /**
      *  @brief Gets progress value in percents.
-     *  @returns A natural value between 0 and 100 inclusive. -1 if indefinite.
+     *  @returns A whole number between 0 and 100 inclusive. -1 if indefinite.
      */
     int GetProgressPercentage() const;
     /**
@@ -1680,15 +1700,15 @@ public:
     bool IsComplete() const;
     /**
      *  @brief Sets new shape
-     *  @param shape a ProgressIndicator::SHAPE enum - {DOTS, RING, CIRCLE}
-     *  @throws std::invalid_argument if the parameter is outside the available list
+     *  @param shape DOTS, RING or CIRCLE
+     *  @throws std::invalid_argument for BAR or anything else
+     *  @note Prints a warning for BAR - use ProgressBar.
      */
     virtual void SetShape(const ProgressIndicator::Shapes& shape);
     /**
      *  @brief Sets new shape
-     *  @param shape a string containing the name of the shape - {"DOTS", "RING", "CIRCLE"}
+     *  @param shape a string containing the name of the shape - {"DOTS", "RING", "CIRCLE", "BAR"}
      *  @throws std::invalid_argument if the parameter is outside the available list
-     *  @warning Warns if you try to set shape to BAR.
      */
     virtual void SetShape(const std::string& shape);
     Shapes GetShape() const;
@@ -1705,7 +1725,7 @@ public:
      */
     void DoNotDisplayValue();
     /**
-     *  @brief Sets whether the indicatior should display the numerical value (percentage) of progress.
+     *  @brief Sets whether the indicator should display the numerical value (percentage) of progress.
      *  @param flag true - enable, false - disable.
      */
     void SetDisplayValue(const bool& flag);
@@ -1722,16 +1742,21 @@ public:
 protected:
     Shapes shape;
     bool displayValue; ///< whether displays the value in percents. Indefinite doesn't display value.
-    float value; ///< Raw value of the progress - between 0 and 1, or -1;
+    float value; ///< raw value of the progress - between 0 and 1, or -1 for indefinite
 
     Shapes StringToShape(const std::string& shape) const;
     virtual std::string ShapeToString(const ProgressIndicator::Shapes& shape) const;
 };
 
 
+/**
+ *  @class ProgressBar
+ *  @brief Horizontal progress bar.
+ *  @details Can be solid or segmented. Can also use the ProgressIndicator shapes.
+ */
 class ProgressBar : public ProgressIndicator {
 public:
-    Colour barColour;
+    Colour barColour; ///< colour of the filled part
 
     ProgressBar() : ProgressIndicator("ProgressBar"),
                     barColour(GREEN), barMargin(5.0f), segmented(false), numberOfSegments(10), gapBetweenSegments(1.0f) {shape = ProgressIndicator::Shapes::BAR;}
@@ -1749,15 +1774,14 @@ public:
     /**
      *  @brief Sets number of segments.
      *  @param value new number of segments
-     *  @throws std::invalid_argument if value is lower than 0
+     *  @throws std::invalid_argument if value is less than 1
      */
     void SetNumberOfSegments(int value);
     int GetNumberOfSegments() const;
     /**
      *  @brief Sets length of the gap between segments.
      *  @param value new gap length
-     *  @throws std::out_of_range if value is greater than the available maximum gap based on width and the number of segments
-     *  @throws std::invalid_argument if value is lower than 0
+     *  @throws std::invalid_argument if value is negative or too big for the width and number of segments
      */
     void SetGapBetweenSegments(float value);
     float GetGapBetweenSegments() const;
@@ -1766,8 +1790,7 @@ public:
      *  @details Calls setters for the fields.
      *  @param number number of segments
      *  @param gap length of the gap between segments
-     *  @throws std::invalid_argument if number or gap is negative
-     *  @throws std::out_of_range if number or gap is too big.
+     *  @throws std::invalid_argument if number or gap is negative, or gap is too big
      *  @see ProgressBar::SetGapBetweenSegments
      *  @see ProgressBar::SetNumberOfSegments
      */
@@ -1785,14 +1808,13 @@ public:
      *  @brief Sets whether the bar should be segmented or not.
      *  @param flag true - yes, false - no.
      */
-    void SetSegemented(const bool& flag);
+    void SetSegmented(const bool& flag);
     bool IsSegmented() const;
 
     /**
      *  @brief Sets new shape
-     *  @param shape a ProgressIndicator::SHAPE enum - {DOTS, RING, CIRCLE, BAR}
+     *  @param shape DOTS, RING, CIRCLE or BAR
      *  @throws std::invalid_argument if the parameter is outside the available list
-     *  @warning Warns if you set shape to anything other than BAR.
      */
     void SetShape(const ProgressIndicator::Shapes& shape) override;
     /**
@@ -1816,6 +1838,11 @@ private:
     std::string ShapeToString(const ProgressIndicator::Shapes& shape) const override;
 };
 
+/**
+ *  @class PressedButton
+ *  @brief Button that stays pressed until clicked again.
+ *  @details Shows pressedText and pressedColour while pressed. Has border.
+ */
 class PressedButton : public TextItem, public virtual PersistentState {
 public:
 
@@ -1835,9 +1862,14 @@ public:
     static const std::string GetClassID();
 
 private:
-    std::string pressedText;
+    std::string pressedText; ///< text shown while pressed
 };
 
+/**
+ *  @class List
+ *  @brief Shows values as text, in a column or a row.
+ *  @details Strings are shown as they are, numbers through std::to_string. Anything else needs SetDisplayMethod.
+ */
 template<typename T>
 class List : public virtual Item, public virtual Padded {
 public:
@@ -1849,12 +1881,14 @@ public:
     void AddItem(const T& item) {
         items.push_back(item);
     }
+    /** @brief Removes the item at index. @throws std::out_of_range if index is invalid */
     void RemoveItem(int index) {
         if (index < 0 || (size_t)(index) >= items.size()) {
             CPPFX_THROW(std::out_of_range,"Index beyond range at removal.");
         }
         items.erase(items.begin() + index);
     }
+    /** @brief Replaces the item at index. @throws std::out_of_range if index is invalid */
     void ReplaceItem(int index, const T& item) {
         if (index < 0 || (size_t)(index) >= items.size()) {
             CPPFX_THROW(std::out_of_range,"Index beyond range at replacing.");
@@ -1862,6 +1896,7 @@ public:
         items[index] = item;
     }
 
+    /** @brief Gets the item at index. @throws std::out_of_range if index is invalid */
     const T& GetItem(int index) const {
         if (index < 0 || (size_t)(index) >= items.size()) {
             CPPFX_THROW(std::out_of_range,"Index beyond range at getting.");
@@ -1891,6 +1926,7 @@ public:
         std::reverse(items.begin(), items.end());
     }
 
+    /** @brief Sets how an item is turned into text. */
     void SetDisplayMethod(const std::function<std::string(const T&)>& displayMethod) {
         this->displayMethod = displayMethod;
     }
@@ -1904,7 +1940,7 @@ public:
      * @throws std::runtime_error if display method not set for a type that is not a string nor is able to use to_string.
      * @see Item::DrawMyself
      */
-    void DrawMyself(float elapsedTime) const override {
+    void DrawMyself(float /*elapsedTime*/) const override {
         float next = 0.0f;
         for (const auto& item : items) {
             std::string text;
@@ -1928,7 +1964,7 @@ public:
         }
     }
 
-    void DoFocusAction(float elapsedTime) override {
+    void DoFocusAction(float /*elapsedTime*/) override {
         return;
     }
 
@@ -1996,11 +2032,16 @@ public:
 
 private:
     std::vector<T> items; ///< objects in the list
-    std::function<std::string(const T&)> displayMethod; ///< how the items will be displayed. By default, just spaced out strings. //TODO that is not true.
+    std::function<std::string(const T&)> displayMethod; ///< how an item is turned into text; if unset, see the class description
 
     bool vertical; ///< whether the next item in the list will be next to or under the previous one
 };
 
+/**
+ *  @class PieChart
+ *  @brief Pie chart of the Chart's values.
+ *  @details Can show labels and percentages. Labels are shown only if every value has one, otherwise the values are shown instead.
+ */
 class PieChart : public Chart, virtual public Circular {
 public:
 
@@ -2133,15 +2174,14 @@ public:
      *  @details Used only when the drawing method is set to pointToPoint.
      *  @param x x coordinate of the end
      *  @param y y coordinate of the end
-     *  @warning Gives a warning if the end point is the same as starting point.
+     *  @note Prints a warning if the end point is the same as the starting point.
      */
     void SetEndPoint(float x, float y);
     /**
      *  @brief Sets the end of the line.
      *  @details Used only when the drawing method is set to pointToPoint.
-     *  @param x x coordinate of the end
-     *  @param y y coordinate of the end
-     *  @warning Gives a warning if the end point is the same as starting point.
+     *  @param coordinates the end point
+     *  @note Prints a warning if the end point is the same as the starting point.
      */
     void SetEndPoint(const Vector2& coordinates);
     float GetEndX() const;
@@ -2158,7 +2198,7 @@ public:
 
     /**
      *  @brief Sets the drawing mode to from point to point.
-     *  @details Use EndPoint to draw it.
+     *  @details Set the end with SetEndPoint.
      */
     void DrawPointToPoint();
     /**
@@ -2194,8 +2234,8 @@ private:
 
 /**
  *  @class Square
- *  @brief Equal sides. May conflict with something (probably raylib). Preface with CPPFX:: to solve issues.
- *  @details Uses only width, overrides heights.
+ *  @brief Equal sides.
+ *  @details Uses only width, height follows it.
  */
 class Square : public Shape {
 public:
@@ -2204,11 +2244,11 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
 
-    float CalculateMyArea() const override; /// width * width
+    float CalculateMyArea() const override; ///< width * width
 
-    void SetWidth(float value) override; /// also sets height.
-    void SetHeight(float value) override; /// overrides into width.
-    float GetHeight() const override; /// overrides into width.
+    void SetWidth(float value) override; ///< also sets height
+    void SetHeight(float value) override; ///< sets width, and height with it
+    float GetHeight() const override; ///< returns width
     float GetTotalHeight() const override;
 
     /**
@@ -2219,7 +2259,8 @@ public:
 
 /**
  *  @class Rectangle
- *  @brief Conflicts with raylib. Preface with CPPFX:: to solve issues.
+ *  @brief Rectangle shape.
+ *  @details Clashes with raylib's Rectangle under using namespace CPPFX - write CPPFX::Rectangle.
  */
 class Rectangle : public Shape {
 public:
@@ -2228,7 +2269,7 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
 
-    float CalculateMyArea() const override; /// width * height
+    float CalculateMyArea() const override; ///< width * height
 
     /**
      *  @see Item::GetClassID()
@@ -2267,7 +2308,7 @@ public:
 class Sprite : public Item {
 public:
 
-    Sprite() : Item("Sprite"), texture{0}, filePath(""),
+    Sprite() : Item("Sprite"), texture{}, filePath(""),
                 rotation(0.0f), scale(1.0f), xShift(0.0f), yShift(0.0f),
                 textureHasBeenLoaded(false), ownsTexture(false), autoFits(true) {colour.SetColour(WHITE);}
 
@@ -2313,8 +2354,8 @@ public:
     void LoadTexture(const std::string& fileName);
     /**
      *  @brief Unloads the texture
-     *  @details Wrapper over raylib's UnloadTexture. Safe with empty textures.
-     *  @throws std::runtime_error if this Sprite is not the owner of the texture (it has been loaded elsewhere and set into it).
+     *  @details Wrapper over raylib's UnloadTexture.
+     *  @throws std::runtime_error if this Sprite doesn't own a texture - nothing loaded, or set with SetTexture.
      *  @see ::UnloadTexture()
      */
     void UnloadTexture();
@@ -2326,7 +2367,7 @@ public:
      */
     bool IsTextureValid() const;
 
-    void SetRotation(float rotation);
+    void SetRotation(float rotation); ///< in degrees
     float GetRotation() const;
 
     /**
@@ -2349,8 +2390,8 @@ public:
 
     /**
      *  @brief Changes dimensions to fit with those of the texture.
-     *  @details Attempts to call on setting and loading texture and also on setting scale.
-     *  @throws std::runtime_error if there's no texture
+     *  @details Called automatically on loading or setting a texture, and on SetScale, while auto fitting is on.
+     *  @throws std::runtime_error if there's no valid texture
      */
     void FitToTexture();
     /**
@@ -2381,6 +2422,11 @@ public:
     void    SetXYShift(float shift);
     void    SetXYShift(const Vector2& xyShift);
     Vector2 GetXYShift() const;
+
+    /**
+     *  @see Item::GetClassID()
+     */
+    static const std::string GetClassID();
 
 private:
     Texture2D texture;
