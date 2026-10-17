@@ -50,9 +50,12 @@ jobs:
           path: build/_deps
           key: deps-${{ matrix.name }}-raylib60-${{ hashFiles('CMakeLists.txt') }}
 
+      # CPPFX_WARNINGS_AS_ERRORS: a warning in CPPFX's own code or headers
+      # fails the build here instead of scrolling past. Off by default for
+      # local builds.
       - name: Configure (Linux)
         if: runner.os == 'Linux'
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCPPFX_WARNINGS_AS_ERRORS=ON
 
       # The Windows runner has MSVC installed and CMake would prefer it.
       # Force mingw-w64 GCC, which is what the README tells users to use and
@@ -63,6 +66,7 @@ jobs:
           cmake -B build -G "MinGW Makefiles"
           -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
           -DCMAKE_BUILD_TYPE=Release
+          -DCPPFX_WARNINGS_AS_ERRORS=ON
 
       # Builds the library, the tests and the examples.
       - name: Build

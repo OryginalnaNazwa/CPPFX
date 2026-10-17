@@ -8,7 +8,7 @@
 # Only re-run the configure step when this file changes.
 
 cmake_minimum_required(VERSION 3.23)
-project(CPPFX VERSION 0.23.1 LANGUAGES CXX)
+project(CPPFX VERSION 0.23.2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,6 +24,19 @@ else()
 endif()
 option(CPPFX_BUILD_EXAMPLES "Build the bundled examples" ${CPPFX_EXTRAS_DEFAULT})
 option(CPPFX_BUILD_TESTS    "Build the test suite"       ${CPPFX_EXTRAS_DEFAULT})
+option(CPPFX_WARNINGS_AS_ERRORS "Treat warnings in CPPFX targets as errors" OFF)
+
+# --- warnings -------------------------------------------------------------
+# Applied to everything CPPFX builds: the library, tests and examples.
+# Tests and examples include the headers the way users do, so this is what
+# keeps the headers warning-free for them. raylib's own build is left alone.
+# PRIVATE: your warnings, not your users'.
+
+function(cppfx_warnings target)
+    target_compile_options(${target} PRIVATE
+        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
+        $<$<AND:$<CXX_COMPILER_ID:GNU,Clang>,$<BOOL:${CPPFX_WARNINGS_AS_ERRORS}>>:-Werror>)
+endfunction()
 
 # --- raylib ---------------------------------------------------------------
 # Use an installed raylib if there is one, otherwise download and build it.
@@ -64,9 +77,7 @@ target_sources(CPPFX PUBLIC
 
 target_link_libraries(CPPFX PUBLIC raylib)
 
-# PRIVATE: your warnings, not your users'.
-target_compile_options(CPPFX PRIVATE
-    $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra>)
+cppfx_warnings(CPPFX)
 
 # --- tests ----------------------------------------------------------------
 # Every .cpp in tests/ is compiled into one binary. Tests register
@@ -86,6 +97,7 @@ if(CPPFX_BUILD_TESTS)
          "${CMAKE_CURRENT_SOURCE_DIR}/tests/harness.cpp")
     if(CPPFX_TEST_SOURCES)
         add_executable(cppfx_tests ${CPPFX_TEST_RUNNER} ${CPPFX_TEST_SOURCES})
+        cppfx_warnings(cppfx_tests)
         target_include_directories(cppfx_tests PRIVATE tests)
         target_link_libraries(cppfx_tests PRIVATE CPPFX::CPPFX)
         add_test(NAME cppfx_tests COMMAND cppfx_tests)
@@ -97,6 +109,7 @@ if(CPPFX_BUILD_TESTS)
     file(GLOB CPPFX_GL_TEST_SOURCES CONFIGURE_DEPENDS "tests/gl/*.cpp")
     if(CPPFX_GL_TEST_SOURCES)
         add_executable(cppfx_tests_gl ${CPPFX_TEST_RUNNER} ${CPPFX_GL_TEST_SOURCES})
+        cppfx_warnings(cppfx_tests_gl)
         target_include_directories(cppfx_tests_gl PRIVATE tests)
         target_link_libraries(cppfx_tests_gl PRIVATE CPPFX::CPPFX)
         # Absolute, so ctest's working directory does not matter.
@@ -119,6 +132,7 @@ if(CPPFX_BUILD_EXAMPLES)
                 # Folder names can contain spaces; target names cannot.
                 string(MAKE_C_IDENTIFIER "${name}" target_name)
                 add_executable(example_${target_name} ${sources})
+                cppfx_warnings(example_${target_name})
                 target_link_libraries(example_${target_name} PRIVATE CPPFX::CPPFX)
             endif()
         endif()
