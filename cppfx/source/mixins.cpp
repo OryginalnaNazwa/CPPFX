@@ -86,7 +86,7 @@ void Circular::SetRadius(float radius) {
     if (radius == 0.0f) {
         CPPFX_WARN("In " + fxID + " " + ID + ": radius equals 0. Will not be visible and may break stuff.");
     }
-    SetWidth(radius * 2.0f);
+    SetDimensions(radius * 2.0f);
 }
 
 float Circular::GetXTransformed() const {

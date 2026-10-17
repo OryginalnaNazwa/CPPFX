@@ -37,7 +37,7 @@
  *  @param msg streamed into std::cerr, so it can be a << chain
  */
 #ifdef NDEBUG
-#define CPPFX_WARN(msg)
+#define CPPFX_WARN(msg) ((void)0)
 #else
 #define CPPFX_WARN(msg) std::cerr << "[CPPFX Warning] " << msg << "\n"
 #endif

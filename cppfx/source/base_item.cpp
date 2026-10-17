@@ -14,11 +14,11 @@ bool Item::WasIClicked(const Vector2& mousePosition) const {
     return false;
 }
 
-void Item::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
+void Item::DoFocusAction(float elapsedTime, const Vector2& /*mousePosition*/) {
     return DoFocusAction(elapsedTime);
 }
 
-void Item::DoPassiveAction(float elapsedTime) {
+void Item::DoPassiveAction(float /*elapsedTime*/) {
     return;
 }
 

@@ -321,19 +321,19 @@ bool Container::IsIDTaken(const std::string& ID) const {
     return Items.contains(ID);
 }
 
-void Container::DoPassiveAction(float elapsedTime) {
+void Container::DoPassiveAction(float /*elapsedTime*/) {
     if (needsOrdering) {
         SetPositionsOfItems();
         needsOrdering = false; // needs to be here, SetPositionsOfItems is fully virtual.
     }
 }
 
-void Container::DrawMyself(float elapsedTime) const {
+void Container::DrawMyself(float /*elapsedTime*/) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Container::DoFocusAction(float elapsedTime) {
+void Container::DoFocusAction(float /*elapsedTime*/) {
     Defocus();
     return;
 }
@@ -450,7 +450,7 @@ const std::string Chart::GetClassID() {
 
 // --- Shape ---
 
-void Shape::DoFocusAction(float elapsedTime) {
+void Shape::DoFocusAction(float /*elapsedTime*/) {
     return;
 }
 
