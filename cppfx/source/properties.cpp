@@ -947,18 +947,40 @@ const CPPFX::Font& OverrideFont::Checked(const char* func) const {
     return *font;
 }
 
-void OverrideFont::SetFilePath(const std::string& path) { Checked(__func__).SetFilePath(path); }
+void OverrideFont::SetFilePath(const std::string& path) {
+    if (!font) SetFont(Font());
+    Checked(__func__).SetFilePath(path);
+}
+
 std::string OverrideFont::GetFilePath() const           { return Checked(__func__).GetFilePath(); }
 void OverrideFont::ClearFilePath()                      { Checked(__func__).ClearFilePath(); }
 
-void OverrideFont::LoadFont()                           { Checked(__func__).LoadFont(); }
-void OverrideFont::LoadFont(const std::string& fileName){ Checked(__func__).LoadFont(fileName); }
+void OverrideFont::LoadFont() {
+    if (!font) {
+        Font tempFont;
+        tempFont.LoadFont(); // throws anyway, but with a proper error
+    }
+    Checked(__func__).LoadFont();
+}
+void OverrideFont::LoadFont(const std::string& fileName) {
+    if (!font) {
+        Font tempFont;
+        tempFont.LoadFont(fileName);
+        font = std::move(tempFont);
+    } else {
+        Checked(__func__).LoadFont(fileName);
+    }
+}
+
 void OverrideFont::UnloadFont()                         { Checked(__func__).UnloadFont(); }
 bool OverrideFont::IsFontValid() const                  { return Checked(__func__).IsFontValid(); }
 bool OverrideFont::IsDefaultFont() const                { return Checked(__func__).IsDefaultFont(); }
 long OverrideFont::GetShareCount() const                { return Checked(__func__).GetShareCount(); }
 
-void OverrideFont::SetFont(const ::Font& f)             { Checked(__func__).SetFont(f); }
+void OverrideFont::SetFont(const ::Font& f) {
+    if (!font) SetFont(Font());
+    Checked(__func__).SetFont(f);
+}
 ::Font OverrideFont::GetFont() const                    { return Checked(__func__).GetFont(); }
 void OverrideFont::ClearFont()                          { Checked(__func__).ClearFont(); }
 
