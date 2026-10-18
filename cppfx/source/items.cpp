@@ -10,11 +10,11 @@ using namespace CPPFX;
 //--- Label ---
 
 void Label::DrawMyself(float /*elapsedTime*/) const {
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    if (text != "") {
+    border.DrawMyself(xAnchor, yAnchor, width, height);
+    DrawRectangleRec(::Rectangle{xAnchor, yAnchor, width, height}, colour.GetColour());
+    if (!IsEmpty()) {
         DrawAlignedText(alignment);
     }
-    border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
 void Label::DoFocusAction(float /*elapsedTime*/) {
@@ -22,14 +22,14 @@ void Label::DoFocusAction(float /*elapsedTime*/) {
     return;
 }
 
-const std::string Label::GetClassID() {
+std::string Label::GetClassID() {
     return "Label";
 }
 
 //--- Text Field ---
 
 void TextField::DrawMyself(float elapsedTime) const {
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+    DrawRectangleRec(::Rectangle{xAnchor, yAnchor, width, height}, colour.GetColour());
     if (text == "") {
         if (promptText != "" && !focused) {
             DrawAlignedText(Alignment::CENTRE_LEFT, promptText, promptFont);
@@ -77,7 +77,7 @@ std::string TextField::Truncate(const std::string& text, const CPPFX::Font& font
     return TextItem::Truncate(text, font, maxWidth - font.MeasureTextWidth("|"));
 }
 
-const std::string TextField::GetClassID() {
+std::string TextField::GetClassID() {
     return "TextField";
 }
 

@@ -32,7 +32,7 @@ namespace CPPFX {
 /**
  *  @class Label
  *  @brief A simple text displayer.
- *  @details Displays the text. Position is based on alignment. Default alignment is CENTRE. Has border.
+ *  @details Displays the text. Position is based on alignment. Default alignment is CENTRE. Has border. By default consumes clicks.
  */
 class Label : public TextItem {
 public:
@@ -47,7 +47,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 };
 
@@ -64,7 +64,6 @@ public:
     Font promptFont; ///< font of the prompt text, mostly here for its colour
 
     TextField() : Item("TextField"), TextItem("TextField"), promptFont(height / 4.0f, GRAY), promptText("Text goes here...") {ClearText();}
-    explicit TextField(const std::string& i) : Item("TextField"), TextItem(i), promptFont(height / 4.0f, GRAY), promptText("Text goes here...") {ClearText();}
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
@@ -80,7 +79,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
     /**
      *  @see TextItem::Truncate
@@ -1629,7 +1628,7 @@ public:
 class PasswordField : public TextField {
 public:
 
-    PasswordField() : Item("PasswordField"), TextField("PasswordField"), mask('*') {promptText = "Password"; ClearText();}
+    PasswordField() : Item("PasswordField"), TextField(), mask('*') {promptText = "Password"; ClearText();}
 
     void DrawMyself(float elapsedTime) const override;
 
