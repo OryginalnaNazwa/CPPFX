@@ -28,26 +28,33 @@ std::string Label::GetClassID() {
 
 //--- Text Field ---
 
+void TextField::DrawCaret(const std::string& truncated) const {
+    font.DrawText("|",
+                xAnchor + textMargin + font.MeasureTextWidth(truncated) + 2.0f,
+                yAnchor + font.GetVerticalCentreOffset(height));
+}
+
 void TextField::DrawMyself(float elapsedTime) const {
+    border.DrawMyself(xAnchor, yAnchor, width, height);
     DrawRectangleRec(::Rectangle{xAnchor, yAnchor, width, height}, colour.GetColour());
-    if (text == "") {
-        if (promptText != "" && !focused) {
+
+    if (IsEmpty()) {
+        if (!IsPromptTextEmpty() && !IsFocused()) {
             DrawAlignedText(Alignment::CENTRE_LEFT, promptText, promptFont);
+        } else if (IsFocused()) {
+            DrawCaret(text);
         }
     } else {
         const std::string truncated = DrawAlignedText(Alignment::CENTRE_LEFT, text, font);
         if (focused && fmod(elapsedTime, 1.0f) < 0.5f) {
-            font.DrawText("|",
-                xAnchor + textMargin + font.MeasureTextWidth(truncated) + 2.0f,
-                yAnchor + font.GetVerticalCentreOffset(height));
+            DrawCaret(truncated);
         }
     }
-    border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
 void TextField::DoFocusAction(float elapsedTime) {
     if (focused) {
-        if (IsKeyPressed(KEY_BACKSPACE)) {
+        if (IsKeyPressedRepeat(KEY_BACKSPACE)) {
             Font::PopBackCodepoint(text);
         } else if (IsKeyDown(KEY_BACKSPACE)) {
             if (fmod(elapsedTime, 0.1f) < GetFrameTime()) Font::PopBackCodepoint(text);
@@ -73,6 +80,10 @@ std::string TextField::GetPromptText() const {
     return promptText;
 }
 
+bool TextField::IsPromptTextEmpty() const {
+    return promptText.empty();
+}
+
 std::string TextField::Truncate(const std::string& text, const CPPFX::Font& font, float maxWidth) const {
     return TextItem::Truncate(text, font, maxWidth - font.MeasureTextWidth("|"));
 }
@@ -88,18 +99,18 @@ void Button::DrawMyself(float /*elapsedTime*/) const {
         DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour()); //button during click
     } else DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
 
-    if (text != "") {
+    if (IsEmpty()) {
        DrawAlignedText(Alignment::CENTRE);
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
 void Button::DoFocusAction(float elapsedTime) {
-    if (focused) {
+    if (IsFocused()) {
         if (timer > 0.0f) {
             if (elapsedTime > timer) {
                 timer = 0.0f;
-                focused = false;
+                Focus();
             }
         } else {
             timer = elapsedTime + 0.1f;
@@ -109,7 +120,7 @@ void Button::DoFocusAction(float elapsedTime) {
     }
 }
 
-const std::string Button::GetClassID() {
+std::string Button::GetClassID() {
     return "Button";
 }
 
@@ -126,7 +137,7 @@ void CheckBox::DrawMyself(float /*elapsedTime*/) const {
 
     const Vector2 ink = font.GetInkSize(text);
 
-    if (text != "") {
+    if (IsEmpty()) {
         float gap = textMargin + labelMargin;
         float x = xAnchor, y = yAnchor, w = width, h = height;
 
@@ -209,7 +220,7 @@ float CheckBox::GetTotalHeight() const {
     return Item::GetTotalHeight() + clickBorder.GetThickness();
 }
 
-const std::string CheckBox::GetClassID() {
+std::string CheckBox::GetClassID() {
     return "CheckBox";
 }
 
@@ -429,7 +440,7 @@ bool RadioGroup::IsVertical() const {
     return vertical;
 }
 
-const std::string RadioGroup::GetClassID() {
+std::string RadioGroup::GetClassID() {
     return "RadioGroup";
 }
 
@@ -752,7 +763,7 @@ bool ComboBox::DoesAddAreaFocusOnSecondClick() const {
     return opensOnSecondClick;
 }
 
-const std::string ComboBox::GetClassID() {
+std::string ComboBox::GetClassID() {
     return "ComboBox";
 }
 
@@ -947,7 +958,7 @@ void SearchableDropDown::Defocus() {
     DropDown<std::string>::Defocus();
 }
 
-const std::string SearchableDropDown::GetClassID() {
+std::string SearchableDropDown::GetClassID() {
     return "SearchableDropDown";
 }
 
@@ -987,7 +998,7 @@ void Workspace::SetPositionsOfItems() {
     }
 }
 
-const std::string Workspace::GetClassID() {
+std::string Workspace::GetClassID() {
     return "Workspace";
 }
 
@@ -1036,7 +1047,7 @@ void AnchorPane::SetWidth(float value) {
     Container::SetWidth(value);
 }
 
-const std::string AnchorPane::GetClassID() {
+std::string AnchorPane::GetClassID() {
     return "AnchorPane";
 }
 
@@ -1075,7 +1086,7 @@ float VBox::GetItemsTotalHeight() const {
     return GetChildrenTotalLength();
 }
 
-const std::string VBox::GetClassID() {
+std::string VBox::GetClassID() {
     return "VBox";
 }
 
@@ -1115,7 +1126,7 @@ float HBox::GetItemsTotalWidth() const {
     return GetChildrenTotalLength();
 }
 
-const std::string HBox::GetClassID() {
+std::string HBox::GetClassID() {
     return "HBox";
 }
 
@@ -1354,7 +1365,7 @@ float Spinner::GetTotalWidth() const {
     return Item::GetTotalWidth() + incrementButton.GetWidth();
 }
 
-const std::string Spinner::GetClassID() {
+std::string Spinner::GetClassID() {
     return "Spinner";
 }
 
@@ -1476,7 +1487,7 @@ void EditableSpinner::SetToScreen() {
     Spinner::SetToScreen();
 }
 
-const std::string EditableSpinner::GetClassID() {
+std::string EditableSpinner::GetClassID() {
     return "EditableSpinner";
 }
 
@@ -1510,7 +1521,7 @@ char PasswordField::GetMask() const {
     return mask;
 }
 
-const std::string PasswordField::GetClassID() {
+std::string PasswordField::GetClassID() {
     return "PasswordField";
 }
 
@@ -1673,7 +1684,7 @@ bool ProgressIndicator::IsDisplayingValue() const {
     return displayValue;
 }
 
-const std::string ProgressIndicator::GetClassID() {
+std::string ProgressIndicator::GetClassID() {
     return "ProgressIndicator";
 }
 
@@ -1789,7 +1800,7 @@ bool ProgressBar::IsSegmented() const {
     return segmented;
 }
 
-const std::string ProgressBar::GetClassID() {
+std::string ProgressBar::GetClassID() {
     return "ProgressBar";
 }
 
@@ -1831,7 +1842,7 @@ std::string PressedButton::GetPressedText() const {
     return pressedText;
 }
 
-const std::string PressedButton::GetClassID() {
+std::string PressedButton::GetClassID() {
     return "PressedButton";
 }
 
@@ -1928,7 +1939,7 @@ bool PieChart::IsShowingPercentage() const {
     return showPercentage;
 }
 
-const std::string PieChart::GetClassID() {
+std::string PieChart::GetClassID() {
     return "PieChart";
 }
 
@@ -2086,7 +2097,7 @@ bool Line::GetDrawingMethod() const {
     return pointToPoint;
 }
 
-const std::string Line::GetClassID() {
+std::string Line::GetClassID() {
     return "Line";
 }
 
@@ -2118,7 +2129,7 @@ float CPPFX::Square::GetTotalHeight() const {
     return Item::GetTotalWidth();
 }
 
-const std::string CPPFX::Square::GetClassID() {
+std::string CPPFX::Square::GetClassID() {
     return "Square";
 }
 
@@ -2133,7 +2144,7 @@ float CPPFX::Rectangle::CalculateMyArea() const {
     return width * height;
 }
 
-const std::string CPPFX::Rectangle::GetClassID() {
+std::string CPPFX::Rectangle::GetClassID() {
     return "Rectangle";
 }
 
@@ -2148,7 +2159,7 @@ float CPPFX::Circle::CalculateMyArea() const {
     return PI * GetRadius() * GetRadius();
 }
 
-const std::string Circle::GetClassID() {
+std::string Circle::GetClassID() {
     return "Circle";
 }
 
@@ -2330,6 +2341,6 @@ Vector2 Sprite::GetXYShift() const {
     return Vector2{xShift, yShift};
 }
 
-const std::string Sprite::GetClassID() {
+std::string Sprite::GetClassID() {
     return "Sprite";
 }

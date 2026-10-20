@@ -75,6 +75,7 @@ public:
     void SetPromptText(const std::string& text);
     void ClearPromptText();
     std::string GetPromptText() const;
+    bool IsPromptTextEmpty() const;
 
     /**
      *  @see Item::GetClassID()
@@ -89,6 +90,11 @@ public:
 
 protected:
     std::string promptText; ///< string displayed when the text is empty
+
+    /**
+     *  @brief Draws the blinking cursor.
+     */
+    void DrawCaret(const std::string& truncated) const;
 };
 
 /**
@@ -120,7 +126,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 };
 
 /**
@@ -210,7 +216,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 protected:
     float labelMargin; ///< distance between the box and the label
@@ -370,7 +376,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
     void SetX(float x) override; ///< flags for ordering
     void SetY(float y) override; ///< flags for ordering
@@ -770,7 +776,7 @@ public:
     }
 
     /** @brief Labels in the order they are drawn. */
-    const std::vector<std::string>& GetLabelsInOrder() const {
+    std::vector<std::string> GetLabelsInOrder() const {
         return valuesInOrder;
     }
 
@@ -848,7 +854,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID() {
+    static std::string GetClassID() {
         return "DropDown";
     }
 
@@ -1144,7 +1150,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 private:
     void CommitAddArea();
@@ -1240,7 +1246,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 private:
      bool opensOnSecondClick = true; ///< if true, the click that unrolls the dropdown doesn't reach searchArea
@@ -1276,7 +1282,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 };
 
 /**
@@ -1314,7 +1320,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 private:
     // used for recalculating positions of children when pane moves or reshapes.
@@ -1347,7 +1353,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 };
 
 /**
@@ -1373,7 +1379,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 };
 
 /**
@@ -1525,7 +1531,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 protected:
     float valueMargin; ///< distance between value and border
@@ -1617,7 +1623,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 };
 
 /**
@@ -1638,7 +1644,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 private:
     char mask;
@@ -1736,7 +1742,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 protected:
     Shapes shape;
@@ -1826,7 +1832,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 private:
     float barMargin; ///< the distance between the top/side of the main bar and the progress bar.
@@ -1858,7 +1864,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 private:
     std::string pressedText; ///< text shown while pressed
@@ -2025,7 +2031,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID() {
+    static std::string GetClassID() {
         return "List";
     }
 
@@ -2062,7 +2068,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 private:
     bool showLabels;
@@ -2219,7 +2225,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 private:
     bool pointToPoint; ///< method of drawing. False is based on angle and length (width)
@@ -2253,7 +2259,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 };
 
 /**
@@ -2273,7 +2279,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 };
 
 /**
@@ -2293,7 +2299,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 };
 
 // --- Sprite ---
@@ -2425,7 +2431,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 private:
     Texture2D texture;
