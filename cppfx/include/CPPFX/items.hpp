@@ -1119,7 +1119,7 @@ public:
     void Defocus() override;
 
     /** @brief Sets the text margin, addArea's included. */
-    void SetTextMargin(float margin);
+    void SetTextMargin(float margin) override;
 
     /**
      *  @brief Makes addArea take focus the moment the dropdown opens.
@@ -1207,7 +1207,7 @@ public:
     void Defocus() override;
 
     /** @brief Sets the text margin, searchArea's included. */
-    void SetTextMargin(float margin);
+    void SetTextMargin(float margin) override;
 
     /**
      *  @brief Makes searchArea take focus the moment the dropdown opens.
@@ -1634,12 +1634,18 @@ public:
 class PasswordField : public TextField {
 public:
 
-    PasswordField() : Item("PasswordField"), TextField(), mask('*') {promptText = "Password"; ClearText();}
+    PasswordField() : Item("PasswordField"), TextField(), mask('*'), isPasswordVisible(false) {promptText = "Password"; ClearText();}
 
     void DrawMyself(float elapsedTime) const override;
 
-    void SetMask(const char character);
-    char GetMask() const;
+    void SetMask(char32_t character);
+    char32_t GetMask() const;
+
+    void MakePasswordVisible();
+    void MakePasswordHidden();
+    void SetPasswordVisibility(bool visible);
+    void SwitchPasswordVisibility();
+    bool IsPasswordVisible() const;
 
     /**
      *  @see Item::GetClassID()
@@ -1647,7 +1653,8 @@ public:
     static std::string GetClassID();
 
 private:
-    char mask;
+    char32_t mask;
+    bool isPasswordVisible;
 };
 
 /**

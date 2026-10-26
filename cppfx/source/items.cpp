@@ -99,7 +99,7 @@ void Button::DrawMyself(float /*elapsedTime*/) const {
         DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour()); //button during click
     } else DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
 
-    if (IsEmpty()) {
+    if (!IsEmpty()) {
        DrawAlignedText(Alignment::CENTRE);
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);
@@ -1495,16 +1495,21 @@ std::string EditableSpinner::GetClassID() {
 
 void PasswordField::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    if (text == "") {
-        if (promptText != "" && !focused) {
+    if (IsEmpty()) {
+        if (!IsPromptTextEmpty() && !IsFocused()) {
             const std::string truncated = truncates ? Truncate(promptText, promptFont) : promptText;
             DrawAlignedText(Alignment::CENTRE_LEFT, truncated, promptFont);
         }
     } else {
-        std::string password(text.size(), mask);
-        const std::string truncated = truncates ? Truncate(password) : password;
+        std::string truncated;
+        if (IsPasswordVisible()) {
+            truncated = truncates ? Truncate(text) : text;
+        } else {
+            std::string password(text.size(), mask);
+            truncated = truncates ? Truncate(password) : password;
+        }
         DrawAlignedText(Alignment::CENTRE_LEFT, truncated, font);
-        if (focused && fmod(elapsedTime, 1.0f) < 0.5f) {
+        if (IsFocused() && fmod(elapsedTime, 1.0f) < 0.5f) {
             font.DrawText("|",
                 xAnchor + textMargin + font.MeasureTextWidth(truncated) + 2.0f,
                 yAnchor + font.GetVerticalCentreOffset(height));
@@ -1513,12 +1518,32 @@ void PasswordField::DrawMyself(float elapsedTime) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void PasswordField::SetMask(const char character) {
+void PasswordField::SetMask(char32_t character) {
     mask = character;
 }
 
-char PasswordField::GetMask() const {
+char32_t PasswordField::GetMask() const {
     return mask;
+}
+
+void PasswordField::MakePasswordVisible() {
+    isPasswordVisible = true;
+}
+
+void PasswordField::MakePasswordHidden() {
+    isPasswordVisible = false;
+}
+
+void PasswordField::SetPasswordVisibility(bool visible) {
+    isPasswordVisible = visible;
+}
+
+void PasswordField::SwitchPasswordVisibility() {
+    isPasswordVisible = !isPasswordVisible;
+}
+
+bool PasswordField::IsPasswordVisible() const {
+    return isPasswordVisible;
 }
 
 std::string PasswordField::GetClassID() {
