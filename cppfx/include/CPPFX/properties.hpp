@@ -1240,5 +1240,28 @@ protected:
     Item* owner; ///< item this property belongs to
 };
 
+class Callback {
+public:
+    Callback() : armed(false), slot(nullptr), ID("Callback") {}
+    Callback(const std::string& i) : armed(false), slot(nullptr), ID(i) {}
+
+    void Arm();
+    void Dearm();
+    bool IsArmed() const;
+
+    void Do();
+    void UnsafeDo();
+    void Clear();
+    bool IsSet() const;
+
+    void SetID(const std::string& ID);
+    std::string GetID() const;
+
+private:
+    bool armed;
+    std::function<void()> slot;
+    std::string ID;
+};
+
 }
 #endif // PROPERTIES_H

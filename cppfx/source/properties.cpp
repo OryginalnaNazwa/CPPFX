@@ -1060,3 +1060,49 @@ void OverrideFont::DrawAligned(const std::string& text, const Alignment& alignme
 
 std::string OverrideFont::GetLoadedPath() const         { return Checked(__func__).GetLoadedPath(); }
 CPPFX::Font OverrideFont::GetOverride() const { return Checked(__func__); }
+
+// --- Callback ---
+
+void Callback::Arm() {
+    armed = true;
+}
+
+void Callback::Dearm() {
+    armed = false;
+}
+
+bool Callback::IsArmed() const {
+    return armed;
+}
+
+void Callback::Do() {
+    if (IsSet()) {
+        slot();
+    }
+}
+
+void Callback::UnsafeDo() {
+    if (!IsSet()) {
+        CPPFX_THROW_NO_ITEM(std::runtime_error, ID, ID, "No callback set.");
+    }
+    slot();
+}
+
+void Callback::Clear() {
+    slot = nullptr;
+}
+
+bool Callback::IsSet() const {
+    if (slot) {
+        return true;
+    }
+    return false;
+}
+
+void Callback::SetID(const std::string& ID) {
+    this->ID = ID;
+}
+
+std::string Callback::GetID() const {
+    return ID;
+}

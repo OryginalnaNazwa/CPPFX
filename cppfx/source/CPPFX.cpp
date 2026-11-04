@@ -34,6 +34,7 @@ void GUI::DoUI(const Camera2D& camera) {
         DoItemsActions(mousePos, camera);
     }
 
+
     DrawUI(camera);
 }
 
