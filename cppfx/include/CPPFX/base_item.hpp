@@ -174,12 +174,13 @@ public:
      *  @brief Launches on click.
      *  @details Lambda, put in your own. Not called while the item is inactive.
      */
-    std::function<void()> onClick;
-    /**
-     *  @brief Launches every frame the cursor is over the item.
-     *  @details Lambda, put in your own. Not called while the item is inactive.
-     */
-    std::function<void()> onHover;
+    Callback onClick{"onClick"};
+    Callback onMove{"onMove"};
+    Callback onChange{"onChange"};
+
+    bool HasArmedCallbacks();
+    void DoCallbacks();
+    void DisarmCallbacks();
 
     /**
      *  @brief Sets the x coordinate of the item.
@@ -358,6 +359,7 @@ protected:
     bool inactive; ///< inactive items are not interactable
     bool eatsClick; ///< if false, allows the click to continue under it
     size_t priority; ///< drawing order; see SetPriority.
+    virtual void GetCallbacks(std::vector<Callback*>& out); ///< derived: call base, then push their own
 
     bool screenBased; ///< if true, item stays fixed on screen and ignores the camera.
     const std::string fxID; ///< ID for the library.

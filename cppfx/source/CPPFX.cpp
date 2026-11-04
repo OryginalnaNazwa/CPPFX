@@ -33,8 +33,13 @@ void GUI::DoUI(const Camera2D& camera) {
     } else {
         DoItemsActions(mousePos, camera);
     }
+    GrabArmedWidgets();
+    DoCallbacks();
 
-
+    if (needsSorting) {
+        SortOrder();
+        needsSorting = false;
+    }
     DrawUI(camera);
 }
 
@@ -43,6 +48,7 @@ void GUI::Close() {
     Items.clear();
     for (auto& [id, n] : ItemsCounter) n = 0;
     needsSorting = false;
+    graveyard.clear();
 }
 
 void GUI::OnMouseClick(const Vector2& mousePos, const Camera2D& camera) {
@@ -56,7 +62,7 @@ void GUI::OnMouseClick(const Vector2& mousePos, const Camera2D& camera) {
                     DefocusItems();
                     item->Focus();
                 }
-                if (item->onClick) item->onClick();
+                item->onClick.Arm();
                 if (item->DoesEatClicks()) {
                     return;
                 }
@@ -83,15 +89,15 @@ void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
         if (!item->IsInactive()) {
             if (screenBased || item->IsScreenBased()) {
                 if (item->WasIClicked(mousePos)) {
-                    if (item->onHover) {
-                        item->onHover();
-                    }
+                    //if (item->onHover) {
+                    //    item->onHover();
+                    //}
                 }
             } else {
                 if (item->WasIClicked(GetScreenToWorld2D(mousePos, camera))) {
-                    if (item->onHover) {
-                        item->onHover();
-                    }
+                    //if (item->onHover) {
+                    //    item->onHover();
+                    //}
                 }
             }
             item->DoPassiveAction(elapsedTime);
@@ -119,6 +125,23 @@ void GUI::DefocusItems() {
     for (auto& [key, item] : Items) {
         item->Defocus();
     }
+}
+
+void GUI::GrabArmedWidgets() {
+    for (const auto& item : ItemsInDrawingOrder) {
+        if (item->HasArmedCallbacks()) {
+            ArmedCallbacksIDs.push_back(item->GetID());
+        }
+    }
+}
+
+void GUI::DoCallbacks() {
+    for (const auto& id : ArmedCallbacksIDs) {
+        auto it = Items.find(id);
+        if (it != Items.end()) it->second->DoCallbacks();
+    }
+    ArmedCallbacksIDs.clear();
+    graveyard.clear();
 }
 
 //--- Adders ---
@@ -250,31 +273,31 @@ Sprite* GUI::AddSprite(const std::string& ID) {
 //--- Remover ---
 
 void GUI::RemoveItem(const std::string& ID) {
-    if (IsIDTaken(ID)) {
-        for (auto& [key, item] : Items) {
-            if (IsContainer(item->GetFxID())) {
-                GetContainer(item->GetID())->SafeRemoveItem(ID);
-            }
-        }
-        ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&ID](const Item* item) { return item->GetID() == ID; }),ItemsInDrawingOrder.end());
-        Items.erase(ID);
-    } else {
+    auto it = Items.find(ID);
+    if (it == Items.end()) {
         CPPFX_THROW_GUI(std::out_of_range, "Item " + ID + " doesn't exist, cannot delete");
     }
+    for (auto& [key, item] : Items) {
+        if (IsContainer(item->GetFxID())) {
+            GetContainer(item->GetID())->SafeRemoveItem(ID);
+        }
+    }
+    Item* removed = it->second.get();
+    removed->DisarmCallbacks();
+    std::erase(ItemsInDrawingOrder, removed);
+    graveyard.push_back(std::move(it->second));
+    Items.erase(it);
 }
 
 void GUI::RemoveItem(Item* item) {
-    if (item) {
-        if (IsIDTaken(item->GetID())) {
-            for (auto& [key, it] : Items) {
-                if (IsContainer(it->GetFxID())) {
-                    GetContainer(it->GetID())->SafeRemoveItem(item);
-                }
-            }
-            ItemsInDrawingOrder.erase(std::remove_if(ItemsInDrawingOrder.begin(), ItemsInDrawingOrder.end(),[&item](const Item* i) { return i->GetID() == item->GetID(); }),ItemsInDrawingOrder.end());
-            Items.erase(item->GetID());
-        } else CPPFX_THROW_GUI(std::out_of_range, "Item with the ID " + item->GetID() + " is not in the GUI.");
-    } else CPPFX_THROW_GUI(std::invalid_argument, "Cannot delete Item: doesn't exist");
+    if (!item) {
+        CPPFX_THROW_GUI(std::invalid_argument, "Cannot delete Item: doesn't exist");
+    }
+    auto it = Items.find(item->GetID());
+    if (it == Items.end() || it->second.get() != item) {
+        CPPFX_THROW_GUI(std::out_of_range, "Item with the ID " + item->GetID() + " is not in the GUI.");
+    }
+    RemoveItem(item->GetID());
 }
 
 bool GUI::IsIDTaken(const std::string& ID) const {

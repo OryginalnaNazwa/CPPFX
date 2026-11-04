@@ -22,6 +22,33 @@ void Item::DoPassiveAction(float /*elapsedTime*/) {
     return;
 }
 
+void Item::GetCallbacks(std::vector<Callback*>& out) {
+    out.insert(out.end(), {&onClick, &onMove, &onChange});
+}
+
+bool Item::HasArmedCallbacks() {
+    std::vector<Callback*> callbacks;
+    GetCallbacks(callbacks);
+    return std::any_of(callbacks.begin(), callbacks.end(),
+                       [](const Callback* c) { return c->IsArmed(); });
+}
+
+void Item::DoCallbacks() {
+    std::vector<Callback*> callbacks;
+    GetCallbacks(callbacks);
+    for (auto& cb : callbacks) {
+        cb->Do();
+    }
+}
+
+void Item::DisarmCallbacks() {
+    std::vector<Callback*> callbacks;
+    GetCallbacks(callbacks);
+    for (auto& cb : callbacks) {
+        cb->Disarm();
+    }
+}
+
 // --- Helpers ---
 
 void Item::MoveUpPriority() {

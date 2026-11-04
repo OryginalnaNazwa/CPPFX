@@ -1246,12 +1246,14 @@ public:
     Callback(const std::string& i) : armed(false), slot(nullptr), ID(i) {}
 
     void Arm();
-    void Dearm();
+    void Disarm();
     bool IsArmed() const;
 
     void Do();
-    void UnsafeDo();
+    void ForceDo();
     void Clear();
+    void Set(const std::function<void()>& func);
+    std::function<void()> Get() const;
     bool IsSet() const;
 
     void SetID(const std::string& ID);
@@ -1261,6 +1263,8 @@ private:
     bool armed;
     std::function<void()> slot;
     std::string ID;
+
+    void Execute();
 };
 
 }

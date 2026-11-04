@@ -1067,7 +1067,7 @@ void Callback::Arm() {
     armed = true;
 }
 
-void Callback::Dearm() {
+void Callback::Disarm() {
     armed = false;
 }
 
@@ -1076,20 +1076,36 @@ bool Callback::IsArmed() const {
 }
 
 void Callback::Do() {
+    if (!IsArmed()) return;
+    Disarm();
     if (IsSet()) {
-        slot();
+       Execute();
     }
 }
 
-void Callback::UnsafeDo() {
+void Callback::ForceDo() {
     if (!IsSet()) {
         CPPFX_THROW_NO_ITEM(std::runtime_error, ID, ID, "No callback set.");
     }
-    slot();
+    Disarm();
+    Execute();
+}
+
+void Callback::Execute() {
+    auto fn = slot;
+    fn();
 }
 
 void Callback::Clear() {
     slot = nullptr;
+}
+
+void Callback::Set(const std::function<void()>& func) {
+    slot = func;
+}
+
+std::function<void()> Callback::Get() const {
+    return slot;
 }
 
 bool Callback::IsSet() const {

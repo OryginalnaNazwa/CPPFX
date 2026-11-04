@@ -110,7 +110,7 @@ void Button::DoFocusAction(float elapsedTime) {
         if (timer > 0.0f) {
             if (elapsedTime > timer) {
                 timer = 0.0f;
-                Focus();
+                Defocus();
             }
         } else {
             timer = elapsedTime + 0.1f;
@@ -137,7 +137,7 @@ void CheckBox::DrawMyself(float /*elapsedTime*/) const {
 
     const Vector2 ink = font.GetInkSize(text);
 
-    if (IsEmpty()) {
+    if (!IsEmpty()) {
         float gap = textMargin + labelMargin;
         float x = xAnchor, y = yAnchor, w = width, h = height;
 
@@ -1149,10 +1149,10 @@ void Spinner::DrawMyself(float elapsedTime) const {
 void Spinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.Focus();
-        if (incrementButton.onClick) incrementButton.onClick();
+        if (incrementButton.onClick.IsSet()) incrementButton.onClick.ForceDo();
     } else if (decrementButton.WasIClicked(mousePosition)) {
         decrementButton.Focus();
-        if (decrementButton.onClick) decrementButton.onClick();
+        if (decrementButton.onClick.IsSet()) decrementButton.onClick.ForceDo();
     }
     decrementButton.DoFocusAction(elapsedTime);
     incrementButton.DoFocusAction(elapsedTime);
@@ -1275,14 +1275,14 @@ void Spinner::Initialise() {
     incrementButton.SetWidth(50.0f);
     incrementButton.SetText("/\\");
     incrementButton.border.SetThickness(2.0f);
-    incrementButton.onClick = [this]() { Increment(); };
+    incrementButton.onClick.Set([this]() { Increment(); });
     decrementButton.SetX(xAnchor + width + border.GetThickness());
     decrementButton.SetY(yAnchor + (height / 2.0f));
     decrementButton.SetHeight(height / 2.0f);
     decrementButton.SetWidth(50.0f);
     decrementButton.SetText("\\/");
     decrementButton.border.SetThickness(2.0f);
-    decrementButton.onClick = [this]() { Decrement(); };
+    decrementButton.onClick.Set([this]() { Decrement(); });
 }
 
 void Spinner::SetButtonsWidth(float value) {
@@ -1388,13 +1388,13 @@ void EditableSpinner::DrawMyself(float elapsedTime) const {
 void EditableSpinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.Focus();
-        if (incrementButton.onClick) incrementButton.onClick();
+        if (incrementButton.onClick.IsSet()) incrementButton.onClick.ForceDo();
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
         editArea.Defocus();
     } else if (decrementButton.WasIClicked(mousePosition)) {
         decrementButton.Focus();
         editArea.Defocus();
-        if (decrementButton.onClick) decrementButton.onClick();
+        if (decrementButton.onClick.IsSet()) decrementButton.onClick.ForceDo();
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
     } else if (editArea.WasIClicked(mousePosition)) {
         editArea.Focus();
