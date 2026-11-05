@@ -8,7 +8,7 @@
 
 using namespace CPPFX;
 
-const char* const CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.24.0"; //sanity check for version
+const char* const CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.25.0"; //sanity check for version
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "ComboBox", "SearchableDropDown",
     "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
@@ -89,7 +89,7 @@ void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
         if (!item->IsInactive()) {
             if (screenBased || item->IsScreenBased()) {
                 if (item->WasIClicked(mousePos)) {
-                    //if (item->onHover) {
+                    //if (item->onHover) { //TODO SUPPORT IT BACK
                     //    item->onHover();
                     //}
                 }

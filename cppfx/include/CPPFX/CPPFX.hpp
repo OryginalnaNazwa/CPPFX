@@ -32,7 +32,7 @@
  * @{
  */
 #define CPPFX_VERSION_MAJOR 0
-#define CPPFX_VERSION_MINOR 24
+#define CPPFX_VERSION_MINOR 25
 #define CPPFX_VERSION_PATCH 0
 #define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
 /** @} */
@@ -73,7 +73,7 @@ public:
 
     /**
      *  @brief Primary UI drawing and interaction loop.
-     *  @details Controls everything else.
+     *  @details Controls everything else. Handles callbacks.
      *  @param camera raylib's camera instance, the one being passed to BeginMode2D()
      *  @note Use this in your main loop.
      *  @warning Must be between Begin/EndMode2D if screenBased items or GUI is used.
@@ -549,11 +549,11 @@ private:
     bool needsSorting = false; ///< lazy sort
 
     void DrawUI(const Camera2D& camera) const; ///< draws the items
-    void OnMouseClick(const Vector2& mousePos, const Camera2D& camera); ///< defocuses and does onClick
-    void DoItemsActions(const Vector2& mousePos, const Camera2D& camera); ///< does focused and passive actions and onHover
+    void OnMouseClick(const Vector2& mousePos, const Camera2D& camera); ///< defocuses and arms onClick
+    void DoItemsActions(const Vector2& mousePos, const Camera2D& camera); ///< does focused and passive actions
     void DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera); ///< does actions that require mouse input
-    void GrabArmedWidgets();
-    void DoCallbacks();
+    void GrabArmedWidgets(); ///< collects a list of IDs with armed widgets
+    void DoCallbacks(); ///< executes the callbacks.
 
     void DefocusItems(); ///< defocuses all items after a click.
 
