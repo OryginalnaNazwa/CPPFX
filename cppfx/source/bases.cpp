@@ -173,6 +173,13 @@ void TextItem::AppendAtBack(int codepoint) {
     onChange.Arm();
 }
 
+std::string TextItem::StringFromTo(size_t from, size_t to) const {
+    to = std::min(to, text.size());
+    std::string out;
+    for (size_t i = from; i < to; ++i) Font::AppendCodepoint(out, (int)text[i]);
+    return out;
+}
+
 std::u32string TextItem::DecodeUtf8(const std::string& utf8) {
     std::u32string decoded;
     const char* p = utf8.c_str();

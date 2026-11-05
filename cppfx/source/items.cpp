@@ -28,9 +28,9 @@ std::string Label::GetClassID() {
 
 //--- Text Field ---
 
-void TextField::DrawCaret(const std::string& truncated) const {
+void TextField::DrawCaret(const std::string& beforeCaret) const {
     font.DrawText("|",
-                xAnchor + textMargin + font.MeasureTextWidth(truncated) + 2.0f,
+                xAnchor + textMargin + font.MeasureTextWidth(beforeCaret) + 2.0f,
                 yAnchor + font.GetVerticalCentreOffset(height));
 }
 
@@ -42,32 +42,43 @@ void TextField::DrawMyself(float elapsedTime) const {
         if (!IsPromptTextEmpty() && !IsFocused()) {
             DrawAlignedText(Alignment::CENTRE_LEFT, promptText, promptFont);
         } else if (IsFocused()) {
-            DrawCaret(GetText());
+            DrawCaret("");
         }
+    } else if (!IsFocused()) {
+        DrawAlignedText(Alignment::CENTRE_LEFT, ShownFromTo(0, Length()), font);
     } else {
-        const std::string truncated = DrawAlignedText(Alignment::CENTRE_LEFT);
-        if (IsFocused() && fmod(elapsedTime, 1.0f) < 0.5f) {
-            DrawCaret(truncated);
+        const size_t lastVisible = VisibleEnd(firstVisible);
+        const std::string left = (firstVisible > 0) ? "..." : "";
+        const std::string right = (lastVisible < Length()) ? "..." : "";
+        DrawAlignedText(Alignment::CENTRE_LEFT,
+                        left + ShownFromTo(firstVisible, lastVisible) + right, font);
+        if (fmod(elapsedTime, 1.0f) < 0.5f) {
+            DrawCaret(left + ShownFromTo(firstVisible, caretPosition));
         }
     }
 }
 
-void TextField::DoFocusAction(float elapsedTime) {
+void TextField::DoFocusAction(float /*elapsedTime*/) {
     if (IsFocused()) {
-        if (IsKeyPressedRepeat(KEY_BACKSPACE)) {
-            RemoveAt(Length() - 1);
-        } else if (IsKeyDown(KEY_BACKSPACE)) {
-            if (fmod(elapsedTime, 0.1f) < GetFrameTime()) RemoveAt(Length() - 1);
-        } else if (IsKeyPressed(KEY_ENTER)) {
+        if (IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE)) {
+            if (caretPosition > 0) RemoveAt(--caretPosition);
+        } else if (IsKeyPressed(KEY_SUBMIT)) {
             onSubmit.Arm();
             Defocus();
+        } else if (IsKeyPressed(KEY_DELETE) || IsKeyPressedRepeat(KEY_DELETE)) {
+            if (caretPosition < Length()) RemoveAt(caretPosition);
+        } else if (IsKeyPressed(KEY_LEFT) || IsKeyPressedRepeat(KEY_LEFT)) {
+            if (caretPosition > 0) --caretPosition;
+        } else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressedRepeat(KEY_RIGHT)) {
+            if (caretPosition < Length()) ++caretPosition;
         } else {
             int ch = GetCharPressed();
             while (ch > 0) {
-                AppendAtBack(ch);
+                InsertAt(caretPosition++, ch);
                 ch = GetCharPressed();
             }
         }
+        UpdateScroll();
     }
 }
 
@@ -87,6 +98,9 @@ bool TextField::IsPromptTextEmpty() const {
     return promptText.empty();
 }
 
+void TextField::SetSubmitKey(int key)      { KEY_SUBMIT = key; }
+void TextField::RestoreSubmitKey()         { KEY_SUBMIT = KEY_ENTER; }
+
 void TextField::GetCallbacks(std::vector<Callback*>& out) {
     TextItem::GetCallbacks(out);
     out.push_back(&onSubmit);
@@ -94,6 +108,51 @@ void TextField::GetCallbacks(std::vector<Callback*>& out) {
 
 std::string TextField::Truncate(const std::string& text, const CPPFX::Font& font, float maxWidth) const {
     return TextItem::Truncate(text, font, maxWidth - font.MeasureTextWidth("|"));
+}
+
+float TextField::GetEditWidth() const {
+    return width - (2.0f * textMargin) - font.MeasureTextWidth("|");
+}
+
+std::string TextField::ShownFromTo(size_t from, size_t to) const {
+    return StringFromTo(from, to);
+}
+
+size_t TextField::VisibleEnd(size_t first) const {
+    const float available = GetEditWidth();
+    const std::string left = (first > 0) ? "..." : "";
+    if (font.MeasureTextWidth(left + ShownFromTo(first, Length())) <= available) return Length();
+    size_t last = first;
+    while (last < Length() &&
+           font.MeasureTextWidth(left + ShownFromTo(first, last + 1) + "...") <= available) {
+        ++last;
+    }
+    return last;
+}
+
+void TextField::UpdateScroll() {
+    // caret moved left out of view
+    if (firstVisible > caretPosition) firstVisible = caretPosition;
+    // caret moved right out of view
+    while (firstVisible < caretPosition && caretPosition > VisibleEnd(firstVisible)) {
+        ++firstVisible;
+    }
+    // text got shorter - slide back while everything to the end still fits
+    while (firstVisible > 0 && VisibleEnd(firstVisible - 1) == Length()) {
+        --firstVisible;
+    }
+}
+
+void TextField::SetText(const std::string& text) {
+    TextItem::SetText(text);
+    caretPosition = Length();
+    UpdateScroll();
+}
+
+void TextField::ClearText() {
+    TextItem::ClearText();
+    caretPosition = 0;
+    firstVisible = 0;
 }
 
 std::string TextField::GetClassID() {
@@ -1524,29 +1583,12 @@ std::string EditableSpinner::GetClassID() {
 
 // --- PasswordField ---
 
-void PasswordField::DrawMyself(float elapsedTime) const {
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    if (IsTextEmpty()) {
-        if (!IsPromptTextEmpty() && !IsFocused()) {
-            const std::string truncated = truncates ? Truncate(promptText, promptFont) : promptText;
-            DrawAlignedText(Alignment::CENTRE_LEFT, truncated, promptFont);
-        }
-    } else {
-        std::string shown;
-        if (IsPasswordVisible()) {
-            shown = GetText();
-        } else {
-            for (size_t i = 0; i < Length(); ++i) Font::AppendCodepoint(shown, (int)mask);
-        }
-        const std::string truncated = truncates ? Truncate(shown) : shown;
-        DrawAlignedText(Alignment::CENTRE_LEFT, truncated, font);
-        if (IsFocused() && fmod(elapsedTime, 1.0f) < 0.5f) {
-            font.DrawText("|",
-                xAnchor + textMargin + font.MeasureTextWidth(truncated) + 2.0f,
-                yAnchor + font.GetVerticalCentreOffset(height));
-        }
-    }
-    border.DrawMyself(xAnchor, yAnchor, width, height);
+std::string PasswordField::ShownFromTo(size_t from, size_t to) const {
+    if (IsPasswordVisible()) return StringFromTo(from, to);
+    to = std::min(to, Length());
+    std::string out;
+    for (size_t i = from; i < to; ++i) Font::AppendCodepoint(out, (int)mask);
+    return out;
 }
 
 void PasswordField::SetMask(char32_t character) {

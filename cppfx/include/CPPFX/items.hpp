@@ -87,6 +87,9 @@ public:
      */
     void DoFocusAction(float elapsedTime) override;
 
+    void SetText(const std::string& text) override; ///< moves the caret
+    void ClearText() override; ///< moves the caret
+
     /**
      *  @brief Sets the text shown while the field is empty and unfocused.
      *  @param text new prompt text
@@ -95,6 +98,11 @@ public:
     void ClearPromptText();
     std::string GetPromptText() const;
     bool IsPromptTextEmpty() const;
+
+    /** @brief Sets the key that submits the text and defocuses.*/
+    void SetSubmitKey(int key);
+    /** @brief Restores the submit key to KEY_ENTER. */
+    void RestoreSubmitKey();
 
     /**
      *  @see Item::GetClassID()
@@ -110,11 +118,8 @@ public:
 protected:
     std::string promptText; ///< string displayed when the text is empty
     size_t caretPosition = 0;
-    int KEY_REMOVE = KEY_BACKSPACE;
-    int KEY_REMOVE_FRONT = KEY_DELETE;
-    int KEY_SUBMIT = KEY_ENTER;
-    int KEY_MOVE_LEFT = KEY_LEFT;
-    int KEY_MOVE_RIGHT = KEY_RIGHT;
+    size_t firstVisible = 0; ///< first character shown while focused - scrolls to keep the caret visible
+    int KEY_SUBMIT = KEY_ENTER; ///< the key that submits and defocuses the field. Default: KEY_ENTER
 
     void GetCallbacks(std::vector<Callback*>& out) override;
 
@@ -122,6 +127,14 @@ protected:
      *  @brief Draws the blinking cursor.
      */
     void DrawCaret(const std::string& truncated) const;
+    void UpdateScroll();
+    size_t VisibleEnd(size_t first) const; ///< one past the last character shown when the window starts at first
+    float GetEditWidth() const;
+        /**
+     *  @brief Returns the characters in [from, to) as they are displayed.
+     *  @details The text itself by default. Overridden by PasswordField to return masks.
+     */
+    virtual std::string ShownFromTo(size_t from, size_t to) const;
 };
 
 /**
@@ -1676,9 +1689,7 @@ public:
 
     PasswordField() : Item("PasswordField"), TextField(), mask('*'), isPasswordVisible(false) {promptText = "Password"; ClearText();}
 
-    void DrawMyself(float elapsedTime) const override;
-
-        /**
+    /**
      *  @brief Sets the character shown in place of each hidden character.
      *  @details Adds it to the font's charset if the font has no glyph for it.
      *           Non-ASCII masks need a char32_t literal: U'•', not '•' - the latter
@@ -1712,6 +1723,8 @@ public:
 private:
     char32_t mask; ///< a character displayed instead of the characters of the text
     bool isPasswordVisible;
+
+    std::string ShownFromTo(size_t from, size_t to) const override;
 };
 
 /**

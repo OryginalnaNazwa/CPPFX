@@ -233,6 +233,11 @@ public:
      *  @param codepoint codepoint to append, e.g. from GetCharPressed()
      */
     void AppendAtBack(int codepoint);
+    /**
+     *  @brief Returns the characters in [from, to) as UTF-8.
+     *  @details Positions count characters (codepoints), not bytes. to is clamped to Length().
+     */
+    std::string StringFromTo(size_t from, size_t to) const;
 
     /**
      *  @brief Decodes a UTF-8 string into codepoints.
