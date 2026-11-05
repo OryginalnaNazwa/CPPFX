@@ -98,7 +98,7 @@ int main() {
     auto startButton = gui.AddPressedButton("Start Button");
     startButton->SetPressedText("STOP"); startButton->pressedColour.SetColour(RED);
     startButton->SetText("START"); startButton->colour.SetColour(DARKGREEN);
-    startButton->onClick = [&fxAlarm, &elapsed]() { StopMusicStream(fxAlarm); elapsed = 0.0f;}; // stops the alarm and restarts the timer
+    startButton->onClick.Set([&fxAlarm, &elapsed]() { StopMusicStream(fxAlarm); elapsed = 0.0f;}); // stops the alarm and restarts the timer
     startButton->font.colour.SetColour(RAYWHITE);
 
     // set up button interface
