@@ -1093,7 +1093,7 @@ void Callback::ForceDo() {
 }
 
 void Callback::Execute() {
-    auto fn = slot;
+    auto fn = slot; // in case callback deletes itself
     fn();
 }
 

@@ -31,19 +31,19 @@ public:
 
     /**
      *  @brief Expands the width and height to accommodate text.
-     *  @details Only grows. Includes the text margin on every side.
+     *  @details Only grows. Includes the text margin on every side. Calls onResize if the dimensions changed.
      */
     virtual void ExpandToText();
 
     /**
      *  @brief Expands or shrinks width and height to the text dimensions.
-     *  @details Includes the text margin on every side.
+     *  @details Includes the text margin on every side. Calls onResize if the dimensions changed.
      */
     virtual void FitToText();
 
     /**
      *  @brief Sets text
-     *  @details Expands the item if it expands to text automatically.
+     *  @details Expands the item if it expands to text automatically. Calls onChange if the text changed.
      *  @param text new text to be set
      */
     virtual void SetText(const std::string& text);
@@ -314,13 +314,12 @@ public:
 
     /**
      *  @brief Grows width and height to fit children.
-     *  @details Grows from the top-left anchor only. VBox and HBox call it after
-     *           arranging their children. Does nothing if the container is empty.
+     *  @details Grows from the top-left anchor only. VBox and HBox call it after arranging their children. Does nothing if the container is empty. Calls onResize if the dimensions have changed.
      */
     void ExpandToChildren();
     /**
      *  @brief Grows or shrinks width and height to fit children.
-     *  @details Resizes from the top-left anchor only. Does nothing if the container is empty.
+     *  @details Resizes from the top-left anchor only. Does nothing if the container is empty. Calls onResize if the dimensions have changed.
      */
     void FitToChildren();
 
