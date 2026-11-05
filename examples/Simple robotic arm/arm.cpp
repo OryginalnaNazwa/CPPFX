@@ -6,6 +6,7 @@
  *  A simple robotic arm
  *  Use controls to move the arm around. Arm is composed of nodes that are linked. Change length and angle using spinners. You can also add and delete nodes.
  *  =========================================================================================================================================================
+ *  v3.1 - switched to new Callbacks
  *  v3 - removed manual expansion to text now that it's automatic. Added Close().
  *************************************************************************************************************************************************************/
 
@@ -107,12 +108,12 @@ int main() {
 
     auto addButton = gui.AddButton();
     addButton->SetText("Add node to the top");
-    addButton->onClick = [&nodes]() {AddNode(nodes);};
+    addButton->onClick.Set([&nodes]() {AddNode(nodes);});
     addButton->border.SetThickness(5.0f);
 
     auto removeButton = gui.AddButton();
     removeButton->SetText("Remove the top node");
-    removeButton->onClick = [&nodes]() {RemoveNode(nodes);};
+    removeButton->onClick.Set([&nodes]() {RemoveNode(nodes);});
     removeButton->border.SetThickness(5.0f);
 
     auto ui = gui.AddVBox();

@@ -8,6 +8,7 @@ using namespace CPPFX;
  *  A label with welcome text and two text fields, one masked for password.
  *  Clicking a button or pressing enter is a login attempt. Incorrect credentials end with error appearing. Correct ("Login", "Password") end in welcome label changing.
  * ======================================================================================================================================================================
+ *  v4 - updated with Callback rework. Removed global raylib enter key checking, instead its onSubmit
  *  v3 - removed the manual expansion now that it's automatic, removed references in lambda, just pointers. Centred the alignment.
  *  v2.1 - made up to date with convenience fixes in Label and Fields.
  *  v2 - switched to Hide and Show for error label
@@ -52,10 +53,11 @@ int main() {
     loginField->SetPromptText("Login");
 
     auto passwordField = gui.AddPasswordField("PasswordField"); // by default prompts "Password"
+    passwordField->onSubmit.Set([loginField, passwordField, welcomeLabel, errorLabel]() { LoginLogic(loginField, passwordField, welcomeLabel, errorLabel); }); // callback on enter
 
     auto loginButton = gui.AddButton("LoginButton");
     loginButton->SetText("Log in");
-    loginButton->onClick = [loginField, passwordField, welcomeLabel, errorLabel]() { LoginLogic(loginField, passwordField, welcomeLabel, errorLabel); }; //callback
+    loginButton->onClick.Set([loginField, passwordField, welcomeLabel, errorLabel]() { LoginLogic(loginField, passwordField, welcomeLabel, errorLabel); }); // callback on click
 
     //add items to the VBox
     fields->AddItem(welcomeLabel);
@@ -69,11 +71,6 @@ int main() {
         BeginDrawing();
         ClearBackground(WHITE);
         BeginMode2D(camera);
-
-        //log-in logic
-        if (IsKeyPressed(KEY_ENTER)) { //raylib key press catch
-            LoginLogic(loginField, passwordField, welcomeLabel, errorLabel);
-        }
 
         //draw and update ui
         gui.DoUI(camera);

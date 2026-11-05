@@ -11,6 +11,7 @@
  *  Genuinely a very rough, primitive example that was more me testing if it'll work rather than intended use case. DO NOT do things ugly. Be better. It'll pay off.
  *  Main issues: saving and loading is ugly, no insertion order retention between sessions, no actual scaling and resizing of the todo list (camera moving is a hack counteracting it).
  ========================================================================================================================================================================================
+ * v2.2 - switched to new Callbacks
  * v2.1 - removed manual expansion to text now that it's automatic. Added Close().
  * v2 - doesn't throw on not opened file. That's a first run. Doesn't need the extra file now.
  * v1.1 - slight fixes. Made the VBox ID not hardcoded.
@@ -85,7 +86,7 @@ int main() {
 
     auto addButton = gui.AddButton();
     addButton->SetText("Add a todo");
-    addButton->onClick = [&todoField, &todoList, &gui](){ // calback
+    addButton->onClick.Set([todoField, todoList, &gui](){ // calback
         const std::string newTodo = todoField->GetText();
         if (!gui.IsIDTaken(newTodo)) {
             auto todo = gui.AddCheckBox(newTodo); // creates a new item with the ID the same as the text
@@ -93,15 +94,15 @@ int main() {
             todoList->AddItem(todo);
             todoField->ClearText();
         }
-    };
+    });
     addButton->border.SetThickness(10.0f);
 
     auto saveButton = gui.AddButton();
     saveButton->SetText("Save and quit");
-    saveButton->onClick = [&gui, &closing](){
+    saveButton->onClick.Set([&gui, &closing](){
         SaveToFile(gui);
         closing = true;
-    };
+    });
     saveButton->border.SetThickness(10.0f);
 
     auto ui = gui.AddHBox();
