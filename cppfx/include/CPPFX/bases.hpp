@@ -48,8 +48,7 @@ public:
      */
     virtual void SetText(const std::string& text);
     /**
-     *  @brief Clears text.
-     *  @details Sets text to an empty std::string.
+     *  @brief Empties the text.
      */
     virtual void ClearText();
     /**
@@ -61,7 +60,7 @@ public:
      *  @brief Checks whether the text is empty.
      *  @returns true if text is an empty string
      */
-    virtual bool IsEmpty() const;
+    virtual bool IsTextEmpty() const;
 
     /**
      *  @brief Sets the distance between border and text in x axis.
@@ -199,18 +198,72 @@ public:
     virtual std::string Truncate() const; // optional overflow message?
 
     /**
+     *  @brief Inserts a character at a position.
+     *  @details Positions count characters (codepoints), not bytes. Calls onChange.
+     *  @param i position to insert at; Length() appends
+     *  @param cp codepoint to insert
+     *  @throws std::out_of_range if i is greater than Length()
+     */
+    void InsertAt(size_t i, int cp);
+    /**
+     *  @brief Removes the character at a position.
+     *  @details Positions count characters (codepoints), not bytes. Calls onChange
+     *           if a character was removed. Does nothing if index is out of range,
+     *           so RemoveAt(Length() - 1) is safe on empty text.
+     *  @param index position of the character to remove
+     */
+    void RemoveAt(size_t index);
+    /**
+     *  @brief Returns the character at a position.
+     *  @param i position, counted in characters (codepoints)
+     *  @returns the codepoint at i
+     *  @throws std::out_of_range if i is not less than Length()
+     */
+    int CharacterAt(size_t i) const;
+    /**
+     *  @brief Returns the number of characters in the text.
+     *  @details Counts codepoints, not bytes - "ąćż" has a length of 3,
+     *           even though its UTF-8 form is 6 bytes.
+     *  @returns number of codepoints
+     */
+    size_t Length() const;
+    /**
+     *  @brief Appends a character to the end of the text.
+     *  @details Calls onChange.
+     *  @param codepoint codepoint to append, e.g. from GetCharPressed()
+     */
+    void AppendAtBack(int codepoint);
+
+    /**
+     *  @brief Decodes a UTF-8 string into codepoints.
+     *  @param utf8 UTF-8 encoded text
+     *  @returns one element per codepoint
+     */
+    static std::u32string DecodeUtf8(const std::string& utf8);
+
+    /**
      *  @see Item::GetClassID()
      */
     static const std::string GetClassID();
 
 protected:
-    explicit TextItem(const std::string& i) : Item(i), font(height / 4.0f), text(i), textMargin(10.0f), expandsToTextAutomatically(true) {}
-    TextItem(const std::string& i, float w, float h) : Item(i, w, h), font(h / 4.0f), text(i), textMargin(10.0f), expandsToTextAutomatically(true) {}
+    explicit TextItem(const std::string& i) : Item(i), font(height / 4.0f), textMargin(10.0f), expandsToTextAutomatically(true), text(DecodeUtf8(i)), utf8Cache(i) {}
+    TextItem(const std::string& i, float w, float h) : Item(i, w, h), textMargin(10.0f), expandsToTextAutomatically(true), text(DecodeUtf8(i)), utf8Cache(i) {}
 
-    std::string text;                ///< displayed text
     float textMargin;                ///< distance from the item's edge to the text, on every side
     bool expandsToTextAutomatically; ///< whether it expands its dimensions to the text's
     bool truncates = true;           ///< whether text too long for the box is cut
+
+    /**
+     *  @brief Rebuilds the UTF-8 copy of the text.
+     *  @details Every function that changes text must call it, otherwise
+     *           drawing, measuring and GetText() see stale text.
+     */
+    void SyncUtf8();
+
+private:
+    std::u32string text;   ///< displayed text, one element per codepoint - for editing by position
+    std::string utf8Cache; ///< UTF-8 copy of text - what Font and raylib get; kept in sync by SyncUtf8()
 };
 
 /**

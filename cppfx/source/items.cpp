@@ -12,7 +12,7 @@ using namespace CPPFX;
 void Label::DrawMyself(float /*elapsedTime*/) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
     DrawRectangleRec(::Rectangle{xAnchor, yAnchor, width, height}, colour.GetColour());
-    if (!IsEmpty()) {
+    if (!IsTextEmpty()) {
         DrawAlignedText(alignment);
     }
 }
@@ -38,14 +38,14 @@ void TextField::DrawMyself(float elapsedTime) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
     DrawRectangleRec(::Rectangle{xAnchor, yAnchor, width, height}, colour.GetColour());
 
-    if (IsEmpty()) {
+    if (IsTextEmpty()) {
         if (!IsPromptTextEmpty() && !IsFocused()) {
             DrawAlignedText(Alignment::CENTRE_LEFT, promptText, promptFont);
         } else if (IsFocused()) {
-            DrawCaret(text);
+            DrawCaret(GetText());
         }
     } else {
-        const std::string truncated = DrawAlignedText(Alignment::CENTRE_LEFT, text, font);
+        const std::string truncated = DrawAlignedText(Alignment::CENTRE_LEFT);
         if (IsFocused() && fmod(elapsedTime, 1.0f) < 0.5f) {
             DrawCaret(truncated);
         }
@@ -55,22 +55,17 @@ void TextField::DrawMyself(float elapsedTime) const {
 void TextField::DoFocusAction(float elapsedTime) {
     if (IsFocused()) {
         if (IsKeyPressedRepeat(KEY_BACKSPACE)) {
-            if (text != "") onChange.Arm();
-            Font::PopBackCodepoint(text);
+            RemoveAt(Length() - 1);
         } else if (IsKeyDown(KEY_BACKSPACE)) {
-            if (fmod(elapsedTime, 0.1f) < GetFrameTime()) {
-                if (text != "") onChange.Arm();
-                Font::PopBackCodepoint(text);
-            }
+            if (fmod(elapsedTime, 0.1f) < GetFrameTime()) RemoveAt(Length() - 1);
         } else if (IsKeyPressed(KEY_ENTER)) {
             onSubmit.Arm();
             Defocus();
         } else {
             int ch = GetCharPressed();
             while (ch > 0) {
-                Font::AppendCodepoint(text, ch);
+                AppendAtBack(ch);
                 ch = GetCharPressed();
-                onChange.Arm();
             }
         }
     }
@@ -112,7 +107,7 @@ void Button::DrawMyself(float /*elapsedTime*/) const {
         DrawRectangle(xAnchor, yAnchor, width, height, pressedColour.GetColour()); //button during click
     } else DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
 
-    if (!IsEmpty()) {
+    if (!IsTextEmpty()) {
        DrawAlignedText(Alignment::CENTRE);
     }
     border.DrawMyself(xAnchor, yAnchor, width, height);
@@ -148,9 +143,9 @@ void CheckBox::DrawMyself(float /*elapsedTime*/) const {
         DrawCircle(xAnchor + (width / 2.0f), yAnchor + (height / 2.0f), width / 2.0f, colour.GetColour());
     }
 
-    const Vector2 ink = font.GetInkSize(text);
+    const Vector2 ink = font.GetInkSize(GetText());
 
-    if (!IsEmpty()) {
+    if (!IsTextEmpty()) {
         float gap = textMargin + labelMargin;
         float x = xAnchor, y = yAnchor, w = width, h = height;
 
@@ -159,7 +154,7 @@ void CheckBox::DrawMyself(float /*elapsedTime*/) const {
         else if (alignment.IsBottomAlignment()) { y += height + gap;  h = ink.y; }
         else                                    { y -= gap + ink.y;   h = ink.y; }
 
-        DrawAlignedText(alignment, text, font, x, y, w, h);
+        DrawAlignedText(alignment, GetText(), font, x, y, w, h);
     }
 
     if (alignment.IsRightAlignment()) {
@@ -215,7 +210,7 @@ float CheckBox::GetLabelMargin() const {
 }
 
 float CheckBox::GetTotalWidth() const {
-    const float textWidth = text.empty() ? 0.0f : font.GetInkSize(text).x;
+    const float textWidth = IsTextEmpty() ? 0.0f : font.GetInkSize(GetText()).x;
     if (alignment.IsRightAlignment() || alignment.IsLeftAlignment()) {
         return Item::GetTotalWidth() + clickBorder.GetThickness() + labelMargin
              + (2.0f * textMargin) + textWidth;
@@ -226,7 +221,7 @@ float CheckBox::GetTotalWidth() const {
 
 float CheckBox::GetTotalHeight() const {
     if (alignment.IsTopAlignment() || alignment.IsBottomAlignment()) {
-        const float textHeight = text.empty() ? 0.0f : font.GetInkSize(text).y;
+        const float textHeight = IsTextEmpty() ? 0.0f : font.GetInkSize(GetText()).y;
         return Item::GetTotalHeight() + clickBorder.GetThickness() + labelMargin
              + (2.0f * textMargin) + textHeight;
     }
@@ -1531,19 +1526,19 @@ std::string EditableSpinner::GetClassID() {
 
 void PasswordField::DrawMyself(float elapsedTime) const {
     DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    if (IsEmpty()) {
+    if (IsTextEmpty()) {
         if (!IsPromptTextEmpty() && !IsFocused()) {
             const std::string truncated = truncates ? Truncate(promptText, promptFont) : promptText;
             DrawAlignedText(Alignment::CENTRE_LEFT, truncated, promptFont);
         }
     } else {
-        std::string truncated;
+        std::string shown;
         if (IsPasswordVisible()) {
-            truncated = truncates ? Truncate(text) : text;
+            shown = GetText();
         } else {
-            std::string password(text.size(), mask);
-            truncated = truncates ? Truncate(password) : password;
+            for (size_t i = 0; i < Length(); ++i) Font::AppendCodepoint(shown, (int)mask);
         }
+        const std::string truncated = truncates ? Truncate(shown) : shown;
         DrawAlignedText(Alignment::CENTRE_LEFT, truncated, font);
         if (IsFocused() && fmod(elapsedTime, 1.0f) < 0.5f) {
             font.DrawText("|",
@@ -1556,6 +1551,20 @@ void PasswordField::DrawMyself(float elapsedTime) const {
 
 void PasswordField::SetMask(char32_t character) {
     mask = character;
+    if (!font.HasGlyph((int)mask)) {
+        std::string glyph;
+        Font::AppendCodepoint(glyph, (int)mask);
+        font.AddCharset(glyph);
+    }
+}
+
+void PasswordField::SetMask(const std::string& character) {
+    int size = 0;
+    const int cp = GetCodepointNext(character.c_str(), &size);
+    if (character.empty() || (size_t)size != character.size()) {
+        CPPFX_THROW(std::invalid_argument, "Mask must be exactly one character.");
+    }
+    SetMask((char32_t)cp);
 }
 
 char32_t PasswordField::GetMask() const {
@@ -1874,7 +1883,7 @@ void PressedButton::DrawMyself(float /*elapsedTime*/) const {
         textToDisplay = pressedText;
     } else {
         DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-        textToDisplay = text;
+        textToDisplay = GetText();
     }
 
     if (textToDisplay != "") {

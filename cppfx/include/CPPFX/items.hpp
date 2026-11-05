@@ -39,9 +39,15 @@ public:
 
     Alignment alignment;
 
-    Label() : Item("Label"), TextItem("Label"), alignment(Alignment::CENTRE) {colour.SetColour(BLANK); text = "Label";}
+    Label() : Item("Label"), TextItem("Label"), alignment(Alignment::CENTRE) {colour.SetColour(BLANK);}
 
+    /**
+     *  @brief Draws a rectangle and text in it.
+     */
     void DrawMyself(float elapsedTime) const override;
+    /**
+     *  @brief Defocuses immediately.
+     */
     void DoFocusAction(float elapsedTime) override;
 
     /**
@@ -103,6 +109,12 @@ public:
 
 protected:
     std::string promptText; ///< string displayed when the text is empty
+    size_t caretPosition = 0;
+    int KEY_REMOVE = KEY_BACKSPACE;
+    int KEY_REMOVE_FRONT = KEY_DELETE;
+    int KEY_SUBMIT = KEY_ENTER;
+    int KEY_MOVE_LEFT = KEY_LEFT;
+    int KEY_MOVE_RIGHT = KEY_RIGHT;
 
     void GetCallbacks(std::vector<Callback*>& out) override;
 
@@ -853,7 +865,7 @@ public:
      *  @details Measures currentLabel. Also grows the list's row height to fit it.
      */
     virtual void ExpandToText() override {
-        text = currentLabel;
+        SetText(currentLabel);
         TextItem::ExpandToText();
         const CPPFX::Font& rowFont = list.font.IsOverridden() ? list.font.GetOverride() : font;
         const float rowNeeds = rowFont.GetInkSize(currentLabel).y + (2.0f * textMargin);
@@ -864,7 +876,7 @@ public:
      *  @details Measures currentLabel. Also sets the list's row height to fit it.
      */
     void FitToText() override {
-        text = currentLabel;
+        SetText(currentLabel);
         TextItem::FitToText();
         const CPPFX::Font& rowFont = list.font.IsOverridden() ? list.font.GetOverride() : font;
         const float rowNeeds = rowFont.GetInkSize(currentLabel).y + (2.0f * textMargin);
@@ -1666,7 +1678,24 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
 
+        /**
+     *  @brief Sets the character shown in place of each hidden character.
+     *  @details Adds it to the font's charset if the font has no glyph for it.
+     *           Non-ASCII masks need a char32_t literal: U'•', not '•' - the latter
+     *           is a multi-character literal and compiles to garbage.
+     *  @param character codepoint to mask with
+     */
     void SetMask(char32_t character);
+    /**
+     *  @brief Sets the mask from a UTF-8 string.
+     *  @param character exactly one character, e.g. "•"
+     *  @throws std::invalid_argument if character is empty or longer than one character
+     */
+    void SetMask(const std::string& character);
+    /**
+     *  @brief Returns the mask character.
+     *  @returns the mask's codepoint
+     */
     char32_t GetMask() const;
 
     void MakePasswordVisible();
@@ -1681,7 +1710,7 @@ public:
     static std::string GetClassID();
 
 private:
-    char32_t mask;
+    char32_t mask; ///< a character displayed instead of the characters of the text
     bool isPasswordVisible;
 };
 

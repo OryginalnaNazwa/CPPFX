@@ -38,36 +38,41 @@ std::string TextItem::Truncate(const std::string& text) const {
 }
 
 std::string TextItem::Truncate() const {
-    return Truncate(text, font);
+    return Truncate(utf8Cache, font);
 }
 
 void TextItem::ExpandToText() {
-    const Vector2 ink = font.GetInkSize(text);
+    const Vector2 ink = font.GetInkSize(utf8Cache);
     if (ink.x + (2.0f * textMargin) > width) SetWidth(ink.x + (2.0f * textMargin));
     if (ink.y + (2.0f * textMargin) > height) SetHeight(ink.y + (2.0f * textMargin));
 }
 
 void TextItem::FitToText() {
-    const Vector2 ink = font.GetInkSize(text);
+    const Vector2 ink = font.GetInkSize(utf8Cache);
     SetWidth(ink.x + (2.0f * textMargin));
     SetHeight(ink.y + (2.0f * textMargin));
 }
 
-void TextItem::SetText(const std::string& text) {
-    if (this->text != text) onChange.Arm();
-    this->text = text;
-    if (expandsToTextAutomatically) ExpandToText();
+void TextItem::SetText(const std::string& utf8) {
+    std::u32string decoded = DecodeUtf8(utf8);
+    if (decoded != text) {
+        text = std::move(decoded);
+        SyncUtf8();
+        onChange.Arm();
+    }
 }
 
 void TextItem::ClearText() {
-    text = "";
+    if (!text.empty()) onChange.Arm();
+    text.clear();
+    utf8Cache.clear();
 }
 
 std::string TextItem::GetText() const {
-    return text;
+    return utf8Cache;
 }
 
-bool TextItem::IsEmpty() const {
+bool TextItem::IsTextEmpty() const {
     return text.empty();
 }
 
@@ -116,11 +121,11 @@ std::string TextItem::DrawAlignedText(const Alignment& alignment,
 
 std::string TextItem::DrawAlignedText(const Alignment& alignment,
                                       float x, float y, float width, float height) const {
-    return DrawAlignedText(alignment, text, font, x, y, width, height);
+    return DrawAlignedText(alignment, utf8Cache, font, x, y, width, height);
 }
 
 std::string TextItem::DrawAlignedText(const Alignment& alignment) const {
-    return DrawAlignedText(alignment, text, font);
+    return DrawAlignedText(alignment, utf8Cache, font);
 }
 
 void TextItem::DoTruncate() {
@@ -141,6 +146,47 @@ bool TextItem::DoesTruncate() const {
 
 const std::string TextItem::GetClassID() {
     return "TextItem";
+}
+
+void TextItem::InsertAt(size_t i, int cp)  {
+    text.insert(i, 1, (char32_t)cp);
+    SyncUtf8();
+    onChange.Arm();
+}
+
+void TextItem::RemoveAt(size_t index) {
+    if (index >= text.size()) return;
+    text.erase(index, 1);
+    SyncUtf8();
+    onChange.Arm();
+}
+
+int TextItem::CharacterAt(size_t i) const {
+    return (int)text.at(i);
+}
+
+size_t TextItem::Length() const { return text.size(); }  // codepoints, not bytes
+
+void TextItem::AppendAtBack(int codepoint) {
+    text.push_back((char32_t)codepoint);
+    SyncUtf8();
+    onChange.Arm();
+}
+
+std::u32string TextItem::DecodeUtf8(const std::string& utf8) {
+    std::u32string decoded;
+    const char* p = utf8.c_str();
+    while (*p) {
+        int size = 0;
+        decoded.push_back((char32_t)GetCodepointNext(p, &size));
+        p += size;
+    }
+    return decoded;
+}
+
+void TextItem::SyncUtf8() {
+    utf8Cache.clear();
+    for (char32_t cp : text) Font::AppendCodepoint(utf8Cache, cp);
 }
 
 //--- Container ---

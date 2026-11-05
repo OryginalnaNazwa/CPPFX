@@ -710,6 +710,7 @@ void CPPFX::Font::SetCharset(Charset preset) {
 }
 
 void CPPFX::Font::AddCharset(Charset preset) {
+    if (codepoints.empty()) AppendPreset(codepoints, Charset::LATIN_EXTENDED);
     AppendPreset(codepoints, preset);
     NormaliseCharset(codepoints);
     ReloadIfLoaded();
@@ -733,6 +734,7 @@ void CPPFX::Font::AddCharset(const std::string& sampleText) {
     if (sampleText.empty()) {
         throw std::invalid_argument("In Font: The charset sample is empty.");
     }
+    if (codepoints.empty()) AppendPreset(codepoints, Charset::LATIN_EXTENDED);
     int count = 0;
     int* cps = ::LoadCodepoints(sampleText.c_str(), &count);
     codepoints.insert(codepoints.end(), cps, cps + count);
