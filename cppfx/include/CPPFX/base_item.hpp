@@ -177,6 +177,8 @@ public:
     Callback onClick{"onClick"};
     Callback onMove{"onMove"};
     Callback onChange{"onChange"};
+    Callback onFocus{"onFocus"};
+    Callback onResize{"onResize"};
 
     bool HasArmedCallbacks();
     void DoCallbacks();

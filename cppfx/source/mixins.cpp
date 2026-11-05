@@ -116,18 +116,22 @@ Vector2 Circular::GetXYTransformed() const {
 // --- PersistentState ---
 
 void PersistentState::SetPressed(bool flag) {
+    if (pressed != flag) onChange.Arm();
     pressed = flag;
 }
 
 void PersistentState::Press() {
+    if (pressed != true) onChange.Arm();
     pressed = true;
 }
 
 void PersistentState::Unpress() {
+    if (pressed != false) onChange.Arm();
     pressed = false;
 }
 
 void PersistentState::SwitchPress() {
+    onChange.Arm();
     pressed = !pressed;
 }
 

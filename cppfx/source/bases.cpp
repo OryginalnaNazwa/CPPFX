@@ -43,12 +43,8 @@ std::string TextItem::Truncate() const {
 
 void TextItem::ExpandToText() {
     const Vector2 ink = font.GetInkSize(text);
-    if (ink.x + (2.0f * textMargin) > width) {
-        SetWidth(ink.x + (2.0f * textMargin));
-    }
-    if (ink.y + (2.0f * textMargin) > height) {
-        SetHeight(ink.y + (2.0f * textMargin));
-    }
+    if (ink.x + (2.0f * textMargin) > width) SetWidth(ink.x + (2.0f * textMargin));
+    if (ink.y + (2.0f * textMargin) > height) SetHeight(ink.y + (2.0f * textMargin));
 }
 
 void TextItem::FitToText() {
@@ -58,6 +54,7 @@ void TextItem::FitToText() {
 }
 
 void TextItem::SetText(const std::string& text) {
+    if (this->text != text) onChange.Arm();
     this->text = text;
     if (expandsToTextAutomatically) ExpandToText();
 }
@@ -346,8 +343,8 @@ void Container::ExpandToChildren() {
         if (item->GetX() + item->GetTotalWidth() > maxX) maxX = item->GetX() + item->GetTotalWidth();
         if (item->GetY() + item->GetTotalHeight() > maxY) maxY = item->GetY() + item->GetTotalHeight();
     }
-    if (maxX > xAnchor + width) width = maxX - xAnchor;
-    if (maxY > yAnchor + height) height = maxY - yAnchor;
+    if (maxX > xAnchor + width) SetWidth(maxX - xAnchor);
+    if (maxY > yAnchor + height) SetHeight(maxY - yAnchor);
 }
 
 void Container::FitToChildren() {
@@ -358,8 +355,8 @@ void Container::FitToChildren() {
         if (item->GetX() + item->GetTotalWidth() > maxX) maxX = item->GetX() + item->GetTotalWidth();
         if (item->GetY() + item->GetTotalHeight() > maxY) maxY = item->GetY() + item->GetTotalHeight();
     }
-    width = maxX - xAnchor;
-    height = maxY - yAnchor;
+    SetWidth(maxX - xAnchor);
+    SetHeight(maxY - yAnchor);
 }
 
 const std::string Container::GetClassID() {

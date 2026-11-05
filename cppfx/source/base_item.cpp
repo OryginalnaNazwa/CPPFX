@@ -23,7 +23,7 @@ void Item::DoPassiveAction(float /*elapsedTime*/) {
 }
 
 void Item::GetCallbacks(std::vector<Callback*>& out) {
-    out.insert(out.end(), {&onClick, &onMove, &onChange});
+    out.insert(out.end(), {&onClick, &onMove, &onChange, &onFocus, &onResize});
 }
 
 bool Item::HasArmedCallbacks() {
@@ -63,9 +63,11 @@ void Item::MoveDownPriority() {
 
 // --- Setters ---
 void Item::SetX(float x) {
+    if (xAnchor != x) onMove.Arm();
     xAnchor = x;
 }
 void Item::SetY(float y) {
+    if (yAnchor != y) onMove.Arm();
     yAnchor = y;
 }
 
@@ -88,6 +90,7 @@ void Item::SetHeight(float value) {
     if (value < 0.0f) {
         CPPFX_THROW(std::invalid_argument, "Negative height.");
     }
+    if (value != height) onResize.Arm();
     height = value;
 }
 
@@ -95,6 +98,7 @@ void Item::SetWidth(float value) {
     if (value < 0.0f) {
         CPPFX_THROW(std::invalid_argument, "Negative width.");
     }
+    if (value != width) onResize.Arm();
     width = value;
 }
 
@@ -128,6 +132,7 @@ void Item::SetID(const std::string& id) {
 }
 
 void Item::Focus() {
+    if (!focused) onFocus.Arm();
     focused = true;
 }
 

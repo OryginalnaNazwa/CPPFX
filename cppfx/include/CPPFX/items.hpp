@@ -65,6 +65,8 @@ public:
 
     TextField() : Item("TextField"), TextItem("TextField"), promptFont(height / 4.0f, GRAY), promptText("Text goes here...") {ClearText();}
 
+    Callback onSubmit{"onSubmit"};
+
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
 
@@ -90,6 +92,8 @@ public:
 
 protected:
     std::string promptText; ///< string displayed when the text is empty
+
+    void GetCallbacks(std::vector<Callback*>& out) override;
 
     /**
      *  @brief Draws the blinking cursor.
@@ -540,7 +544,8 @@ public:
             dirty = false;
         }
         if (currentLabel == "" && !values.empty()) {
-            SetCurrent(valuesInOrder[0]);
+            currentLabel = valuesInOrder[0];
+            currentValue = values.at(currentLabel); // explicit on purpose to avoid a callback on the first frame
             if (expandsToTextAutomatically) ExpandToText();
         }
     }
@@ -744,6 +749,7 @@ public:
      */
     void SetCurrent(const std::string& label) {
         if (IsLabelTaken(label)) {
+            if (currentLabel != label) onChange.Arm();
             currentLabel = label;
             currentValue = values.at(currentLabel);
         } else CPPFX_THROW(std::out_of_range, "No key " + label + " found.");
@@ -1085,6 +1091,8 @@ public:
         addArea.Hide();
     }
 
+    Callback onCommit{"onCommit"};
+
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
@@ -1154,6 +1162,8 @@ public:
 
 private:
     void CommitAddArea();
+
+    void GetCallbacks(std::vector<Callback*>& out) override;
 
     bool opensOnSecondClick = true; ///< if true, the click that unrolls the dropdown doesn't reach addArea
 };

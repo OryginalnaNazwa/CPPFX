@@ -1064,6 +1064,7 @@ CPPFX::Font OverrideFont::GetOverride() const { return Checked(__func__); }
 // --- Callback ---
 
 void Callback::Arm() {
+    if (!IsSet()) return;
     armed = true;
 }
 

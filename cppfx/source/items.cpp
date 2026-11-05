@@ -46,23 +46,31 @@ void TextField::DrawMyself(float elapsedTime) const {
         }
     } else {
         const std::string truncated = DrawAlignedText(Alignment::CENTRE_LEFT, text, font);
-        if (focused && fmod(elapsedTime, 1.0f) < 0.5f) {
+        if (IsFocused() && fmod(elapsedTime, 1.0f) < 0.5f) {
             DrawCaret(truncated);
         }
     }
 }
 
 void TextField::DoFocusAction(float elapsedTime) {
-    if (focused) {
+    if (IsFocused()) {
         if (IsKeyPressedRepeat(KEY_BACKSPACE)) {
+            if (text != "") onChange.Arm();
             Font::PopBackCodepoint(text);
         } else if (IsKeyDown(KEY_BACKSPACE)) {
-            if (fmod(elapsedTime, 0.1f) < GetFrameTime()) Font::PopBackCodepoint(text);
+            if (fmod(elapsedTime, 0.1f) < GetFrameTime()) {
+                if (text != "") onChange.Arm();
+                Font::PopBackCodepoint(text);
+            }
+        } else if (IsKeyPressed(KEY_ENTER)) {
+            onSubmit.Arm();
+            Defocus();
         } else {
             int ch = GetCharPressed();
             while (ch > 0) {
                 Font::AppendCodepoint(text, ch);
                 ch = GetCharPressed();
+                onChange.Arm();
             }
         }
     }
@@ -82,6 +90,11 @@ std::string TextField::GetPromptText() const {
 
 bool TextField::IsPromptTextEmpty() const {
     return promptText.empty();
+}
+
+void TextField::GetCallbacks(std::vector<Callback*>& out) {
+    TextItem::GetCallbacks(out);
+    out.push_back(&onSubmit);
 }
 
 std::string TextField::Truncate(const std::string& text, const CPPFX::Font& font, float maxWidth) const {
@@ -183,9 +196,9 @@ void CheckBox::DrawMyself(float /*elapsedTime*/) const {
 }
 
 void CheckBox::DoFocusAction(float /*elapsedTime*/) {
-   if (focused) {
-        pressed = !pressed;
-        focused = false;
+   if (IsFocused()) {
+        SwitchPress();
+        Defocus();
    }
 }
 
@@ -291,6 +304,7 @@ void RadioGroup::DoFocusAction(float /*elapsedTime*/) {
 void RadioGroup::DoFocusAction(float /*elapsedTime*/, const Vector2& mousePosition) {
     for (auto& [key, button] : buttons) {
         if (button->WasIClicked(mousePosition)) {
+            if (!button->IsPressed()) onChange.Arm();
             UnpressButtons();
             button->Press();
             return;
@@ -306,7 +320,7 @@ void RadioGroup::DoPassiveAction(float /*elapsedTime*/) {
 
 void RadioGroup::AddButton(const std::string& label) {
     if (label == "") {
-        CPPFX_WARN("If for some strange reason you want no label, use ' ' spaces.");
+        CPPFX_WARN("If for some reason you want no label, use ' '/ spaces.");
         CPPFX_THROW(std::invalid_argument, "Cannot add button - empty label.");
     }
     if (IsLabelTaken(label)) {
@@ -547,8 +561,8 @@ void RadioGroup::ExpandToButtons() {
         if (button->GetX() + button->GetTotalWidth() > maxX) maxX = button->GetX() + button->GetTotalWidth();
         if (button->GetY() + button->GetTotalHeight() > maxY) maxY = button->GetY() + button->GetTotalHeight();
     }
-    if (maxX > xAnchor + width) width = maxX - xAnchor + buttonMargin;
-    if (maxY > yAnchor + height) height = maxY - yAnchor + buttonMargin;
+    if (maxX > xAnchor + width) SetWidth(maxX - xAnchor + buttonMargin);
+    if (maxY > yAnchor + height) SetHeight(maxY - yAnchor + buttonMargin);
 }
 
 void RadioGroup::FitToButtons() {
@@ -559,8 +573,8 @@ void RadioGroup::FitToButtons() {
         if (button->GetX() + button->GetTotalWidth() > maxX) maxX = button->GetX() + button->GetTotalWidth();
         if (button->GetY() + button->GetTotalHeight() > maxY) maxY = button->GetY() + button->GetTotalHeight();
     }
-    width = maxX - xAnchor + buttonMargin;
-    height = maxY - yAnchor + buttonMargin;
+    SetWidth(maxX - xAnchor + buttonMargin);
+    SetHeight(maxY - yAnchor + buttonMargin);
 }
 
 void RadioGroup::SetButtonMargin(float distance) {
@@ -634,6 +648,7 @@ void ComboBox::CommitAddArea() {
         }
     }
     SetCurrent(label);
+    onCommit.Arm();
     if (expandsToTextAutomatically) ExpandToText();
     Defocus();
 }
@@ -667,6 +682,11 @@ void ComboBox::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
     } else if (values.empty()) {
         Defocus();
     }
+}
+
+void ComboBox::GetCallbacks(std::vector<Callback*>& out) {
+    DropDown<std::string>::GetCallbacks(out);
+    out.push_back(&onCommit);
 }
 
 void ComboBox::SetX(float x) {
@@ -1017,10 +1037,12 @@ void AnchorPane::SetPositionsOfItems() {
     }
     if (maxX > xAnchor + width) {
         width = maxX - xAnchor;
+        if (width != previousWidth) onResize.Arm();
         previousWidth = width;
     }
     if (maxY > yAnchor + height) {
         height = maxY - yAnchor;
+        if (height != previousHeight) onResize.Arm();
         previousHeight = height;
     }
     previousX = xAnchor;
@@ -1149,10 +1171,14 @@ void Spinner::DrawMyself(float elapsedTime) const {
 void Spinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.Focus();
-        if (incrementButton.onClick.IsSet()) incrementButton.onClick.ForceDo();
+        const float old = value;
+        incrementButton.onClick.ForceDo();
+        if (value != old) onChange.Arm();
     } else if (decrementButton.WasIClicked(mousePosition)) {
         decrementButton.Focus();
-        if (decrementButton.onClick.IsSet()) decrementButton.onClick.ForceDo();
+        const float old = value;
+        decrementButton.onClick.ForceDo();
+        if (value != old) onChange.Arm();
     }
     decrementButton.DoFocusAction(elapsedTime);
     incrementButton.DoFocusAction(elapsedTime);
@@ -1388,31 +1414,38 @@ void EditableSpinner::DrawMyself(float elapsedTime) const {
 void EditableSpinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.Focus();
-        if (incrementButton.onClick.IsSet()) incrementButton.onClick.ForceDo();
+        const float old = value;
+        incrementButton.onClick.ForceDo();
+        if (value != old) onChange.Arm();
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
         editArea.Defocus();
     } else if (decrementButton.WasIClicked(mousePosition)) {
         decrementButton.Focus();
         editArea.Defocus();
-        if (decrementButton.onClick.IsSet()) decrementButton.onClick.ForceDo();
+        const float old = value;
+        decrementButton.onClick.ForceDo();
+        if (value != old) onChange.Arm();
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
     } else if (editArea.WasIClicked(mousePosition)) {
         editArea.Focus();
         editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
     } else {
         if (editArea.IsFocused()) {
+            float old = value;
             try {
                 value = std::stof(editArea.GetText());
             } catch (const std::invalid_argument&) {
                 //do nothing. Doesn't change the value.
             } catch (const std::out_of_range&) {
-                value = std::numeric_limits<float>::max();
+                value = editArea.GetText().starts_with('-') ? std::numeric_limits<float>::lowest()
+                                                            : std::numeric_limits<float>::max();
             }
             if (hasMax && value >= maxValue) {
                 value = maxValue;
             } else if (hasMin && value <= minValue) {
                 value = minValue;
             }
+            if (old != value) onChange.Arm();
             editArea.Defocus();
         }
     }
@@ -1461,19 +1494,22 @@ float EditableSpinner::GetValueMargin() const {
 
 void EditableSpinner::Defocus() {
     editArea.Defocus();
-    focused = false;
+    Spinner::Defocus();
+    float old = value;
     try {
         value = std::stof(editArea.GetText());
     } catch (const std::invalid_argument&) {
         return; //no need to reset the value if it didn't change
     } catch (const std::out_of_range&) {
-        value = std::numeric_limits<float>::max();
+        value = editArea.GetText().starts_with('-') ? std::numeric_limits<float>::lowest()
+                                                    : std::numeric_limits<float>::max();
     }
     if (hasMax && value >= maxValue) {
         value = maxValue;
     } else if (hasMin && value <= minValue) {
         value = minValue;
     }
+    if (old != value) onChange.Arm();
     editArea.SetText(value == (int)value ? TextFormat("%d", (int)value) : TextFormat("%.2f", value));
 }
 
@@ -1833,7 +1869,7 @@ std::string ProgressBar::GetClassID() {
 
 void PressedButton::DrawMyself(float /*elapsedTime*/) const {
     std::string textToDisplay;
-    if (pressed) {
+    if (IsPressed()) {
         DrawRectangle(xAnchor, yAnchor, width, height, PersistentState::pressedColour.GetColour());
         textToDisplay = pressedText;
     } else {
@@ -1852,7 +1888,7 @@ void PressedButton::DoFocusAction(float /*elapsedTime*/) {
 }
 
 void PressedButton::DoFocusAction(float /*elapsedTime*/, const Vector2& /*mousePosition*/) {
-    pressed = !pressed;
+    SwitchPress();
 }
 
 void PressedButton::SetPressedText(const std::string& value) {
