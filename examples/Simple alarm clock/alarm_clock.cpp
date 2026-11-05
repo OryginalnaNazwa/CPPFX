@@ -104,22 +104,22 @@ int main() {
     // set up button interface
     auto btn1 = gui.AddButton("-1h Button");
     btn1->SetText("-1h");
-    btn1->onClick = [&hours]() { hours--; };
+    btn1->onClick.Set([&hours]() { hours--; });
     auto btn2 = gui.AddButton("-5m Button");
     btn2->SetText("-5m");
-    btn2->onClick = [&minutes]() { minutes -= 5; };
+    btn2->onClick.Set([&minutes]() { minutes -= 5; });
     auto btn3 = gui.AddButton("-1m Button");
     btn3->SetText("-1m");
-    btn3->onClick = [&minutes]() { minutes --; };
+    btn3->onClick.Set([&minutes]() { minutes--; });
     auto btn4 = gui.AddButton("+1m Button");
     btn4->SetText("+1m");
-    btn4->onClick = [&minutes]() { minutes++; };
+    btn4->onClick.Set([&minutes]() { minutes++; });
     auto btn5 = gui.AddButton("+5m Button");
     btn5->SetText("+5m");
-    btn5->onClick = [&minutes]() { minutes += 5; };
+    btn5->onClick.Set([&minutes]() { minutes += 5; });
     auto btn6 = gui.AddButton("+1h Button");
     btn6->SetText("+1h");
-    btn6->onClick = [&hours]() { hours++; };
+    btn6->onClick.Set([&hours]() { hours++; });
 
     // arrange layout
     auto column = gui.AddVBox();
