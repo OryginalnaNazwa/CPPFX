@@ -151,19 +151,23 @@ public:
 
     /**
      *  @brief Sets whether the item is pressed.
+     *  @details Calls onChange if the press value changed.
      *  @param flag true - pressed
      */
     void SetPressed(bool flag);
     /**
      *  @brief Sets pressed to true.
+     *  @details Calls onChange if the press value changed.
      */
     void Press();
     /**
      *  @brief Sets pressed to false.
+     *  @details Calls onChange if the press value changed.
      */
     void Unpress();
     /**
      *  @brief Toggles pressed.
+     *  @details Calls onChange.
      */
     void SwitchPress();
     /**

@@ -1240,5 +1240,66 @@ protected:
     Item* owner; ///< item this property belongs to
 };
 
+/**
+ * @class Callback
+ * @brief Event handler
+ * @details Arming and doing happen in the same frame, once. Arming an armed callback is a no-op. Callback handling is done by GUI.
+ */
+class Callback {
+public:
+    Callback() : armed(false), slot(nullptr), ID("Callback") {}
+    Callback(const std::string& i) : armed(false), slot(nullptr), ID(i) {}
+
+    /**
+     *  @brief Arms the callback, preparing it for execution later.
+     *  @details Does nothing if callback is not set.
+     */
+    void Arm();
+    void Disarm(); ///< Disarms the callback
+    /**
+     *  @brief Checks whether the callback is armed.
+     *  @returns true if armed
+     */
+    bool IsArmed() const;
+
+    /**
+     *  @brief Tries to execute callback
+     *  @details Does nothing if it's not set or armed.
+     */
+    void Do();
+    /**
+     *  @brief Executes callback. FOR COMPOSITES.
+     *  @details Ignores state of arming. Throws if not set. For use in composites which control the composed-in widgets and don't need to arm them.
+     *  @throws std::runtime_error if callback is not set.
+     */
+    void ForceDo();
+    void Clear(); ///< Unsets the callback, leaving it empty
+    /**
+     *  @brief Sets the callback.
+     *  @param func function that callback will call
+     */
+    void Set(const std::function<void()>& func);
+    /**
+     *  @brief Returns current callback
+     *  @returns Function its calling.
+     */
+    std::function<void()> Get() const;
+    /**
+     *  @brief Checks whether callback's function is set
+     *  @returns true if set
+     */
+    bool IsSet() const;
+
+    void SetID(const std::string& ID);
+    std::string GetID() const;
+
+private:
+    bool armed; ///< whether it should be called
+    std::function<void()> slot; ///< what it will do
+    std::string ID;
+
+    void Execute(); ///< helper for calling, copies the function for safety
+};
+
 }
 #endif // PROPERTIES_H

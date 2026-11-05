@@ -65,7 +65,20 @@ public:
 
     TextField() : Item("TextField"), TextItem("TextField"), promptFont(height / 4.0f, GRAY), promptText("Text goes here...") {ClearText();}
 
+    Callback onSubmit{"onSubmit"}; ///< Launches when enter is pressed
+
+    /**
+     *  @brief Draws the text field.
+     *  @details Draws the box. If it's empty, draws prompt text in prompt font.
+     *           Draws the text otherwise. If focused, draws the caret at the end.
+     */
     void DrawMyself(float elapsedTime) const override;
+    /**
+     *  @brief Handles text input.
+     *  @details Pressing enter submits the text, defocusing TextField, which also calls onSubmit.
+     *           Pressing backspace removes one character, holding it down removes more. Both call onChange.
+     *           Keyboard input is added to the text otherwise, which calls onChange.
+     */
     void DoFocusAction(float elapsedTime) override;
 
     /**
@@ -90,6 +103,8 @@ public:
 
 protected:
     std::string promptText; ///< string displayed when the text is empty
+
+    void GetCallbacks(std::vector<Callback*>& out) override;
 
     /**
      *  @brief Draws the blinking cursor.
@@ -149,6 +164,7 @@ public:
  *  border goes around the box and the label, clickBorder around the box only.
  *  The mark is drawn in colour, and pressedColour fills the box while pressed.
  *  RADIO is the exception: colour fills the circle and pressedColour is the dot.
+ *  @see PersistentState for onChange callback handling.
  *  @note Probably works best for equal width and height, but X and TICK should work correctly nonetheless at least.
  */
 class CheckBox : public TextItem, public virtual PersistentState {
@@ -269,7 +285,7 @@ public:
 
     /**
      *  @brief Presses the given button
-     *  @details Unpresses other buttons
+     *  @details Unpresses other buttons. Calls onChange if a new button was pressed.
      *  @param label label of the button to be pressed
      *  @throws std::runtime_error if there are no buttons
      *  @throws std::out_of_range if the button wasn't found
@@ -354,13 +370,14 @@ public:
     void SetButtonsPositions();
     /**
      *  @brief Expands width and height to fit the buttons.
-     *  @details Called automatically in SetButtonsPositions.
+     *  @details Called automatically in SetButtonsPositions. Calls onResize if dimension have changed.
      *  @throws std::runtime_error if there are no buttons.
      *  @see SetButtonsPositions
      */
     void ExpandToButtons();
     /**
      *  @brief Expands or shrinks width and height to fit the buttons.
+     *  @details Calls onResize if dimension have changed.
      *  @throws std::runtime_error if there are no buttons.
      */
     void FitToButtons();
@@ -540,7 +557,8 @@ public:
             dirty = false;
         }
         if (currentLabel == "" && !values.empty()) {
-            SetCurrent(valuesInOrder[0]);
+            currentLabel = valuesInOrder[0];
+            currentValue = values.at(currentLabel); // explicit on purpose to avoid a callback on the first frame
             if (expandsToTextAutomatically) ExpandToText();
         }
     }
@@ -739,11 +757,13 @@ public:
 
     /**
      *  @brief Sets current label and value to another item based on label.
+     *  @details Calls onChange if a new label was selected.
      *  @param label name of the item to be set to.
      *  @throws std::out_of_range if no label found
      */
     void SetCurrent(const std::string& label) {
         if (IsLabelTaken(label)) {
+            if (currentLabel != label) onChange.Arm();
             currentLabel = label;
             currentValue = values.at(currentLabel);
         } else CPPFX_THROW(std::out_of_range, "No key " + label + " found.");
@@ -1085,6 +1105,8 @@ public:
         addArea.Hide();
     }
 
+    Callback onCommit{"onCommit"}; ///< Called when add area's new label is submitted
+
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
@@ -1154,6 +1176,8 @@ public:
 
 private:
     void CommitAddArea();
+
+    void GetCallbacks(std::vector<Callback*>& out) override;
 
     bool opensOnSecondClick = true; ///< if true, the click that unrolls the dropdown doesn't reach addArea
 };
@@ -1407,6 +1431,10 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
+    /**
+     *  @brief Checks whether the buttons were clicked and calls their callback.
+     *  @details Calls onChange if value has changed.
+     */
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
     bool WasIClicked(const Vector2& mousePosition) const override;
 
@@ -1576,7 +1604,7 @@ public:
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
     /**
      *  @brief Defocuses and loads value.
-     *  @details Keeps the old value on invalid input. A number too big for a float becomes the float max. Then clamps to the enabled bounds.
+     *  @details Keeps the old value on invalid input. A number too big for a float becomes the float max and too small becomes lowest. Then clamps to the enabled bounds. Calls onChange if the value has changed.
      */
     void Defocus() override;
 

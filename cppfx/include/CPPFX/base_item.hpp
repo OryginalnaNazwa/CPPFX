@@ -172,22 +172,50 @@ public:
 
     /**
      *  @brief Launches on click.
-     *  @details Lambda, put in your own. Not called while the item is inactive.
      */
-    std::function<void()> onClick;
+    Callback onClick{"onClick"};
     /**
-     *  @brief Launches every frame the cursor is over the item.
-     *  @details Lambda, put in your own. Not called while the item is inactive.
+     *  @brief Launches when x,y coordinates were changed
      */
-    std::function<void()> onHover;
+    Callback onMove{"onMove"};
+    /**
+     *  @brief Launches when value was changed
+     *  @details What value means depends on widget.
+     */
+    Callback onChange{"onChange"};
+    /**
+     *  @brief Launches when the widget was focused.
+     *  @details Only when it was not focused before
+     */
+    Callback onFocus{"onFocus"};
+    /**
+     *  @brief Launches when width or height were changed
+     */
+    Callback onResize{"onResize"};
+
+    /**
+     *  @brief Checks whether any callbacks are armed.
+     *  @returns true if any callback is armed
+     */
+    bool HasArmedCallbacks();
+    /**
+     *  @brief Executes armed callbacks
+     */
+    void DoCallbacks();
+    /**
+     *  @brief Disarms all callbacks.
+     */
+    void DisarmCallbacks();
 
     /**
      *  @brief Sets the x coordinate of the item.
+     *  @brief Calls onMove if x has changed.
      *  @param x new value to be set
      */
     virtual void SetX(float x);
     /**
      *  @brief Sets the y coordinate of the item.
+     *  @brief Calls onMove if y has changed.
      *  @param y new value to be set
      */
     virtual void SetY(float y);
@@ -218,12 +246,14 @@ public:
     virtual void SetXY(const Vector2& xy);
     /**
      *  @brief Sets the height of the item.
+     *  @details Calls onResize if height has changed.
      *  @param value The new height.
      *  @throws std::invalid_argument If the value is negative.
      */
     virtual void SetHeight(float value);
     /**
      *  @brief Sets the width of the item.
+     *  @details Calls onResize if width has changed.
      *  @param value The new width.
      *  @throws std::invalid_argument If the value is negative.
      */
@@ -358,6 +388,12 @@ protected:
     bool inactive; ///< inactive items are not interactable
     bool eatsClick; ///< if false, allows the click to continue under it
     size_t priority; ///< drawing order; see SetPriority.
+    /**
+     *  @brief Gets the list of the callbacks in the widget
+     *  @details By default lists onClick, onMove, onResize, onFocus and onChange. For derived: call base, then push their own
+     *  @param out this will be the list
+     */
+    virtual void GetCallbacks(std::vector<Callback*>& out);
 
     bool screenBased; ///< if true, item stays fixed on screen and ignores the camera.
     const std::string fxID; ///< ID for the library.

@@ -7,6 +7,8 @@
  * @file Slot Machine
  * @brief A simple simulation of a slot machine.
  * Three reels with symbols represented by coloured squares. Push the lever to roll.
+ * =====================================================================================
+ * v1.1 - switched to new Callbacks. Cleaned up & a bit.
  **************************************************************************************/
 
 enum PHASE { ///< phase of the game
@@ -122,9 +124,9 @@ int main() {
     CPPFX::GUI gui;
     auto lever = gui.AddButton("Lever"); // button that will handle lever
     lever->MakeInvisible(); // invisible, lever is the visible part, button only handles clicks.
-    lever->onClick = [&phase, &reelsIndexes, &lever, &money, &COST_OF_ROLL]() { // set callback to change phase and roll
+    lever->onClick.Set([&phase, &reelsIndexes, lever, &money, COST_OF_ROLL]() { // set callback to change phase and roll
         StartRoll(phase, reelsIndexes, lever, money, COST_OF_ROLL);
-    };
+    });
     lever->SetXY(END_UP.x - HEAD_RADIUS, END_UP.y - HEAD_RADIUS);
     lever->SetDimensions(HEAD_RADIUS * 2.0f, HEAD_RADIUS * 2.0f);
 
