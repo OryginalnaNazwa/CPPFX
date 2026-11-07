@@ -355,7 +355,7 @@ void RadioGroup::DoFocusAction(float /*elapsedTime*/) {
     return;
 }
 
-void RadioGroup::DoFocusAction(float /*elapsedTime*/, const Vector2& mousePosition) {
+void RadioGroup::DoFocusAction(float /*elapsedTime*/, Vector2 mousePosition) {
     for (auto& [key, button] : buttons) {
         if (button->WasIClicked(mousePosition)) {
             if (!button->IsPressed()) onChange.Arm();
@@ -766,7 +766,7 @@ void ComboBox::DoFocusAction(float elapsedTime) {
     else addArea.DoFocusAction(elapsedTime);
 }
 
-void ComboBox::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
+void ComboBox::DoFocusAction(float elapsedTime, Vector2 mousePosition) {
     if (justOpened) {
         justOpened = false;
         return;
@@ -987,7 +987,7 @@ void SearchableDropDown::DoFocusAction(float elapsedTime) {
     else searchArea.DoFocusAction(elapsedTime);
 }
 
-void SearchableDropDown::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
+void SearchableDropDown::DoFocusAction(float elapsedTime, Vector2 mousePosition) {
     if (justOpened) {
         justOpened = false;
         return;
@@ -1279,7 +1279,7 @@ void Spinner::DrawMyself(float elapsedTime) const {
     border.DrawMyself(xAnchor, yAnchor, width, height);
 }
 
-void Spinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
+void Spinner::DoFocusAction(float elapsedTime, Vector2 mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.Focus();
         const float old = value;
@@ -1300,7 +1300,7 @@ void Spinner::DoFocusAction(float elapsedTime) {
     decrementButton.DoFocusAction(elapsedTime);
 }
 
-bool Spinner::WasIClicked(const Vector2& mousePosition) const {
+bool Spinner::WasIClicked(Vector2 mousePosition) const {
     float xClick = mousePosition.x, yClick = mousePosition.y;
     if (xClick >= xAnchor && xClick <= (xAnchor + width + incrementButton.GetWidth()) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
         return true;
@@ -1544,7 +1544,7 @@ void EditableSpinner::DrawMyself(float elapsedTime) const {
     border.DrawMyself(xAnchor, yAnchor, width + incrementButton.GetWidth() + editArea.border.GetThickness(), height);
 }
 
-void EditableSpinner::DoFocusAction(float elapsedTime, const Vector2& mousePosition) {
+void EditableSpinner::DoFocusAction(float elapsedTime, Vector2 mousePosition) {
     if (incrementButton.WasIClicked(mousePosition)) {
         incrementButton.Focus();
         const float old = value;
@@ -2017,7 +2017,7 @@ void PressedButton::DoFocusAction(float /*elapsedTime*/) {
     return;
 }
 
-void PressedButton::DoFocusAction(float /*elapsedTime*/, const Vector2& /*mousePosition*/) {
+void PressedButton::DoFocusAction(float /*elapsedTime*/, Vector2 /*mousePosition*/) {
     SwitchPress();
 }
 
@@ -2241,7 +2241,7 @@ void Line::SetEndPoint(float x, float y) {
     CalculateLength();
 }
 
-void Line::SetEndPoint(const Vector2& coordinates) {
+void Line::SetEndPoint(Vector2 coordinates) {
     SetEndPoint(coordinates.x, coordinates.y);
 }
 
@@ -2523,7 +2523,7 @@ void Sprite::SetXYShift(float shift) {
     SetYShift(shift);
 }
 
-void Sprite::SetXYShift(const Vector2& xyShift) {
+void Sprite::SetXYShift(Vector2 xyShift) {
     SetXShift(xyShift.x);
     SetYShift(xyShift.y);
 }

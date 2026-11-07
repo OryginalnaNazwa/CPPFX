@@ -30,7 +30,7 @@ public:
      *  @param mousePosition position of mouse during the click
      *  @returns true if the click was inside the circle.
      */
-    virtual bool WasIClicked(const Vector2& mousePosition) const override;
+    virtual bool WasIClicked(Vector2 mousePosition) const override;
 
     /**
      *  @brief Sets x,y as the centre of the circle.
@@ -238,12 +238,12 @@ protected:
     void SetX(float x) override { Item::SetX(x); }
     void SetY(float y) override { Item::SetY(y); }
     void SetXY(float x, float y) override { Item::SetXY(x, y); }
-    void SetXY(const Vector2& xy) override { Item::SetXY(xy); }
+    void SetXY(Vector2 xy) override { Item::SetXY(xy); }
     void SetXY(float xy) override { Item::SetXY(xy); }
     void SetHeight(float value) override { Item::SetHeight(value); }
     void SetWidth(float value) override { Item::SetWidth(value); }
     void SetDimensions(float width, float height) override { Item::SetDimensions(width, height); }
-    void SetDimensions(const Vector2& dimensions) override { Item::SetDimensions(dimensions); }
+    void SetDimensions(Vector2 dimensions) override { Item::SetDimensions(dimensions); }
     void SetDimensions(float value) override { Item::SetDimensions(value); }
     void SetToScreen() override { Item::SetToScreen(); }
     void SetToWorld() override { Item::SetToWorld(); }

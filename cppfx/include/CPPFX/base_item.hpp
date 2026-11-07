@@ -58,7 +58,7 @@ public:
      *  @param mousePosition position of mouse during the click
      *  @returns true if was clicked.
      */
-    virtual bool WasIClicked(const Vector2& mousePosition) const;
+    virtual bool WasIClicked(Vector2 mousePosition) const;
     /**
      *  @brief Action done every frame.
      *  @param elapsedTime total elapsed time of all frames
@@ -83,7 +83,7 @@ public:
      *  @param mousePosition mouse's x and y during the recent click, in the item's
      *         own coordinate system (screen or world).
      */
-    virtual void DoFocusAction(float elapsedTime, const Vector2& mousePosition);
+    virtual void DoFocusAction(float elapsedTime, Vector2 mousePosition);
     /**
      *  @brief Sets focused to false.
      */
@@ -277,7 +277,7 @@ public:
      *  @see SetX
      *  @see SetY
      */
-    virtual void SetXY(const Vector2& xy);
+    virtual void SetXY(Vector2 xy);
     /**
      *  @brief Sets the height of the item.
      *  @details Calls onResize if height has changed.
@@ -308,7 +308,7 @@ public:
      *  @see SetWidth
      *  @see SetHeight
      */
-    virtual void SetDimensions(const Vector2& dimensions);
+    virtual void SetDimensions(Vector2 dimensions);
     /**
      *  @brief Sets both width and height of the item to the same value.
      *  @details Just calls the appropriate methods - convenience wrapper.
@@ -421,8 +421,8 @@ protected:
     bool visible; ///< invisible items are still interactable
     bool inactive; ///< inactive items are not interactable
     bool eatsClick; ///< if false, allows the click to continue under it
-    size_t priority; ///< drawing order; see SetPriority.
-    bool hovered;
+    size_t priority; ///< drawing order; @see SetPriority.
+    bool hovered;   ///< is widget under cursor
     /**
      *  @brief Gets the list of the callbacks in the widget
      *  @details By default lists onClick, onMove, onResize, onFocus and onChange. For derived: call base, then push their own

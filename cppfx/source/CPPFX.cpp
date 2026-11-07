@@ -20,7 +20,7 @@ const std::unordered_set<std::string> GUI::CONTAINERS = {"AnchorPane", "VBox", "
 
 //--- Main loop ---
 
-void GUI::DoUI(const Camera2D& camera) {
+void GUI::DoUI(Camera2D camera) {
     elapsedTime += GetFrameTime();
     if (needsSorting) {
         SortOrder();
@@ -55,7 +55,7 @@ void GUI::Close() {
     hits.clear();
 }
 
-void GUI::CollectHits(const Vector2 screenMouse, const Vector2 worldMouse) {
+void GUI::CollectHits(Vector2 screenMouse, Vector2 worldMouse) {
     hits.clear();
     if (!IsCursorOnScreen()) return;
     for (auto it = ItemsInDrawingOrder.rbegin(); it != ItemsInDrawingOrder.rend(); ++it) {
@@ -87,7 +87,7 @@ void GUI::HandleClick() {
     }
 }
 
-void GUI::DrawUI(const Camera2D camera) const {
+void GUI::DrawUI(Camera2D camera) const {
     for (auto& item : ItemsInDrawingOrder) {
         if (item->IsVisible()) {
             if (screenBased || item->IsScreenBased()) {
@@ -99,7 +99,7 @@ void GUI::DrawUI(const Camera2D camera) const {
     }
 }
 
-void GUI::DoItemsActions(const Vector2 screenMouse, const Vector2 worldMouse, bool clicked) {
+void GUI::DoItemsActions(Vector2 screenMouse, Vector2 worldMouse, bool clicked) {
     for (auto& item : ItemsInDrawingOrder) {
         if (item->IsInactive()) continue;
         item->DoPassiveAction(elapsedTime);
@@ -533,13 +533,13 @@ size_t GUI::GetTotalItemCount(const std::string& fxID) const {
     }
 }
 
-void GUI::SetGlobalPrimaryColour(const Color& color) {
+void GUI::SetGlobalPrimaryColour(Color color) {
     for (auto& [key, item] : Items) {
         item->colour.SetColour(color);
     }
 }
 
-void GUI::SetGlobalPrimaryColour(const Colour& colour) {
+void GUI::SetGlobalPrimaryColour(Colour colour) {
     for (auto& [key, item] : Items) {
         item->colour.SetColour(colour.GetColour());
     }
@@ -559,7 +559,7 @@ void GUI::SetGlobalWorldBased() {
     screenBased = false;
 }
 
-void GUI::SetGlobalCoordinateBase(const bool& flag) {
+void GUI::SetGlobalCoordinateBase(bool flag) {
     screenBased = flag;
 }
 

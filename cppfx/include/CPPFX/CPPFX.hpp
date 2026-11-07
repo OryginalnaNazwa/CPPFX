@@ -78,7 +78,7 @@ public:
      *  @note Use this in your main loop.
      *  @warning Must be between Begin/EndMode2D if screenBased items or GUI is used.
      */
-    void DoUI(const Camera2D& camera);
+    void DoUI(Camera2D camera);
 
     /**
      *  @brief Closes the GUI
@@ -429,9 +429,9 @@ public:
      *  @details Primary is the Item::colour field. Sets ALL and only currently existing items.
      *  @param colour colour to be set
      */
-    void SetGlobalPrimaryColour(const Colour& colour); //TODO make them actually useful
+    void SetGlobalPrimaryColour(Colour colour); //TODO make them actually useful
     /// @copydoc SetGlobalPrimaryColour(const Colour&)
-    void SetGlobalPrimaryColour(const Color& colour);
+    void SetGlobalPrimaryColour(Color colour);
     /**
      *  @copydoc SetGlobalPrimaryColour(const Colour&)
      *  @throws std::invalid_argument if colour is empty
@@ -530,7 +530,7 @@ public:
      *  @brief Sets whether the items will be screen based or world based.
      *  @param flag true - screen, false - world.
      */
-    void SetGlobalCoordinateBase(const bool& flag);
+    void SetGlobalCoordinateBase(bool flag);
     /**
      *  @brief Checks the global coordinate system flag.
      *  @returns true if screen based, false if world.
@@ -548,11 +548,11 @@ private:
     float elapsedTime = 0.0f; ///< total elapsed time of all frames
     bool needsSorting = false; ///< lazy sort
 
-    void DrawUI(const Camera2D camera) const; ///< draws the items
-    void CollectHits(const Vector2 worldMouse, const Vector2 screenMouse);
+    void DrawUI(Camera2D camera) const; ///< draws the items
+    void CollectHits(Vector2 worldMouse, Vector2 screenMouse);
     void UpdateHover(); ///< hovers and dehovers items and arms hover callbacks
     void HandleClick(); ///< defocuses and arms onClick
-    void DoItemsActions(const Vector2 screenMouse, const Vector2 worldMouse, const bool clicked); ///< does focused and passive actions
+    void DoItemsActions(Vector2 screenMouse, Vector2 worldMouse, bool clicked); ///< does focused and passive actions
     void GrabArmedWidgets(); ///< collects a list of IDs with armed widgets
     void DoCallbacks(); ///< executes the callbacks.
 

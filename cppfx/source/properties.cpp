@@ -225,7 +225,7 @@ unsigned char Colour::Lerp(unsigned char a, unsigned char b, float t) {
     return static_cast<unsigned char>(a + (static_cast<float>(b) - a) * t + 0.5f);
 }
 
-void Colour::Blend(const Color& target, float t) {
+void Colour::Blend(Color target, float t) {
     if (t < 0.0f) t = 0.0f;
     if (t > 1.0f) t = 1.0f;
 
@@ -275,7 +275,7 @@ void OverrideColour::SetHex()                         { Checked(__func__).SetHex
 void OverrideColour::SetDec()                         { Checked(__func__).SetDec(); }
 void OverrideColour::SetLiteralBase(bool hex)         { Checked(__func__).SetLiteralBase(hex); }
 void OverrideColour::Fade(float factor)               { Checked(__func__).Fade(factor); }
-void OverrideColour::Blend(const Color& target, float t)  { Checked(__func__).Blend(target, t); }
+void OverrideColour::Blend(Color target, float t)  { Checked(__func__).Blend(target, t); }
 void OverrideColour::Blend(const Colour& target, float t) { Checked(__func__).Blend(target, t); }
 Color OverrideColour::GetColour() const { return Checked(__func__).GetColour(); }
 bool  OverrideColour::IsHex() const     { return Checked(__func__).IsHex(); }
@@ -838,7 +838,7 @@ void CPPFX::Font::WarnAboutMissingGlyphs(const std::string& text,
 }
 
 void CPPFX::Font::DrawText(const std::string& text, float x, float y,
-                           const Color& tint) const {
+                           Color tint) const {
     const ::Font f = Resolve();
     if (!IsDrawable(f)) return;   // no GL context yet, nothing to draw with
     ApplyLineSpacing();
@@ -849,12 +849,12 @@ void CPPFX::Font::DrawText(const std::string& text, float x, float y) const {
     DrawText(text, x, y, colour.GetColour());
 }
 
-void CPPFX::Font::DrawText(const std::string& text, const Vector2& position) const {
+void CPPFX::Font::DrawText(const std::string& text, Vector2 position) const {
     DrawText(text, position.x, position.y, colour.GetColour());
 }
 
-void CPPFX::Font::DrawTextPro(const std::string& text, const Vector2& position,
-                              const Vector2& origin, float rotation) const {
+void CPPFX::Font::DrawTextPro(const std::string& text, Vector2 position,
+                              Vector2 origin, float rotation) const {
     const ::Font f = Resolve();
     if (!IsDrawable(f)) return;
     ApplyLineSpacing();
@@ -873,13 +873,13 @@ Vector2 CPPFX::Font::GetInkSize(const std::string& text) const {
     return Vector2{ MeasureTextWidth(text), GetInkHeight(text) };
 }
 
-void CPPFX::Font::DrawTextAt(const std::string& text, const Vector2& inkTopLeft,
-                             const Color& tint) const {
+void CPPFX::Font::DrawTextAt(const std::string& text, Vector2 inkTopLeft,
+                             Color tint) const {
     // caller gave us where the ink goes; DrawTextEx wants the line box top
     DrawText(text, inkTopLeft.x, inkTopLeft.y - GetCapOffset(), tint);
 }
 
-void CPPFX::Font::DrawTextAt(const std::string& text, const Vector2& inkTopLeft) const {
+void CPPFX::Font::DrawTextAt(const std::string& text, Vector2 inkTopLeft) const {
     DrawTextAt(text, inkTopLeft, colour.GetColour());
 }
 
@@ -916,7 +916,7 @@ float CPPFX::Font::GetVerticalCentreOffset(float boxHeight) const {
 
 void CPPFX::Font::DrawAligned(const std::string& text, const Alignment& alignment,
                               float x, float y, float width, float height,
-                              const Color& tint) const {
+                              Color tint) const {
     const Vector2 ink = GetInkSize(text);
     DrawTextAt(text, alignment.GetAlignedXY(x, y, width, height, ink.x, ink.y), tint);
 }
@@ -1020,23 +1020,23 @@ void OverrideFont::WarnAboutMissingGlyphs(const std::string& text, const std::st
 void OverrideFont::DrawText(const std::string& text, float x, float y) const {
     Checked(__func__).DrawText(text, x, y);
 }
-void OverrideFont::DrawText(const std::string& text, const Vector2& position) const {
+void OverrideFont::DrawText(const std::string& text, Vector2 position) const {
     Checked(__func__).DrawText(text, position);
 }
-void OverrideFont::DrawText(const std::string& text, float x, float y, const Color& tint) const {
+void OverrideFont::DrawText(const std::string& text, float x, float y, Color tint) const {
     Checked(__func__).DrawText(text, x, y, tint);
 }
-void OverrideFont::DrawTextPro(const std::string& text, const Vector2& position,
-                               const Vector2& origin, float rotation) const {
+void OverrideFont::DrawTextPro(const std::string& text, Vector2 position,
+                               Vector2 origin, float rotation) const {
     Checked(__func__).DrawTextPro(text, position, origin, rotation);
 }
 
 float OverrideFont::GetInkHeight(const std::string& text) const { return Checked(__func__).GetInkHeight(text); }
 Vector2 OverrideFont::GetInkSize(const std::string& text) const { return Checked(__func__).GetInkSize(text); }
-void OverrideFont::DrawTextAt(const std::string& text, const Vector2& inkTopLeft) const {
+void OverrideFont::DrawTextAt(const std::string& text, Vector2 inkTopLeft) const {
     Checked(__func__).DrawTextAt(text, inkTopLeft);
 }
-void OverrideFont::DrawTextAt(const std::string& text, const Vector2& inkTopLeft, const Color& tint) const {
+void OverrideFont::DrawTextAt(const std::string& text, Vector2 inkTopLeft, Color tint) const {
     Checked(__func__).DrawTextAt(text, inkTopLeft, tint);
 }
 
@@ -1056,7 +1056,7 @@ void OverrideFont::DrawAligned(const std::string& text, const Alignment& alignme
 }
 void OverrideFont::DrawAligned(const std::string& text, const Alignment& alignment,
                                float x, float y, float width, float height,
-                               const Color& tint) const {
+                               Color tint) const {
     Checked(__func__).DrawAligned(text, alignment, x, y, width, height, tint);
 }
 

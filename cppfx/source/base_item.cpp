@@ -7,7 +7,7 @@ using namespace CPPFX;
 
 // --- Item ---
 
-bool Item::WasIClicked(const Vector2& mousePosition) const {
+bool Item::WasIClicked(Vector2 mousePosition) const {
     float xClick = mousePosition.x, yClick = mousePosition.y;
     if (xClick >= xAnchor && xClick <= (xAnchor + width) && yClick >= yAnchor && yClick <= (yAnchor + height) ) {
         return true;
@@ -15,7 +15,7 @@ bool Item::WasIClicked(const Vector2& mousePosition) const {
     return false;
 }
 
-void Item::DoFocusAction(float elapsedTime, const Vector2& /*mousePosition*/) {
+void Item::DoFocusAction(float elapsedTime, Vector2 /*mousePosition*/) {
     return DoFocusAction(elapsedTime);
 }
 
@@ -110,7 +110,7 @@ void Item::SetXY(float x, float y) {
     SetY(y);
 }
 
-void Item::SetXY(const Vector2& xy) {
+void Item::SetXY(Vector2 xy) {
     SetX(xy.x);
     SetY(xy.y);
 }
@@ -136,7 +136,7 @@ void Item::SetDimensions(float width, float height) {
     SetHeight(height);
 }
 
-void Item::SetDimensions(const Vector2& dimensions) {
+void Item::SetDimensions(Vector2 dimensions) {
     SetWidth(dimensions.x);
     SetHeight(dimensions.y);
 }

@@ -6,7 +6,7 @@ using namespace CPPFX;
 
 // --- Circular ---
 
-bool Circular::WasIClicked(const Vector2& mousePosition) const {
+bool Circular::WasIClicked(Vector2 mousePosition) const {
     if (CheckCollisionPointCircle(mousePosition, {TranslateXToCentre(), TranslateYToCentre()}, GetRadius())) return true;
     return false;
 }

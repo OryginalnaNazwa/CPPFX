@@ -98,7 +98,7 @@ public:
      *  @details Sets the name too - a known name if the value matches one,
      *           otherwise a custom literal.
      */
-    Colour(const Color& colour) : value(colour) {
+    Colour(Color colour) : value(colour) {
         name = ColourToString(colour);
     }
 
@@ -186,7 +186,7 @@ public:
      *  @param t 0.0 leaves the colour unchanged, 1.0 makes it the target
      *  @details Clamps t. Blends all four channels, alpha included.
      */
-    void Blend(const Color& target, float t);
+    void Blend(Color target, float t);
     /**
      *  @overload
      */
@@ -334,7 +334,7 @@ public:
      *  @details Clamps t. Blends all four channels, alpha included.
      *  @throws std::logic_error if no colour is set
      */
-    void Blend(const Color& target, float t);
+    void Blend(Color target, float t);
     /**
      *  @overload
      */
@@ -373,7 +373,7 @@ public:
     Colour colour;
 
     explicit Property(const std::string& i) : fxID(i) {}
-    Property(const std::string& i, const Color& colour) : colour(colour), fxID(i)  {}
+    Property(const std::string& i, Color colour) : colour(colour), fxID(i)  {}
     Property(const std::string& i, const std::string& colour) : colour(colour), fxID(i) {}
 
     virtual ~Property() = default;
@@ -664,7 +664,7 @@ public:
      *  @brief Constructor for custom colour.
      *  @param c colour to be set.
      */
-    explicit Font(const Color& c) : Font() {
+    explicit Font(Color c) : Font() {
         colour.SetColour(c);
     }
 
@@ -675,7 +675,7 @@ public:
      *  @throws std::invalid_argument if the size is negative.
      *  @note Prints a warning if size is 0.
      */
-    explicit Font(float fS, const Color& c) : Font(fS) {
+    explicit Font(float fS, Color c) : Font(fS) {
         colour.SetColour(c);
     }
 
@@ -922,12 +922,12 @@ public:
     /**
      *  @overload
      */
-    void DrawText(const std::string& text, const Vector2& position) const;
+    void DrawText(const std::string& text, Vector2 position) const;
     /**
      *  @overload
      *  @param tint colour to use instead of this font's colour
      */
-    void DrawText(const std::string& text, float x, float y, const Color& tint) const;
+    void DrawText(const std::string& text, float x, float y, Color tint) const;
     /**
      *  @brief Draws rotated text.
      *  @details Uses this font's colour.
@@ -937,8 +937,8 @@ public:
      *  @param rotation rotation in degrees
      *  @see ::DrawTextPro
      */
-    void DrawTextPro(const std::string& text, const Vector2& position,
-                     const Vector2& origin, float rotation) const;
+    void DrawTextPro(const std::string& text, Vector2 position,
+                     Vector2 origin, float rotation) const;
 
     /**
      *  @brief Gets the height of the visible text.
@@ -963,13 +963,13 @@ public:
      *  @param text text to draw
      *  @param inkTopLeft where the top-left of the visible text should land
      */
-    void DrawTextAt(const std::string& text, const Vector2& inkTopLeft) const;
+    void DrawTextAt(const std::string& text, Vector2 inkTopLeft) const;
     /**
      *  @overload
      *  @param tint colour to use instead of this font's colour
      */
-    void DrawTextAt(const std::string& text, const Vector2& inkTopLeft,
-                    const Color& tint) const;
+    void DrawTextAt(const std::string& text, Vector2 inkTopLeft,
+                    Color tint) const;
 
     /**
      *  @brief Measures text with this font.
@@ -1053,7 +1053,7 @@ public:
      */
     void DrawAligned(const std::string& text, const Alignment& alignment,
                      float x, float y, float width, float height,
-                     const Color& tint) const;
+                     Color tint) const;
 
     /// True when this font can actually be measured and drawn.
     static bool IsDrawable(const ::Font& f);
@@ -1194,16 +1194,16 @@ public:
                                 const std::string& context = "") const;
 
     void DrawText(const std::string& text, float x, float y) const;
-    void DrawText(const std::string& text, const Vector2& position) const;
-    void DrawText(const std::string& text, float x, float y, const Color& tint) const;
-    void DrawTextPro(const std::string& text, const Vector2& position,
-                     const Vector2& origin, float rotation) const;
+    void DrawText(const std::string& text, Vector2 position) const;
+    void DrawText(const std::string& text, float x, float y, Color tint) const;
+    void DrawTextPro(const std::string& text, Vector2 position,
+                     Vector2 origin, float rotation) const;
 
     float GetInkHeight(const std::string& text) const;
     Vector2 GetInkSize(const std::string& text) const;
-    void DrawTextAt(const std::string& text, const Vector2& inkTopLeft) const;
-    void DrawTextAt(const std::string& text, const Vector2& inkTopLeft,
-                    const Color& tint) const;
+    void DrawTextAt(const std::string& text, Vector2 inkTopLeft) const;
+    void DrawTextAt(const std::string& text, Vector2 inkTopLeft,
+                    Color tint) const;
 
     Vector2 MeasureText(const std::string& text) const;
     float MeasureTextWidth(const std::string& text) const;
@@ -1217,7 +1217,7 @@ public:
                      float x, float y, float width, float height) const;
     void DrawAligned(const std::string& text, const Alignment& alignment,
                      float x, float y, float width, float height,
-                     const Color& tint) const;
+                     Color tint) const;
 
     std::string GetLoadedPath() const;
     ///@}

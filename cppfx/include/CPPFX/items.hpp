@@ -290,7 +290,7 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
-    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+    void DoFocusAction(float elapsedTime, Vector2 mousePosition) override;
     void DoPassiveAction(float elapsedTime) override;
 
     void GetCallbacks(std::vector<Callback*>& out) override;
@@ -661,7 +661,7 @@ public:
         return highlightHeader;
     }
 
-    bool WasIClicked(const Vector2& mousePosition) const override {
+    bool WasIClicked(Vector2 mousePosition) const override {
         if (!focused) return Item::WasIClicked(mousePosition);
         return mousePosition.x >= xAnchor && mousePosition.x <= xAnchor + width
             && mousePosition.y >= yAnchor
@@ -673,7 +673,7 @@ public:
         justOpened = true;
     }
 
-    void DoFocusAction(float /*elapsedTime*/, const Vector2& mousePosition) override {
+    void DoFocusAction(float /*elapsedTime*/, Vector2 mousePosition) override {
         if (justOpened) { justOpened = false; return; }
         if (!WasIClicked(mousePosition)) { Defocus(); return; }
         if (mousePosition.y < GetListTop()) { Defocus(); return; }
@@ -1230,7 +1230,7 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
-    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+    void DoFocusAction(float elapsedTime, Vector2 mousePosition) override;
 
     /** @see DropDown::SetX @details Moves addArea. */
     void SetX(float x) override;
@@ -1320,7 +1320,7 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
-    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+    void DoFocusAction(float elapsedTime, Vector2 mousePosition) override;
 
     /** @see DropDown::SetX @details Moves searchArea. */
     void SetX(float x) override;
@@ -1556,8 +1556,8 @@ public:
      *  @brief Checks whether the buttons were clicked and calls their callback.
      *  @details Calls onChange if value has changed.
      */
-    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
-    bool WasIClicked(const Vector2& mousePosition) const override;
+    void DoFocusAction(float elapsedTime, Vector2 mousePosition) override;
+    bool WasIClicked(Vector2 mousePosition) const override;
     void DoHoverAction(float elapsedTime, const Vector2 mousePosition) override;
     void Dehover() override;
 
@@ -1726,7 +1726,7 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
-    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+    void DoFocusAction(float elapsedTime, Vector2 mousePosition) override;
     /**
      *  @brief Defocuses and loads value.
      *  @details Keeps the old value on invalid input. A number too big for a float becomes the float max and too small becomes lowest. Then clamps to the enabled bounds. Calls onChange if the value has changed.
@@ -2032,7 +2032,7 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
-    void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
+    void DoFocusAction(float elapsedTime, Vector2 mousePosition) override;
 
     void SetPressedText(const std::string& value);
     void ClearPressedText();
@@ -2271,7 +2271,7 @@ public:
 
     void DrawMyself(float elapsedTime) const override;
 
-    //bool WasIClicked(const Vector2& mousePosition) const override; // TODO FIX IT IT HAS A RECTANGULAR HIT DETECTION
+    //bool WasIClicked(Vector2 mousePosition) const override; // TODO FIX IT IT HAS A RECTANGULAR HIT DETECTION
 
     /**
      *  @brief Sets length of the line.
@@ -2365,7 +2365,7 @@ public:
      *  @param coordinates the end point
      *  @note Prints a warning if the end point is the same as the starting point.
      */
-    void SetEndPoint(const Vector2& coordinates);
+    void SetEndPoint(Vector2 coordinates);
     float GetEndX() const;
     float GetEndY() const;
     Vector2 GetEndPoint() const;
@@ -2602,7 +2602,7 @@ public:
     void    SetYShift(float shift);
     float   GetYShift() const;
     void    SetXYShift(float shift);
-    void    SetXYShift(const Vector2& xyShift);
+    void    SetXYShift(Vector2 xyShift);
     Vector2 GetXYShift() const;
 
     /**
