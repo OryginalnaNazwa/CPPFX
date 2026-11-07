@@ -293,6 +293,10 @@ public:
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
     void DoPassiveAction(float elapsedTime) override;
 
+    void GetCallbacks(std::vector<Callback*>& out) override;
+    void Dehover() override;
+    void DoHoverAction(float elapsedTime, const Vector2 mousePosition) override;
+
     /**
      *  @brief Adds a button to the group.
      *  @details Presses it if it's the first one.
@@ -352,6 +356,28 @@ public:
      *  @see SetButtonsPressedColour
      */
     void SetButtonColours(const Color& backgroundColour, const Color& pressedColour);
+    /**
+     *  @brief Sets hover colour of the buttons.
+     *  @details Only affects buttons already in the group.
+     *  @param colour new colour
+     *  @see Item::hoveredColour
+     */
+    void SetButtonsHoverColour(const Color& colour);
+    /**
+     *  @brief Turns on the buttons' default hover - swapping to the hover colour.
+     *  @details On by default. Only affects buttons already in the group.
+     */
+    void EnableButtonsHover();
+    /**
+     *  @brief Turns off the buttons' hover.
+     *  @details Only affects buttons already in the group.
+     */
+    void DisableButtonsHover();
+    /**
+     *  @brief Checks which button is under the cursor.
+     *  @returns Label of the hovered button, empty if none.
+     */
+    std::string GetHoveredButton() const;
     /**
      *  @brief Sets label margins of the buttons.
      *  @param margin new value
@@ -496,12 +522,14 @@ public:
     };
 
     struct Header : public NestedProperty {
+        public:
         friend DropDown;
 
         OverrideColour colour;
         Colour dividerColour;
         Border border;
         OverrideFont font;
+        Colour hoveredColour;
 
         /**
          *  @brief Sets the thickness of the divider between the header and the list.
@@ -516,18 +544,28 @@ public:
             return headerDividerThickness;
         }
 
+        void SetHoverBlendFactor(float value) {
+            hoverBlendFactor = value;
+        }
+        float GetHoverBlendFactor() const {
+            return hoverBlendFactor;
+        }
+
         private:
-            explicit Header(Item* o) : NestedProperty(o), headerDividerThickness(10.0f) { dividerColour.SetColour(BLACK); }
-            float headerDividerThickness = 0.0f;
+            explicit Header(Item* o) : NestedProperty(o), headerDividerThickness(10.0f) { dividerColour.SetColour(BLACK); hoveredColour.Blend(GREY, 0.25f); }
+            float headerDividerThickness;
+            float hoverBlendFactor = 0.5f;
     } header{this};
 
     struct MenuList : public NestedProperty {
+        public:
         friend DropDown;
 
         OverrideColour colour;
         Border border;
         OverrideFont font;
         Colour dividerColour;
+        Colour hoveredColour;
 
         /**
          *  @brief Sets the thickness of the dividers between list items.
@@ -556,10 +594,21 @@ public:
             return listItemHeight;
         }
 
+        /**
+         *  @brief Sets how much will hover blend the colour towards hoveredColour
+         */
+        void SetHoverBlendFactor(float value) {
+            hoverBlendFactor = value;
+        }
+        float GetHoverBlendFactor() const {
+            return hoverBlendFactor;
+        }
+
         private:
-            explicit MenuList(Item* o) : NestedProperty(o), dividerThickness(5.0f) { dividerColour.SetColour(BLACK); }
+            explicit MenuList(Item* o) : NestedProperty(o), dividerThickness(5.0f) { dividerColour.SetColour(BLACK); hoveredColour.Blend(GREY, 0.25f);}
             float dividerThickness; ///< seam between rows; none after the last one
             float listItemHeight = 50.0f;   ///< row height, independent of the header's
+            float hoverBlendFactor = 0.5f; ///< used for hover on labels. hoveredColour is treated as base for blend.
     } list{this};
 
     DropDown() : Item("DropDown"), TextItem("DropDown"), order(insertion), currentLabel("") {
@@ -586,6 +635,30 @@ public:
             currentValue = values.at(currentLabel); // explicit on purpose to avoid a callback on the first frame
             if (expandsToTextAutomatically) ExpandToText();
         }
+    }
+
+    void DoHoverAction(float /*elapsedTime*/, const Vector2 mousePosition) override {
+        hoveredRow = (IsFocused() && AreRowsHighlighted()) ? GetIndexAt(mousePosition.y) : -1;
+        headerHovered = IsHeaderHighlighted() && mousePosition.y < GetListTop();
+    }
+
+    void Dehover() override {
+        TextItem::Dehover();
+        hoveredRow = -1;
+        headerHovered = false;
+    }
+
+    void DoHighlightHeader() {
+        highlightHeader = true;
+    }
+    void DoNotHighlightHeader() {
+        highlightHeader = false;
+    }
+    void SetHighlightingHeader(bool highlight) {
+        highlightHeader = highlight;
+    }
+    bool IsHeaderHighlighted() const {
+        return highlightHeader;
     }
 
     bool WasIClicked(const Vector2& mousePosition) const override {
@@ -983,6 +1056,19 @@ public:
         return index;
     }
 
+    void DoHighlightRows() {
+        highlightRows = true;
+    }
+    void DoNotHighlightRows() {
+        highlightRows = false;
+    }
+    void SetHighlightingRows(bool highlight) {
+        highlightRows = highlight;
+    }
+    bool AreRowsHighlighted() const {
+        return highlightRows;
+    }
+
 protected:
     std::unordered_map<std::string, T> values;      ///< source of truth: every label and the value it stands for
     std::vector<std::string> valuesInOrder;         ///< labels as drawn, top to bottom; rebuilt by Sort
@@ -994,11 +1080,16 @@ protected:
     std::function<bool(const std::string&, const std::string&)> customSort; ///< comparator for ORDER::custom
     bool justOpened = false;                        ///< swallows the click that opened the list
     std::unordered_map<std::string, Colour> labelToColour; ///< per-row background overrides; labels absent from here use list.colour
+    bool highlightRows = true; ///< are rows highlighted under hover
+    int hoveredRow = -1;
+    bool highlightHeader = true; ///< is the header highlighted under hover
+    bool headerHovered = false;
 
     /** @brief Draws the header - background, current pick, and its border. */
     virtual void DrawHeader(float /*elapsedTime*/) const {
-        if (header.colour.IsOverridden()) DrawRectangle(xAnchor, yAnchor, width, height, header.colour.GetColour());
-        else DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
+        Colour c = header.colour.IsOverridden() ? header.colour.GetOverride() : colour;
+        if (headerHovered) c.Blend(header.hoveredColour, header.GetHoverBlendFactor());
+        DrawRectangle(xAnchor, yAnchor, width, height, c.GetColour());
         if (!currentLabel.empty()) {
             if (header.font.IsOverridden()) DrawAlignedText(Alignment::CENTRE, currentLabel, header.font.GetOverride());
             else DrawAlignedText(Alignment::CENTRE, currentLabel, font);
@@ -1018,14 +1109,19 @@ protected:
         CPPFX::Font drawFont = font;
         if (list.font.IsOverridden()) drawFont = list.font.GetOverride();
 
-        DrawRectangle(xAnchor, yCurrent, width, header.GetDividerThickness(), drawColour);
-
+        DrawRectangle(xAnchor, yCurrent, width, header.GetDividerThickness(), header.dividerColour.GetColour());
         yCurrent += header.GetDividerThickness();
+
         for (size_t i = 0; i < valuesInOrder.size(); ++i) {
             const std::string& label = valuesInOrder[i];
-            const Color rowColour = labelToColour.contains(label)
+            Color rowColour = labelToColour.contains(label)
                                   ? labelToColour.at(label).GetColour()
                                   : drawColour;
+            if ((int)i == hoveredRow) {
+                Colour c = rowColour;
+                c.Blend(list.hoveredColour, list.GetHoverBlendFactor());
+                rowColour = c.GetColour();
+            }
 
             DrawRectangle(xAnchor, yCurrent, width, list.GetItemInListHeight(), rowColour);
             DrawAlignedText(Alignment::CENTRE, label, drawFont,
@@ -1462,6 +1558,10 @@ public:
      */
     void DoFocusAction(float elapsedTime, const Vector2& mousePosition) override;
     bool WasIClicked(const Vector2& mousePosition) const override;
+    void DoHoverAction(float elapsedTime, const Vector2 mousePosition) override;
+    void Dehover() override;
+
+    void GetCallbacks(std::vector<Callback*>& out) override;
 
     void SetToScreen() override;
     void SetToWorld() override;

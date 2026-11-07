@@ -24,16 +24,18 @@ namespace CPPFX {
 class Item {
 public:
     Colour colour; ///< primary colour
-    Colour hoverColour; ///< you can also use it for other things, it's legal!
+    Colour hoveredColour; ///< you can also use it for other things, it's legal!
     Border border; ///< all but a few items have it.
 
-    Item() : ID(""), xAnchor(0.0f), yAnchor(0.0f), height(0.0f), width(0.0f), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID("") {} ///< for vectors and stuff, don't use normally
+    Item() : ID(""), xAnchor(0.0f), yAnchor(0.0f), height(0.0f), width(0.0f),
+            focused(false), visible(true), inactive(false), eatsClick(true), priority(3), hovered(false), screenBased(false), fxID("") {} ///< for vectors and stuff, don't use normally
     /**
      *  @brief Constructor with the default size (200 x 100).
      *  @param i fxID of the new item.
      */
     Item(const std::string& i)
-        : ID(""), xAnchor(0.0f), yAnchor(0.0f), height(100.0f), width(200.0f), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
+        : ID(""), xAnchor(0.0f), yAnchor(0.0f), height(100.0f), width(200.0f),
+         focused(false), visible(true), inactive(false), eatsClick(true), priority(3), hovered(false), screenBased(false), fxID(i) {}
     /**
      *  @brief Constructor for items with different dimensions than the default ones.
      *  @param i fxID of the new item.
@@ -62,6 +64,13 @@ public:
      *  @param elapsedTime total elapsed time of all frames
      */
     virtual void DoPassiveAction(float elapsedTime);
+    /**
+     *  @brief Action done on frames when the widget is hovered.
+     *  @param elapsedTime total elapsed time of all frames
+     *  @param mousePosition cursor's position
+     *  @details Does nothing by default.
+     */
+    virtual void DoHoverAction(float elapsedTime, const Vector2 mousePosition);
     /**
      *  @brief Action done while the item is focused.
      *  @param elapsedTime total elapsed time of all frames
@@ -192,6 +201,16 @@ public:
      *  @brief Launches when width or height were changed
      */
     Callback onResize{"onResize"};
+    /**
+     *  @brief Launches when item is hovered.
+     *  @see onDehover
+     */
+    Callback onHover{"onHover"};
+    /**
+     *  @brief Launches when widget stops being hovered
+     *  @see onHover
+     */
+    Callback onDehover{"onDehover"};
 
     /**
      *  @brief Checks whether any callbacks are armed.
@@ -206,6 +225,21 @@ public:
      *  @brief Disarms all callbacks.
      */
     void DisarmCallbacks();
+
+    virtual void Hover();
+    virtual void Dehover();
+    bool IsHovered() const;
+
+    /**
+     *  @brief Swaps colour with hoveredColour.
+     */
+    void SwapHoverColour();
+    /**
+     *  @brief Sets both onHover and onDehover callbacks to SwapHoverColour.
+     *  @details Swaps immediately in a hovered widget. Overrides those callbacks.
+     *  @see SwapHoverColour
+     */
+    void SetHoverCallbacksToSwap();
 
     /**
      *  @brief Sets the x coordinate of the item.
@@ -388,6 +422,7 @@ protected:
     bool inactive; ///< inactive items are not interactable
     bool eatsClick; ///< if false, allows the click to continue under it
     size_t priority; ///< drawing order; see SetPriority.
+    bool hovered;
     /**
      *  @brief Gets the list of the callbacks in the widget
      *  @details By default lists onClick, onMove, onResize, onFocus and onChange. For derived: call base, then push their own

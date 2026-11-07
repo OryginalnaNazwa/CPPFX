@@ -8,7 +8,7 @@
 
 using namespace CPPFX;
 
-const char* const CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.26.0"; //sanity check for version
+const char* const CPPFX::CPPFX_VERSION_STRING = "@(#)CPPFX 0.27.0"; //sanity check for version
 
 const std::unordered_set<std::string> GUI::FXIDs = {"Label", "Button", "TextField", "CheckBox", "DropDown", "ComboBox", "SearchableDropDown",
     "AnchorPane", "VBox", "HBox", "Workspace", "Spinner", "EditableSpinner",
@@ -26,13 +26,16 @@ void GUI::DoUI(const Camera2D& camera) {
         SortOrder();
         needsSorting = false;
     }
-    Vector2 mousePos = {(float)GetMouseX(), (float)GetMouseY()};
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        OnMouseClick(mousePos, camera);
-        DoClickedItemsActions(mousePos, camera);
-    } else {
-        DoItemsActions(mousePos, camera);
-    }
+
+    const Vector2 screenMouse = GetMousePosition();
+    const Vector2 worldMouse  = GetScreenToWorld2D(screenMouse, camera);
+    const bool clicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+
+    CollectHits(screenMouse, worldMouse);
+    UpdateHover();
+    if (clicked) HandleClick();
+    DoItemsActions(screenMouse, worldMouse, clicked);
+
     GrabArmedWidgets();
     DoCallbacks();
 
@@ -49,30 +52,42 @@ void GUI::Close() {
     for (auto& [id, n] : ItemsCounter) n = 0;
     needsSorting = false;
     graveyard.clear();
+    hits.clear();
 }
 
-void GUI::OnMouseClick(const Vector2& mousePos, const Camera2D& camera) {
-    bool somethingWasClicked = false;
+void GUI::CollectHits(const Vector2 screenMouse, const Vector2 worldMouse) {
+    hits.clear();
+    if (!IsCursorOnScreen()) return;
     for (auto it = ItemsInDrawingOrder.rbegin(); it != ItemsInDrawingOrder.rend(); ++it) {
         Item* item = *it;
-        if (!item->IsInactive())  {
-            if (((screenBased || item->IsScreenBased()) && item->WasIClicked(mousePos)) || ((!screenBased && !item->IsScreenBased()) && item->WasIClicked(GetScreenToWorld2D(mousePos, camera)))) {
-                somethingWasClicked = true;
-                if (!item->IsFocused()) {
-                    DefocusItems();
-                    item->Focus();
-                }
-                item->onClick.Arm();
-                if (item->DoesEatClicks()) {
-                    return;
-                }
-            }
-        }
+        if (item->IsInactive()) continue;
+        const bool screen = screenBased || item->IsScreenBased();
+        if (!item->WasIClicked(screen ? screenMouse : worldMouse)) continue;
+        hits.push_back(item);
+        if (item->DoesEatClicks()) return;
     }
-    if (!somethingWasClicked) DefocusItems();
 }
 
-void GUI::DrawUI(const Camera2D& camera) const {
+void GUI::UpdateHover() {
+    for (auto& [key, item] : Items) {
+        if (std::ranges::find(hits, item.get()) != hits.end()) {
+            item->Hover();
+        }
+        else item->Dehover();
+    }
+}
+
+void GUI::HandleClick() {
+    for (auto& [key, item] : Items) {
+        if (std::ranges::find(hits, item.get()) == hits.end()) item->Defocus();
+    }
+    for (auto& item : hits) {
+        if (!item->IsFocused()) item->Focus();
+        item->onClick.Arm();
+    }
+}
+
+void GUI::DrawUI(const Camera2D camera) const {
     for (auto& item : ItemsInDrawingOrder) {
         if (item->IsVisible()) {
             if (screenBased || item->IsScreenBased()) {
@@ -84,39 +99,20 @@ void GUI::DrawUI(const Camera2D& camera) const {
     }
 }
 
-void GUI::DoItemsActions(const Vector2& mousePos, const Camera2D& camera) {
+void GUI::DoItemsActions(const Vector2 screenMouse, const Vector2 worldMouse, bool clicked) {
     for (auto& item : ItemsInDrawingOrder) {
-        if (!item->IsInactive()) {
-            if (screenBased || item->IsScreenBased()) {
-                if (item->WasIClicked(mousePos)) {
-                    //if (item->onHover) { //TODO SUPPORT IT BACK
-                    //    item->onHover();
-                    //}
-                }
-            } else {
-                if (item->WasIClicked(GetScreenToWorld2D(mousePos, camera))) {
-                    //if (item->onHover) {
-                    //    item->onHover();
-                    //}
-                }
-            }
-            item->DoPassiveAction(elapsedTime);
-            if (item->IsFocused()) {
-                item->DoFocusAction(elapsedTime);
-            }
+        if (item->IsInactive()) continue;
+        item->DoPassiveAction(elapsedTime);
+        if (item->IsHovered()) {
+            const bool screen = screenBased || item->IsScreenBased();
+            item->DoHoverAction(elapsedTime, screen ? screenMouse : worldMouse);
         }
-    }
-}
-
-void GUI::DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera) {
-    for (auto& item : ItemsInDrawingOrder) {
-        if (!item->IsInactive()) {
-            item->DoPassiveAction(elapsedTime);
-            if (item->IsFocused()) {
-                if (screenBased || item->IsScreenBased()) {
-                    item->DoFocusAction(elapsedTime, mousePos);
-                } else item->DoFocusAction(elapsedTime, GetScreenToWorld2D(mousePos, camera));
-            }
+        if (!item->IsFocused()) continue;
+        if (clicked) {
+            const bool screen = screenBased || item->IsScreenBased();
+            item->DoFocusAction(elapsedTime, screen ? screenMouse : worldMouse);
+        } else {
+            item->DoFocusAction(elapsedTime);
         }
     }
 }

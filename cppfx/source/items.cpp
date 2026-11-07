@@ -372,6 +372,26 @@ void RadioGroup::DoPassiveAction(float /*elapsedTime*/) {
     }
 }
 
+void RadioGroup::GetCallbacks(std::vector<Callback*>& out) {
+    // buttons first: the group's own callbacks may remove buttons, so they must run last
+    for (auto& button : buttonsInDrawingOrder) {
+        out.insert(out.end(), {&button->onHover, &button->onDehover});
+    }
+    Item::GetCallbacks(out);
+}
+
+void RadioGroup::DoHoverAction(float /*elapsedTime*/, const Vector2 mousePosition) {
+    for (auto& button : buttonsInDrawingOrder) {
+        if (button->WasIClicked(mousePosition)) button->Hover();
+        else button->Dehover();
+    }
+}
+
+void RadioGroup::Dehover() {
+    Item::Dehover();
+    for (auto& button : buttonsInDrawingOrder) button->Dehover();
+}
+
 void RadioGroup::AddButton(const std::string& label) {
     if (label == "") {
         CPPFX_WARN("If for some reason you want no label, use ' '/ spaces.");
@@ -384,6 +404,8 @@ void RadioGroup::AddButton(const std::string& label) {
     auto button = std::make_unique<RadioButton>();
     button->SetID(label);
     button->SetText(label);
+    button->hoveredColour.Blend(GREY, 0.25f);
+    button->SetHoverCallbacksToSwap();
     if (buttons.empty()) button->Press();
     buttonsInDrawingOrder.push_back(button.get());
     buttons.insert({label, std::move(button)});
@@ -452,6 +474,36 @@ void RadioGroup::SetButtonsPressedColour(const Color& colour) {
 void RadioGroup::SetButtonColours(const Color& backgroundColour, const Color& pressedColour) {
     SetButtonsBackgroundColour(backgroundColour);
     SetButtonsPressedColour(pressedColour);
+}
+
+void RadioGroup::SetButtonsHoverColour(const Color& colour) {
+    for (auto& [key, button] : buttons) {
+        // while hovered with the swap on, the hover colour currently sits in colour
+        if (button->IsHovered() && button->onHover.IsSet()) button->colour.SetColour(colour);
+        else button->hoveredColour.SetColour(colour);
+    }
+}
+
+void RadioGroup::EnableButtonsHover() {
+    for (auto& [key, button] : buttons) {
+        if (!button->onHover.IsSet()) button->SetHoverCallbacksToSwap();
+    }
+}
+
+void RadioGroup::DisableButtonsHover() {
+    for (auto& [key, button] : buttons) {
+        if (!button->onHover.IsSet()) continue;
+        if (button->IsHovered()) button->SwapHoverColour();
+        button->onHover.Clear();
+        button->onDehover.Clear();
+    }
+}
+
+std::string RadioGroup::GetHoveredButton() const {
+    for (const auto& button : buttonsInDrawingOrder) {
+        if (button->IsHovered()) return button->GetID();
+    }
+    return "";
 }
 
 void RadioGroup::SetLabelMargins(float margin) {
@@ -877,15 +929,20 @@ void SearchableDropDown::DrawList(float /*elapsedTime*/) const {
     CPPFX::Font drawFont = font;
     if (list.font.IsOverridden()) drawFont = list.font.GetOverride();
 
-    DrawRectangle(xAnchor, yCurrent, width, header.GetDividerThickness(), drawColour);
-
+    DrawRectangle(xAnchor, yCurrent, width, header.GetDividerThickness(), header.dividerColour.GetColour());
     yCurrent += header.GetDividerThickness();
+
     for (size_t i = 0; i < filtered.size(); ++i) {
         const std::string& label = valuesInOrder[filtered[i]];
 
-        const Color rowColour = labelToColour.contains(label)
+        Color rowColour = labelToColour.contains(label)
                                 ? labelToColour.at(label).GetColour()
                                 : drawColour;
+        if ((int)i == hoveredRow) {
+            Colour c = rowColour;
+            c.Blend(list.hoveredColour, list.GetHoverBlendFactor());
+            rowColour = c.GetColour();
+        }
 
         DrawRectangle(xAnchor, yCurrent, width, list.GetItemInListHeight(), rowColour);
         DrawAlignedText(Alignment::CENTRE, label, drawFont,
@@ -1352,17 +1409,39 @@ void Spinner::Initialise() {
     incrementButton.SetX(xAnchor + width + border.GetThickness());
     incrementButton.SetY(yAnchor);
     incrementButton.SetHeight(height / 2.0f);
-    incrementButton.SetWidth(50.0f);
+    incrementButton.SetWidth(75.0f);
     incrementButton.SetText("/\\");
     incrementButton.border.SetThickness(2.0f);
     incrementButton.onClick.Set([this]() { Increment(); });
     decrementButton.SetX(xAnchor + width + border.GetThickness());
     decrementButton.SetY(yAnchor + (height / 2.0f));
     decrementButton.SetHeight(height / 2.0f);
-    decrementButton.SetWidth(50.0f);
+    decrementButton.SetWidth(75.0f);
     decrementButton.SetText("\\/");
     decrementButton.border.SetThickness(2.0f);
     decrementButton.onClick.Set([this]() { Decrement(); });
+
+    decrementButton.hoveredColour.Blend(GREY, 0.25f);
+    incrementButton.hoveredColour.Blend(GREY, 0.25f);
+    decrementButton.SetHoverCallbacksToSwap();
+    incrementButton.SetHoverCallbacksToSwap();
+}
+
+void Spinner::DoHoverAction(float /*elapsedTime*/, const Vector2 mousePosition) {
+    if (incrementButton.WasIClicked(mousePosition)) incrementButton.Hover(); else incrementButton.Dehover();
+    if (decrementButton.WasIClicked(mousePosition)) decrementButton.Hover(); else decrementButton.Dehover();
+}
+
+void Spinner::Dehover() {
+    Item::Dehover();
+    incrementButton.Dehover();
+    decrementButton.Dehover();
+}
+
+void Spinner::GetCallbacks(std::vector<Callback*>& out) {
+    Item::GetCallbacks(out);
+    out.insert(out.end(), {&incrementButton.onHover, &incrementButton.onDehover,
+                           &decrementButton.onHover, &decrementButton.onDehover});
 }
 
 void Spinner::SetButtonsWidth(float value) {

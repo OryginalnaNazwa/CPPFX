@@ -1,6 +1,6 @@
 # CPPFX
 A retained mode GUI library for raylib, inspired by JavaFX, written in C++.
-v.0.26.0
+v.0.27.0
 
 ## Based on raylib
 https://www.raylib.com/
@@ -63,7 +63,7 @@ int main() {
 
 See raylib for full explanation of how main loop works.
 
-Check out the examples provided in the Examples folder for more.
+Check out the examples provided in the examples folder for more.
 
 ## Widget list
 - Label
