@@ -32,7 +32,7 @@
  * @{
  */
 #define CPPFX_VERSION_MAJOR 0
-#define CPPFX_VERSION_MINOR 26
+#define CPPFX_VERSION_MINOR 27
 #define CPPFX_VERSION_PATCH 0
 #define CPPFX_VERSION ((CPPFX_VERSION_MAJOR * 10000) + (CPPFX_VERSION_MINOR * 100) + CPPFX_VERSION_PATCH)
 /** @} */
@@ -548,10 +548,11 @@ private:
     float elapsedTime = 0.0f; ///< total elapsed time of all frames
     bool needsSorting = false; ///< lazy sort
 
-    void DrawUI(const Camera2D& camera) const; ///< draws the items
-    void OnMouseClick(const Vector2& mousePos, const Camera2D& camera); ///< defocuses and arms onClick
-    void DoItemsActions(const Vector2& mousePos, const Camera2D& camera); ///< does focused and passive actions
-    void DoClickedItemsActions(const Vector2& mousePos, const Camera2D& camera); ///< does actions that require mouse input
+    void DrawUI(const Camera2D camera) const; ///< draws the items
+    void CollectHits(const Vector2 worldMouse, const Vector2 screenMouse);
+    void UpdateHover(); ///< hovers and dehovers items and arms hover callbacks
+    void HandleClick(); ///< defocuses and arms onClick
+    void DoItemsActions(const Vector2 screenMouse, const Vector2 worldMouse, const bool clicked); ///< does focused and passive actions
     void GrabArmedWidgets(); ///< collects a list of IDs with armed widgets
     void DoCallbacks(); ///< executes the callbacks.
 
@@ -582,6 +583,7 @@ private:
 
     std::vector<std::string> ArmedCallbacksIDs;
     std::vector<std::unique_ptr<Item>> graveyard;
+    std::vector<Item*> hits;
 };
 
 }

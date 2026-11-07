@@ -1,6 +1,7 @@
 #include "../include/CPPFX/base_item.hpp"
 
 #include <stdexcept>  // for invalid_argument
+#include <utility>    // for swap
 
 using namespace CPPFX;
 
@@ -22,8 +23,12 @@ void Item::DoPassiveAction(float /*elapsedTime*/) {
     return;
 }
 
+void Item::DoHoverAction(float /*elapsedTime*/, const Vector2 /*mousePosition*/) {
+    return;
+}
+
 void Item::GetCallbacks(std::vector<Callback*>& out) {
-    out.insert(out.end(), {&onClick, &onMove, &onChange, &onFocus, &onResize});
+    out.insert(out.end(), {&onClick, &onMove, &onChange, &onFocus, &onResize, &onHover, &onDehover});
 }
 
 bool Item::HasArmedCallbacks() {
@@ -49,7 +54,31 @@ void Item::DisarmCallbacks() {
     }
 }
 
+void Item::Hover() {
+    if (!hovered) onHover.Arm();
+    hovered = true;
+}
+
+void Item::Dehover() {
+    if (hovered) onDehover.Arm();
+    hovered = false;
+}
+
+bool Item::IsHovered() const {
+    return hovered;
+}
+
 // --- Helpers ---
+
+void Item::SwapHoverColour() {
+    std::swap(colour, hoveredColour);
+}
+
+void Item::SetHoverCallbacksToSwap() {
+    onHover.Set([this](){ SwapHoverColour(); });
+    onDehover.Set([this](){ SwapHoverColour(); });
+    if (hovered) SwapHoverColour();
+}
 
 void Item::MoveUpPriority() {
     if (priority > (size_t)(0)) {
