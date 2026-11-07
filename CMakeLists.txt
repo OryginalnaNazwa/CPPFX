@@ -8,7 +8,17 @@
 # Only re-run the configure step when this file changes.
 
 cmake_minimum_required(VERSION 3.23)
-project(CPPFX VERSION 0.27.0 LANGUAGES CXX)
+
+file(STRINGS cppfx/include/CPPFX/CPPFX.hpp cppfx_version_lines
+     REGEX "^#define CPPFX_VERSION_(MAJOR|MINOR|PATCH) ")
+foreach(line ${cppfx_version_lines})
+    string(REGEX MATCH "CPPFX_VERSION_([A-Z]+) +([0-9]+)" _ "${line}")
+    set(CPPFX_VERSION_${CMAKE_MATCH_1} ${CMAKE_MATCH_2})
+endforeach()
+
+project(CPPFX
+        VERSION ${CPPFX_VERSION_MAJOR}.${CPPFX_VERSION_MINOR}.${CPPFX_VERSION_PATCH}
+        LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -28,9 +38,6 @@ option(CPPFX_WARNINGS_AS_ERRORS "Treat warnings in CPPFX targets as errors" OFF)
 
 # --- warnings -------------------------------------------------------------
 # Applied to everything CPPFX builds: the library, tests and examples.
-# Tests and examples include the headers the way users do, so this is what
-# keeps the headers warning-free for them. raylib's own build is left alone.
-# PRIVATE: your warnings, not your users'.
 
 function(cppfx_warnings target)
     target_compile_options(${target} PRIVATE
@@ -55,21 +62,13 @@ endif()
 
 # --- the library ----------------------------------------------------------
 
-# CONFIGURE_DEPENDS makes CMake re-glob when files appear, so adding a
-# widget does not mean editing this file.
 file(GLOB CPPFX_SOURCES CONFIGURE_DEPENDS "cppfx/source/*.cpp")
 file(GLOB CPPFX_HEADERS CONFIGURE_DEPENDS "cppfx/include/CPPFX/*.hpp")
 
 add_library(CPPFX STATIC ${CPPFX_SOURCES})
 
-# The namespaced alias is what consumers link against. Using it internally
-# too means a typo is an error at configure time rather than a confusing
-# link failure later.
 add_library(CPPFX::CPPFX ALIAS CPPFX)
 
-# FILE_SET HEADERS with BASE_DIRS cppfx/include is what makes
-# #include <CPPFX/CPPFX.hpp> resolve for anything linking this target - and
-# it keeps working after install, with no hand-written include paths.
 target_sources(CPPFX PUBLIC
     FILE_SET HEADERS
     BASE_DIRS cppfx/include
@@ -86,8 +85,6 @@ cppfx_warnings(CPPFX)
 if(CPPFX_BUILD_TESTS)
     enable_testing()
 
-    # Shared runner. Every test file registers itself, so neither binary
-    # needs editing when you add one.
     set(CPPFX_TEST_RUNNER tests/main.cpp tests/harness.cpp)
 
     # Headless: no window, runs anywhere.
