@@ -69,8 +69,9 @@ class Item; // declaration for NestedProperty
  *  @class Colour
  *  @brief Wrapper over raylib colours.
  *  @details Used in every widget and property. Accepts named raylib colours
- *           and custom literals in the form #RrrGggBbbAaa (hex) or
- *           #RrrrGgggBbbbAaaa (dec). Alpha (Aaa or Aaaa) is optional and defaults to opaque.
+ *           and custom literals in the form #RRGGBBAA (hex) or #RRRGGGBBBAAA (dec).
+ *           Labelled forms #RrrGggBbbAaa (hex) and #RrrrGgggBbbbAaaa (dec) are
+ *           accepted too. Alpha is optional and defaults to opaque.
  */
 class Colour {
 public:
@@ -97,7 +98,7 @@ public:
 
     /**
      *  @brief Sets colour using its name or a custom literal.
-     *  @param colour colour's name, or #RrrGggBbbAaa / #RrrrGgggBbbbAaaa. Alpha (aaa) is optional. E.g #R12G34B56, #R12G34B56A78, #R012G034B056 or #R012G034B056A078
+     *  @param colour colour's name, or #RRGGBBAA / #RRRGGGBBBAAA, or labelled #RrrGggBbbAaa / #RrrrGgggBbbbAaaa. Alpha is optional. E.g #123456, #12345678, #012034056, #012034056078 or #R12G34B56
      *  @details Ignores capitalisation. Both GRAY and GREY work.
      *  @throws std::invalid_argument if the input is empty or the literal is malformed
      *  @throws std::out_of_range if the name isn't a known colour
@@ -125,7 +126,7 @@ public:
     /**
      *  @brief Sets custom colour literals to be reported in hexadecimal.
      *  @details Affects GetColourString only, and only for colours with no
-     *           name - #R1EG90BFF rather than #R030G144B255. Both forms are
+     *           name - #1E90FF rather than #030144255. Both forms are
      *           always accepted on input.
      *  @see SetLiteralBase
      */
@@ -133,7 +134,7 @@ public:
     /**
      *  @brief Sets custom colour literals to be reported in decimal.
      *  @details Affects GetColourString only, and only for colours with no
-     *           name - #R030G144B255 rather than #R1EG90BFF. Both forms are
+     *           name - #030144255 rather than #1E90FF. Both forms are
      *           always accepted on input.
      *  @see SetLiteralBase
      */
@@ -158,7 +159,7 @@ public:
      *  @param other the colour to compare against
      *  @returns true if RGBA match
      *  @details Only RGBA is compared - a colour built from "GRAY" equals one
-     *           built from "#R82G82B82", and the literal base is ignored.
+     *           built from "#828282", and the literal base is ignored.
      */
     bool operator==(const Colour& other) const;
     /**

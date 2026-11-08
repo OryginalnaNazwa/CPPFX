@@ -1,5 +1,5 @@
 #include "../include/CPPFX/properties.hpp"
-#include <cctype>          // for toupper
+#include <cctype>          // for toupper, tolower
 #include <algorithm>        // for transform, sort, unique
 #include <stdexcept>        // for invalid_argument
 #include <unordered_map>    // for unordered map
@@ -17,9 +17,11 @@ using namespace CPPFX;
 // --- Colour ---
 
 struct Colour::ColourLayout {
-        int width;       // 2 = hex, 3 = dec
-        int channels;    // 3 = no alpha, 4 = alpha given
+    int width;       // 2 = hex, 3 = dec
+    int channels;    // 3 = no alpha, 4 = alpha given
+    bool labelled;   // #RrrGggBbb rather than #RRGGBB
 };
+
 
 std::string Colour::Normalise(const std::string& str) {
     std::string out = str;
@@ -28,27 +30,37 @@ std::string Colour::Normalise(const std::string& str) {
 }
 
 Colour::ColourLayout Colour::DetectLayout(const std::string& s) {
-    static const std::string MODEL_HEX = "#RrrGggBbbAaa";
-    static const std::string MODEL_DEC = "#RrrrGgggBbbbAaaa";
     const auto Fail = [&s]() {
-        throw std::invalid_argument("Invalid colour: " + s + ". Model colour: "
-            + MODEL_HEX + " (hex) or " + MODEL_DEC + " (dec). Red Green Blue Alpha."
-              " Alpha is optional and defaults to opaque.");
+        throw std::invalid_argument("Invalid colour: " + s + ". Expected #RRGGBB or #RRGGBBAA (hex),"
+            " #RRRGGGBBB or #RRRGGGBBBAAA (dec), or labelled #RrrGggBbb[Aaa] / #RrrrGgggBbbb[Aaaa]."
+            " Alpha is optional and defaults to opaque.");
     };
 
-    if (s.size() < 2 || s.front() != '#' || s.at(1) != 'R') Fail();
+    if (s.size() < 2 || s.front() != '#') Fail();
 
-    // 'G' is not a digit in either base, so the first one is the green label.
+    // Plain: the length alone decides, since 6, 8, 9 and 12 digits don't overlap.
+    if (s[1] != 'R') {
+        switch (s.size() - 1) {
+            case 6:  return {2, 3, false};
+            case 8:  return {2, 4, false};
+            case 9:  return {3, 3, false};
+            case 12: return {3, 4, false};
+            default: Fail();
+        }
+    }
+
+    // Labelled: 'R' is not a digit in either base, so it can't start a plain literal.
+    // 'G' isn't either, so the first one is the green label.
     const std::size_t g = s.find('G');
     if (g != 4 && g != 5) Fail();
 
-    ColourLayout layout{static_cast<int>(g) - 2, 0};
+    ColourLayout layout{static_cast<int>(g) - 2, 0, true};
 
     // Each channel costs one label plus `width` digits; the '#' is the +1.
-    const int stride = layout.width + 1;
-    if (s.size() == (size_t)(1 + (3 * stride)))         layout.channels = 3;
-    else if (s.size() == (size_t)(1 + ((4 * stride))))  layout.channels = 4;
-    else                                    Fail();
+    const std::size_t stride = static_cast<std::size_t>(layout.width) + 1;
+    if (s.size() == 1 + 3 * stride)      layout.channels = 3;
+    else if (s.size() == 1 + 4 * stride) layout.channels = 4;
+    else                                 Fail();
 
     return layout;
 }
@@ -62,7 +74,7 @@ Color Colour::ParseLiteral(const std::string& s) {
     std::size_t pos = 1;
 
     for (int i = 0; i < layout.channels; ++i) {
-        if (s.at(pos++) != labels[i])
+        if (layout.labelled && s.at(pos++) != labels[i])
             throw std::invalid_argument("Invalid colour: " + s + ". Expected '"
                 + labels[i] + "' at index " + std::to_string(pos - 1) + ".");
 
@@ -80,6 +92,7 @@ Color Colour::ParseLiteral(const std::string& s) {
 
     return Color{values[0], values[1], values[2], values[3]};
 }
+
 
 Color Colour::StringToColour(const std::string& s) {
     if (s.empty()) throw std::invalid_argument("Colour cannot be empty.");
@@ -157,14 +170,15 @@ std::string Colour::ColourToString(Color c) const {
 
     char buf[20];
     if (hex) {
-        if (c.a == 255) std::snprintf(buf, sizeof(buf), "#R%02XG%02XB%02X", c.r, c.g, c.b); // alpha is optional
-        else            std::snprintf(buf, sizeof(buf), "#R%02XG%02XB%02XA%02X", c.r, c.g, c.b, c.a);
+        if (c.a == 255) std::snprintf(buf, sizeof(buf), "#%02X%02X%02X", c.r, c.g, c.b); // alpha is optional
+        else            std::snprintf(buf, sizeof(buf), "#%02X%02X%02X%02X", c.r, c.g, c.b, c.a);
     } else {
-        if (c.a == 255) std::snprintf(buf, sizeof(buf), "#R%03uG%03uB%03u", c.r, c.g, c.b);
-        else            std::snprintf(buf, sizeof(buf), "#R%03uG%03uB%03uA%03u", c.r, c.g, c.b, c.a);
+        if (c.a == 255) std::snprintf(buf, sizeof(buf), "#%03u%03u%03u", c.r, c.g, c.b);
+        else            std::snprintf(buf, sizeof(buf), "#%03u%03u%03u%03u", c.r, c.g, c.b, c.a);
     }
     return buf;
 }
+
 
 void Colour::SetColour(const std::string& col) {
     const std::string norm = Normalise(col);
