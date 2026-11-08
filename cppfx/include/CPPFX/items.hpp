@@ -552,7 +552,7 @@ public:
         }
 
         private:
-            explicit Header(Item* o) : NestedProperty(o), headerDividerThickness(10.0f) { dividerColour.SetColour(BLACK); hoveredColour.Blend(GREY, 0.25f); }
+            explicit Header(Item* o) : NestedProperty(o), headerDividerThickness(10.0f) { dividerColour.SetColour(BLACK); hoveredColour.BlendTo(GREY, 0.25f); }
             float headerDividerThickness;
             float hoverBlendFactor = 0.5f;
     } header{this};
@@ -605,7 +605,7 @@ public:
         }
 
         private:
-            explicit MenuList(Item* o) : NestedProperty(o), dividerThickness(5.0f) { dividerColour.SetColour(BLACK); hoveredColour.Blend(GREY, 0.25f);}
+            explicit MenuList(Item* o) : NestedProperty(o), dividerThickness(5.0f) { dividerColour.SetColour(BLACK); hoveredColour.BlendTo(GREY, 0.25f);}
             float dividerThickness; ///< seam between rows; none after the last one
             float listItemHeight = 50.0f;   ///< row height, independent of the header's
             float hoverBlendFactor = 0.5f; ///< used for hover on labels. hoveredColour is treated as base for blend.
@@ -1088,7 +1088,7 @@ protected:
     /** @brief Draws the header - background, current pick, and its border. */
     virtual void DrawHeader(float /*elapsedTime*/) const {
         Colour c = header.colour.IsOverridden() ? header.colour.GetOverride() : colour;
-        if (headerHovered) c.Blend(header.hoveredColour, header.GetHoverBlendFactor());
+        if (headerHovered) c.BlendTo(header.hoveredColour, header.GetHoverBlendFactor());
         DrawRectangle(xAnchor, yAnchor, width, height, c.GetColour());
         if (!currentLabel.empty()) {
             if (header.font.IsOverridden()) DrawAlignedText(Alignment::CENTRE, currentLabel, header.font.GetOverride());
@@ -1118,9 +1118,7 @@ protected:
                                   ? labelToColour.at(label).GetColour()
                                   : drawColour;
             if ((int)i == hoveredRow) {
-                Colour c = rowColour;
-                c.Blend(list.hoveredColour, list.GetHoverBlendFactor());
-                rowColour = c.GetColour();
+                rowColour = Colour::Blend(rowColour, list.hoveredColour.GetColour(), list.GetHoverBlendFactor());
             }
 
             DrawRectangle(xAnchor, yCurrent, width, list.GetItemInListHeight(), rowColour);

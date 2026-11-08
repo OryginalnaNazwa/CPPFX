@@ -404,7 +404,7 @@ void RadioGroup::AddButton(const std::string& label) {
     auto button = std::make_unique<RadioButton>();
     button->SetID(label);
     button->SetText(label);
-    button->hoveredColour.Blend(GREY, 0.25f);
+    button->hoveredColour.BlendTo(GREY, 0.25f);
     button->SetHoverCallbacksToSwap();
     if (buttons.empty()) button->Press();
     buttonsInDrawingOrder.push_back(button.get());
@@ -939,9 +939,7 @@ void SearchableDropDown::DrawList(float /*elapsedTime*/) const {
                                 ? labelToColour.at(label).GetColour()
                                 : drawColour;
         if ((int)i == hoveredRow) {
-            Colour c = rowColour;
-            c.Blend(list.hoveredColour, list.GetHoverBlendFactor());
-            rowColour = c.GetColour();
+            rowColour = Colour::Blend(rowColour, list.hoveredColour.GetColour(), list.GetHoverBlendFactor());
         }
 
         DrawRectangle(xAnchor, yCurrent, width, list.GetItemInListHeight(), rowColour);
@@ -1421,8 +1419,8 @@ void Spinner::Initialise() {
     decrementButton.border.SetThickness(2.0f);
     decrementButton.onClick.Set([this]() { Decrement(); });
 
-    decrementButton.hoveredColour.Blend(GREY, 0.25f);
-    incrementButton.hoveredColour.Blend(GREY, 0.25f);
+    decrementButton.hoveredColour.BlendTo(GREY, 0.25f);
+    incrementButton.hoveredColour.BlendTo(GREY, 0.25f);
     decrementButton.SetHoverCallbacksToSwap();
     incrementButton.SetHoverCallbacksToSwap();
 }

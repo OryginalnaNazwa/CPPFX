@@ -79,28 +79,21 @@ public:
      *  @brief Default constructor.
      *  @details Sets colour as light grey.
      */
-    Colour() : name("LIGHTGRAY"), value(LIGHTGRAY) {}
+    Colour() : value(LIGHTGRAY) {}
     /**
      *  @brief Constructor for setting the colour by name or literal.
      *  @param colour name of the colour, or a custom literal.
-     *  @details Normalises the input. Sets the value too. The stored name is
-     *           always the canonical one, so Colour("grey") reports "GRAY".
+     *  @details Ignores capitalisation. GetColourString reports the canonical
+     *           name, so Colour("grey") reports "GRAY".
      *  @throws std::invalid_argument if the input is empty or the literal is malformed
      *  @throws std::out_of_range if the name isn't a known colour
      */
-    explicit Colour(const std::string& colour) {
-        value = StringToColour(Normalise(colour));
-        name  = ColourToString(value);
-    }
+    explicit Colour(const std::string& colour) : value(StringToColour(Normalise(colour))) {}
     /**
      *  @brief Constructor for setting colour by value.
      *  @param colour value of the colour.
-     *  @details Sets the name too - a known name if the value matches one,
-     *           otherwise a custom literal.
      */
-    Colour(Color colour) : value(colour) {
-        name = ColourToString(colour);
-    }
+    Colour(Color colour) : value(colour) {}
 
     /**
      *  @brief Sets colour using its name or a custom literal.
@@ -164,8 +157,8 @@ public:
      *  @brief Compares two colours by value.
      *  @param other the colour to compare against
      *  @returns true if RGBA match
-     *  @details Names are ignored - a colour built from "GRAY" equals one
-     *           built from "#R82G82B82".
+     *  @details Only RGBA is compared - a colour built from "GRAY" equals one
+     *           built from "#R82G82B82", and the literal base is ignored.
      */
     bool operator==(const Colour& other) const;
     /**
@@ -174,35 +167,69 @@ public:
     bool operator!=(const Colour& other) const;
 
     /**
-     *  @brief Reduces the colour's opacity.
-     *  @details Clamps the factor.
+     *  @brief Reduces this colour's opacity.
      *  @param factor 0.0 fully transparent, 1.0 unchanged
+     *  @details Clamps factor. Only alpha is changed.
      */
-    void Fade(float factor);
+    void FadeTo(float factor);
+    /**
+     *  @brief Reduces given colour's opacity.
+     *  @param colour colour to fade
+     *  @param factor 0.0 fully transparent, 1.0 unchanged
+     *  @returns The faded colour.
+     *  @details Clamps factor. Only alpha is changed.
+     */
+    static Color Fade(Color colour, float factor);
+    /**
+     *  @overload
+     */
+    static Colour Fade(const Colour& colour, float factor);
 
     /**
      *  @brief Blends this colour towards another.
      *  @param target colour to blend towards
-     *  @param t 0.0 leaves the colour unchanged, 1.0 makes it the target
-     *  @details Clamps t. Blends all four channels, alpha included.
+     *  @param factor 0.0 leaves the colour unchanged, 1.0 makes it the target
+     *  @details Clamps factor. Blends all four channels, alpha included.
      */
-    void Blend(Color target, float t);
+    void BlendTo(Color target, float factor);
     /**
      *  @overload
      */
-    void Blend(const Colour& target, float t);
+    void BlendTo(const Colour& target, float factor);
+    /**
+     *  @brief Blends given colour towards another.
+     *  @param colour starting colour
+     *  @param target colour to blend towards
+     *  @param factor 0.0 leaves the colour unchanged, 1.0 makes it the target
+     *  @returns The blended colour.
+     *  @details Clamps factor. Blends all four channels, alpha included.
+     */
+    static Color Blend(Color colour, Color target, float factor);
+    /**
+     *  @overload
+     */
+    static Colour Blend(const Colour& colour, const Colour& target, float factor);
 
     /**
-     *  @brief Linearly interpolates a single channel from a to b.
-     *  @param a starting value
-     *  @param b target value
-     *  @param t must be within [0, 1] - not clamped, unlike Blend
-     *  @returns The interpolated channel, rounded.
+     *  @brief Linearly interpolates one of this colour's channels towards a target value.
+     *  @param channel channel to modify {'r', 'g', 'b', 'a'}, case-insensitive
+     *  @param target value to interpolate towards
+     *  @param factor 0.0 leaves the channel unchanged, 1.0 makes it the target
+     *  @details Clamps factor. The result is rounded.
+     *  @throws std::invalid_argument if channel isn't one of r, g, b, a
      */
-    static unsigned char Lerp(unsigned char a, unsigned char b, float t);
+    void LerpTo(char channel, unsigned char target, float factor);
+    /**
+     *  @brief Linearly interpolates a single channel value towards a target.
+     *  @param value starting value
+     *  @param target value to interpolate towards
+     *  @param factor 0.0 returns value, 1.0 returns target
+     *  @details Clamps factor.
+     *  @returns The interpolated value, rounded.
+     */
+    static unsigned char Lerp(unsigned char value, unsigned char target, float factor);
 
 private:
-    std::string name;   ///< colour's canonical name, or a custom literal
     Color value;        ///< Raylib's colour
     bool hex = false;   ///< whether custom literals are reported in hex or dec
 
@@ -325,7 +352,7 @@ public:
      *  @details Clamps the factor.
      *  @throws std::logic_error if no colour is set
      */
-    void Fade(float factor);
+    void FadeTo(float factor);
 
     /**
      *  @brief Blends this colour towards another.
@@ -334,11 +361,19 @@ public:
      *  @details Clamps t. Blends all four channels, alpha included.
      *  @throws std::logic_error if no colour is set
      */
-    void Blend(Color target, float t);
+    void BlendTo(Color target, float t);
     /**
      *  @overload
      */
-    void Blend(const Colour& target, float t);
+    void BlendTo(const Colour& target, float t);
+    /**
+     *  @brief Linearly interpolates a single channel from a to b.
+     *  @param channel channel to modify {'r', 'g', 'b'}
+     *  @param b target value
+     *  @param t must be within [0, 1] - not clamped, unlike Blend
+     *  @returns The interpolated channel, rounded.
+     */
+    void LerpTo(char channel, unsigned char b, float t);
 
     /**
      *  @brief Checks whether a colour is set.

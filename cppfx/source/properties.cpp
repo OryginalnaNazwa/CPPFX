@@ -169,16 +169,14 @@ std::string Colour::ColourToString(Color c) const {
 void Colour::SetColour(const std::string& col) {
     const std::string norm = Normalise(col);
     value     = StringToColour(norm);
-    name = ColourToString(value);
 }
 
 void Colour::SetColour(Color col) {
     value   = col;
-    name    = ColourToString(col);
 }
 
 std::string Colour::GetColourString() const {
-    return name;
+    return ColourToString(value);
 }
 
 Color Colour::GetColour() const {
@@ -187,17 +185,14 @@ Color Colour::GetColour() const {
 
 void Colour::SetHex() {
     hex = true;
-    name = ColourToString(value);
 }
 
 void Colour::SetDec() {
     hex = false;
-    name = ColourToString(value);
 }
 
 void Colour::SetLiteralBase(bool hex) {
     this->hex = hex;
-    name = ColourToString(value);
 }
 
 bool Colour::IsHex() const {
@@ -213,39 +208,76 @@ bool Colour::operator!=(const Colour& other) const {
     return !(*this == other);
 }
 
-void Colour::Fade(float factor) {
+void Colour::FadeTo(float factor) {
+    SetColour(Colour::Fade(value, factor));
+}
+
+Color Colour::Fade(Color colour, float factor) {
     if (factor < 0.0f) factor = 0.0f;
     if (factor > 1.0f) factor = 1.0f;
 
-    value.a *= factor;
-    name = ColourToString(value);
+    colour.a = static_cast<unsigned char>(colour.a * factor + 0.5f);
+    return colour;
 }
 
-unsigned char Colour::Lerp(unsigned char a, unsigned char b, float t) {
-    return static_cast<unsigned char>(a + (static_cast<float>(b) - a) * t + 0.5f);
+Colour Colour::Fade(const Colour& colour, float factor) {
+   Colour c = colour;
+   c.SetColour(Colour::Fade(colour.GetColour(), factor));
+   return c;
 }
 
-void Colour::Blend(Color target, float t) {
-    if (t < 0.0f) t = 0.0f;
-    if (t > 1.0f) t = 1.0f;
+unsigned char Colour::Lerp(unsigned char value, unsigned char target, float factor) {
+    if (factor <= 0.0f) factor = 0.0f;
+    else if (factor >= 1.0f) factor = 1.0f;
+    return static_cast<unsigned char>(value + (static_cast<float>(target) - value) * factor + 0.5f);
+}
 
-    const Color from = value;
-    const Color to   = target;
+void Colour::LerpTo(char channel, unsigned char target, float factor) {
+    channel = static_cast<char>(std::tolower(static_cast<unsigned char>(channel)));
+    switch (channel) {
+    case 'a':
+        value.a = Colour::Lerp(value.a, target, factor);
+        break;
+    case 'b':
+        value.b = Colour::Lerp(value.b, target, factor);
+        break;
+    case 'g':
+        value.g = Colour::Lerp(value.g, target, factor);
+        break;
+    case 'r':
+        value.r = Colour::Lerp(value.r, target, factor);
+        break;
+    default:
+        throw std::invalid_argument(std::string("Lerping failed: parameter ") + channel + " is not a channel {r, g, b, a}.");
+    }
+}
 
-    value = Color{
-        Lerp(from.r, to.r, t),
-        Lerp(from.g, to.g, t),
-        Lerp(from.b, to.b, t),
-        Lerp(from.a, to.a, t)
+void Colour::BlendTo(Color target, float factor) {
+   SetColour(Colour::Blend(value, target, factor));
+}
+
+void Colour::BlendTo(const Colour& target, float factor) {
+    BlendTo(target.GetColour(), factor);
+}
+
+Color Colour::Blend(Color colour, Color target, float factor) {
+    Color c = Color{
+        Colour::Lerp(colour.r, target.r, factor),
+        Colour::Lerp(colour.g, target.g, factor),
+        Colour::Lerp(colour.b, target.b, factor),
+        Colour::Lerp(colour.a, target.a, factor)
     };
-    name = ColourToString(value);
+    return c;
 }
 
-void Colour::Blend(const Colour& target, float t) {
-    Blend(target.GetColour(), t);
+Colour Colour::Blend(const Colour& colour, const Colour& target, float t) {
+    Colour c = colour;
+    c.SetColour(Colour::Blend(colour.GetColour(), target.GetColour(), t));
+    return c;
 }
 
 // - OverrideColour -
+
 void OverrideColour::SetColour(const std::string& col) {
     colour = Colour(col);
 }
@@ -274,9 +306,10 @@ bool OverrideColour::operator!=(const OverrideColour& other) const {
 void OverrideColour::SetHex()                         { Checked(__func__).SetHex(); }
 void OverrideColour::SetDec()                         { Checked(__func__).SetDec(); }
 void OverrideColour::SetLiteralBase(bool hex)         { Checked(__func__).SetLiteralBase(hex); }
-void OverrideColour::Fade(float factor)               { Checked(__func__).Fade(factor); }
-void OverrideColour::Blend(Color target, float t)  { Checked(__func__).Blend(target, t); }
-void OverrideColour::Blend(const Colour& target, float t) { Checked(__func__).Blend(target, t); }
+void OverrideColour::FadeTo(float factor)               { Checked(__func__).FadeTo(factor); }
+void OverrideColour::BlendTo(Color target, float t)  { Checked(__func__).BlendTo(target, t); }
+void OverrideColour::BlendTo(const Colour& target, float t) { Checked(__func__).BlendTo(target, t); }
+void OverrideColour::LerpTo(char channel, unsigned char b, float t) { Checked(__func__).LerpTo(channel, b, t); }
 Color OverrideColour::GetColour() const { return Checked(__func__).GetColour(); }
 bool  OverrideColour::IsHex() const     { return Checked(__func__).IsHex(); }
 
