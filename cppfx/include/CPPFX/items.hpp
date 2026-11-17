@@ -951,8 +951,10 @@ public:
      *  @details Measures currentLabel. Also grows the list's row height to fit it.
      */
     virtual void ExpandToText() override {
-        SetText(currentLabel);
+        bool wasArmed = onChange.IsArmed();
+        TextItem::SetText(currentLabel);
         TextItem::ExpandToText();
+        if (!wasArmed) onChange.Disarm(); // don't arm callback here
         const CPPFX::Font& rowFont = list.font.IsOverridden() ? list.font.GetOverride() : font;
         const float rowNeeds = rowFont.GetInkSize(currentLabel).y + (2.0f * textMargin);
         if (rowNeeds > list.GetItemInListHeight()) list.SetItemInListHeight(rowNeeds);
@@ -962,8 +964,10 @@ public:
      *  @details Measures currentLabel. Also sets the list's row height to fit it.
      */
     void FitToText() override {
-        SetText(currentLabel);
+        bool wasArmed = onChange.IsArmed();
+        TextItem::SetText(currentLabel);
         TextItem::FitToText();
+        if (!wasArmed) onChange.Disarm();
         const CPPFX::Font& rowFont = list.font.IsOverridden() ? list.font.GetOverride() : font;
         const float rowNeeds = rowFont.GetInkSize(currentLabel).y + (2.0f * textMargin);
         list.SetItemInListHeight(rowNeeds);

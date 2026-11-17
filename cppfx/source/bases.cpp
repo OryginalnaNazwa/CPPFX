@@ -60,6 +60,7 @@ void TextItem::SetText(const std::string& utf8) {
         SyncUtf8();
         onChange.Arm();
     }
+    if (expandsToTextAutomatically) TextItem::ExpandToText();
 }
 
 void TextItem::ClearText() {
@@ -152,6 +153,7 @@ void TextItem::InsertAt(size_t i, int cp)  {
     text.insert(i, 1, (char32_t)cp);
     SyncUtf8();
     onChange.Arm();
+    if (expandsToTextAutomatically) ExpandToText();
 }
 
 void TextItem::RemoveAt(size_t index) {
@@ -171,6 +173,7 @@ void TextItem::AppendAtBack(int codepoint) {
     text.push_back((char32_t)codepoint);
     SyncUtf8();
     onChange.Arm();
+    if (expandsToTextAutomatically) ExpandToText();
 }
 
 std::string TextItem::StringFromTo(size_t from, size_t to) const {
