@@ -1,7 +1,7 @@
 #include "../include/CPPFX/items.hpp"
 #include <cmath>          // for cos, sin, fmod, pow, sqrt
 #include <numeric>        // for accumulate
-#include <unordered_map>  // for unordered_map, operator==, _Node_const_iter...
+#include <unordered_map>  // for unordered_map
 #include <utility>        // for pair
 #include <limits>         // for numeric_limits
 
@@ -59,27 +59,25 @@ void TextField::DrawMyself(float elapsedTime) const {
 }
 
 void TextField::DoFocusAction(float /*elapsedTime*/) {
-    if (IsFocused()) {
-        if (IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE)) {
-            if (caretPosition > 0) RemoveAt(--caretPosition);
-        } else if (IsKeyPressed(KEY_SUBMIT)) {
-            onSubmit.Arm();
-            Defocus();
-        } else if (IsKeyPressed(KEY_DELETE) || IsKeyPressedRepeat(KEY_DELETE)) {
-            if (caretPosition < Length()) RemoveAt(caretPosition);
-        } else if (IsKeyPressed(KEY_LEFT) || IsKeyPressedRepeat(KEY_LEFT)) {
-            if (caretPosition > 0) --caretPosition;
-        } else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressedRepeat(KEY_RIGHT)) {
-            if (caretPosition < Length()) ++caretPosition;
-        } else {
-            int ch = GetCharPressed();
-            while (ch > 0) {
-                InsertAt(caretPosition++, ch);
-                ch = GetCharPressed();
-            }
+    if (IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE)) {
+        if (caretPosition > 0) RemoveAt(--caretPosition);
+    } else if (IsKeyPressed(KEY_SUBMIT)) {
+        onSubmit.Arm();
+        Defocus();
+    } else if (IsKeyPressed(KEY_DELETE) || IsKeyPressedRepeat(KEY_DELETE)) {
+        if (caretPosition < Length()) RemoveAt(caretPosition);
+    } else if (IsKeyPressed(KEY_LEFT) || IsKeyPressedRepeat(KEY_LEFT)) {
+        if (caretPosition > 0) --caretPosition;
+    } else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressedRepeat(KEY_RIGHT)) {
+        if (caretPosition < Length()) ++caretPosition;
+    } else {
+        int ch = GetCharPressed();
+        while (ch > 0) {
+            InsertAt(caretPosition++, ch);
+            ch = GetCharPressed();
         }
-        UpdateScroll();
     }
+    UpdateScroll();
 }
 
 void TextField::SetPromptText(const std::string& text) {
@@ -159,6 +157,10 @@ std::string TextField::GetClassID() {
     return "TextField";
 }
 
+void EmbeddedTextField::DoFocusAction(float elapsedTime) {
+    if (IsFocused()) TextField::DoFocusAction(elapsedTime);
+}
+
 //--- Button ---
 
 void Button::DrawMyself(float /*elapsedTime*/) const {
@@ -173,22 +175,26 @@ void Button::DrawMyself(float /*elapsedTime*/) const {
 }
 
 void Button::DoFocusAction(float elapsedTime) {
-    if (IsFocused()) {
-        if (timer > 0.0f) {
-            if (elapsedTime > timer) {
-                timer = 0.0f;
-                Defocus();
-            }
-        } else {
-            timer = elapsedTime + 0.1f;
+    if (timer > 0.0f) {
+        if (elapsedTime > timer) {
+            Defocus();
         }
     } else {
-        timer = 0.0f;
+        timer = elapsedTime + 0.1f;
     }
+}
+
+void Button::Defocus() {
+    Item::Defocus();
+    timer = 0.0f;
 }
 
 std::string Button::GetClassID() {
     return "Button";
+}
+
+void EmbeddedButton::DoFocusAction(float elapsedTime) {
+    if (IsFocused()) Button::DoFocusAction(elapsedTime);
 }
 
 // --- CheckBox ---
@@ -202,36 +208,12 @@ void CheckBox::DrawMyself(float /*elapsedTime*/) const {
         DrawCircle(xAnchor + (width / 2.0f), yAnchor + (height / 2.0f), width / 2.0f, colour.GetColour());
     }
 
-    const Vector2 ink = font.GetInkSize(GetText());
-
+    const Layout layout = CalculateLayout();
     if (!IsTextEmpty()) {
-        float gap = textMargin + labelMargin;
-        float x = xAnchor, y = yAnchor, w = width, h = height;
-
-        if (alignment.IsRightAlignment())       { x += width + gap;   w = ink.x; }
-        else if (alignment.IsLeftAlignment())   { x -= gap + ink.x;   w = ink.x; }
-        else if (alignment.IsBottomAlignment()) { y += height + gap;  h = ink.y; }
-        else                                    { y -= gap + ink.y;   h = ink.y; }
-
-        DrawAlignedText(alignment, GetText(), font, x, y, w, h);
+        DrawAlignedText(layout.position, GetText(), font,
+                        layout.label.x, layout.label.y, layout.label.width, layout.label.height);
     }
-
-    if (alignment.IsRightAlignment()) {
-        border.DrawMyself(xAnchor, yAnchor,
-                          width + (2.0f * textMargin) + labelMargin + ink.x, height);
-    } else if (alignment.IsLeftAlignment()) {
-        border.DrawMyself(xAnchor - (2.0f * textMargin) - labelMargin - ink.x, yAnchor,
-                          width + (2.0f * textMargin) + labelMargin + ink.x, height);
-    } else {
-        // top and bottom differ only in whether the label sits above the box
-        const float boxWidth = std::max(width, ink.x) + (2.0f * textMargin);
-        const float boxX     = xAnchor - ((ink.x - width) / 2.0f) - textMargin;
-        const float boxY     = alignment.IsTopAlignment()
-                             ? yAnchor - (2.0f * textMargin) - labelMargin - ink.y
-                             : yAnchor;
-        border.DrawMyself(boxX, boxY, boxWidth,
-                          height + (2.0f * textMargin) + labelMargin + ink.y);
-    }
+    border.DrawMyself(layout.frame.x, layout.frame.y, layout.frame.width, layout.frame.height);
     clickBorder.DrawMyself(xAnchor, yAnchor, width, height);
 
     if (pressed) { // draws shapes. Eyeballed numeric values, but looks good. Can stay.
@@ -247,6 +229,45 @@ void CheckBox::DrawMyself(float /*elapsedTime*/) const {
             DrawCircle(xAnchor + (width / 2.0f), yAnchor + (height / 2.0f), width / 4.0f, pressedColour.GetColour());
         }
     }
+}
+
+CheckBox::Layout CheckBox::CalculateLayout() const {
+    const float t = clickBorder.GetThickness();
+    Layout l{};
+
+    if (IsTextEmpty()) {
+        // no label - the frame wraps only the box and its click border
+        l.position = Alignment::Alignments::RIGHT;
+        l.frame    = { xAnchor - t, yAnchor - t, width + (2.0f * t), height + (2.0f * t) };
+        return l;
+    }
+
+    const Vector2 ink = font.GetInkSize(GetText());
+    const float gap   = textMargin + labelMargin;
+
+    // beside is the most common case; corners go beside, degenerate case of CENTRE falls back to right
+    const bool beside = alignment.IsLeftAlignment() || alignment.IsRightAlignment()
+                     || alignment.GetAlignment() == Alignment::Alignments::CENTRE;
+    if (beside) {
+        // label sits beside the box, so the taller of the two sets the height
+        const bool left = alignment.IsLeftAlignment();
+        l.position     = left ? Alignment::Alignments::LEFT : Alignment::Alignments::RIGHT;
+        l.label        = { left ? xAnchor - gap - ink.x : xAnchor + width + gap, yAnchor, ink.x, height };
+        l.frame.width  = width + (2.0f * textMargin) + labelMargin + ink.x + t;
+        l.frame.height = std::max(height + (2.0f * t), ink.y + (2.0f * textMargin));
+        l.frame.x      = left ? xAnchor - (2.0f * textMargin) - labelMargin - ink.x : xAnchor - t;
+        l.frame.y      = yAnchor - ((l.frame.height - height) / 2.0f);
+    } else {
+        // top and bottom differ only in whether the label sits above the box
+        const bool top = alignment.IsTopAlignment();
+        l.position     = top ? Alignment::Alignments::ABOVE : Alignment::Alignments::BOTTOM;
+        l.label        = { xAnchor, top ? yAnchor - gap - ink.y : yAnchor + height + gap, width, ink.y };
+        l.frame.width  = std::max(width + (2.0f * t), ink.x + (2.0f * textMargin));
+        l.frame.height = height + (2.0f * textMargin) + labelMargin + ink.y + t;
+        l.frame.x      = xAnchor - ((l.frame.width - width) / 2.0f);
+        l.frame.y      = top ? yAnchor - (2.0f * textMargin) - labelMargin - ink.y : yAnchor - t;
+    }
+    return l;
 }
 
 void CheckBox::DoFocusAction(float /*elapsedTime*/) {
@@ -269,22 +290,11 @@ float CheckBox::GetLabelMargin() const {
 }
 
 float CheckBox::GetTotalWidth() const {
-    const float textWidth = IsTextEmpty() ? 0.0f : font.GetInkSize(GetText()).x;
-    if (alignment.IsRightAlignment() || alignment.IsLeftAlignment()) {
-        return Item::GetTotalWidth() + clickBorder.GetThickness() + labelMargin
-             + (2.0f * textMargin) + textWidth;
-    }
-    if (textWidth > width) return textWidth + (2.0f * textMargin);
-    return Item::GetTotalWidth() + clickBorder.GetThickness();
+    return CalculateLayout().frame.width + (2.0f * border.GetThickness());
 }
 
 float CheckBox::GetTotalHeight() const {
-    if (alignment.IsTopAlignment() || alignment.IsBottomAlignment()) {
-        const float textHeight = IsTextEmpty() ? 0.0f : font.GetInkSize(GetText()).y;
-        return Item::GetTotalHeight() + clickBorder.GetThickness() + labelMargin
-             + (2.0f * textMargin) + textHeight;
-    }
-    return Item::GetTotalHeight() + clickBorder.GetThickness();
+    return CalculateLayout().frame.height + (2.0f * border.GetThickness());
 }
 
 std::string CheckBox::GetClassID() {

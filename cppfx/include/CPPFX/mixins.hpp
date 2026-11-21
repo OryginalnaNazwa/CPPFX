@@ -231,6 +231,17 @@ public:
     friend class ComboBox;
     friend class SearchableDropDown;
 
+    /**
+     *  @see Item::DoFocusAction
+     *  @note Embedded subclasses should check their own focus, since it's not controlled by GUI.
+     */
+    void DoFocusAction(float elapsedTime) override = 0;
+    /*  Do this in subclasses:
+        void DoFocusAction(float elapsedTime) {
+            if (IsFocused()) SUBCLASS::DoFocusAction(elapsedTime);
+        }
+    */
+
 protected:
 
     Embedded() : Item() {}

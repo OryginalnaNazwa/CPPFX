@@ -146,6 +146,8 @@ class EmbeddedTextField : public TextField, public virtual Embedded {
 public:
 
     EmbeddedTextField() : Item("EmbeddedTextField"), Embedded(), TextField() {}
+
+    void DoFocusAction(float elapsedTime) override;
 };
 
 /**
@@ -163,6 +165,8 @@ public:
     void DrawMyself(float elapsedTime) const override;
     void DoFocusAction(float elapsedTime) override;
 
+    void Defocus() override;
+
     /**
      *  @see Item::GetClassID()
      */
@@ -178,17 +182,22 @@ class EmbeddedButton : public Button, public virtual Embedded {
 public:
 
     EmbeddedButton() : Item("EmbeddedButton"), Embedded(), Button() {}
+
+    void DoFocusAction(float elapsedTime) override;
 };
 
 /**
  *  @class CheckBox
  *  @brief A turn on - turn off button.
- *  @details Width and height are the box's. Alignment sets which side of the box the label is on.
+ *  @details Width and height are the box's. Alignment sets which side of the box the label is on. Default alignment is RIGHT.
  *  With the label left or right, total width is width + label width + labelMargin + 2 * textMargin, plus borders.
  *  With the label above or below, total height is height + label height + labelMargin + 2 * textMargin, plus borders.
- *  border goes around the box and the label, clickBorder around the box only.
+ *  With the label left or right, total height is either widget's height or the text's height (taken from Font), whatever is greater.
+ *  border goes around the box and the label, clickBorder around the box only. If text is empty, they both cover the same area. clickBorder is drawn on the top.
  *  The mark is drawn in colour, and pressedColour fills the box while pressed.
  *  RADIO is the exception: colour fills the circle and pressedColour is the dot.
+ *  All alignments are merged into one of four cardinal directions: RIGHT, LEFT, ABOVE/TOP and BOTTOM.
+ *  Merging goes by horizontal axis first, so TOP_LEFT becomes LEFT. CENTRE is a degenerate case and is treated as RIGHT alignment.
  *  @see PersistentState for onChange callback handling.
  *  @note Probably works best for equal width and height, but X and TICK should work correctly nonetheless at least.
  */
@@ -262,6 +271,13 @@ public:
 protected:
     float labelMargin; ///< distance between the box and the label
     Shapes shape;
+
+    struct Layout {
+        ::Rectangle frame;              ///< what border goes around: box, label and margins
+        ::Rectangle label;              ///< where the label is drawn
+        Alignment::Alignments position; ///< side the label ended up on
+    };
+    Layout CalculateLayout() const; ///< layout maths shared by drawing and the totals
 
     Shapes StringToShape(const std::string& shape) const;
     std::string ShapeToString(const CheckBox::Shapes& shape) const;
