@@ -4,6 +4,7 @@
 #include <unordered_map>  // for unordered_map
 #include <utility>        // for pair
 #include <limits>         // for numeric_limits
+#include <algorithm>
 
 using namespace CPPFX;
 
@@ -1223,16 +1224,32 @@ std::string AnchorPane::GetClassID() {
 }
 
 void VBox::SetPositionsOfItems() {
-    float currentY = 0.0f;
-    for (auto& item : ItemsInDrawingOrder) {
-        item->SetX(alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
-        item->SetY(currentY + alignment.GetAlignedY(yAnchor, item->GetTotalHeight(), height));
+    if (ItemsInDrawingOrder.empty()) return;
 
+    // nested containers arrange first, so they're measured at their real size
+    for (auto* item : ItemsInDrawingOrder) {
         if (IsContainer(item->GetFxID())) {
-            dynamic_cast<Container*>(item)->Order();
+            dynamic_cast<Container*>(item)->SetPositionsOfItems();
         }
+    }
 
-        currentY += padding + item->GetTotalHeight();
+    float stackHeight = 0.0f;
+    float widest = 0.0f;
+    for (const auto* item : ItemsInDrawingOrder) {
+        stackHeight += item->GetTotalHeight();
+        widest = std::max(widest, item->GetTotalWidth());
+    }
+    stackHeight += padding * (float)(ItemsInDrawingOrder.size() - 1);
+
+    // content bigger than the box aligns as if the box already fit it - ExpandToChildren grows it after
+    const float boxWidth  = std::max(width, widest);
+    const float boxHeight = std::max(height, stackHeight);
+
+    float currentY = alignment.GetAlignedY(yAnchor, stackHeight, boxHeight);
+    for (auto* item : ItemsInDrawingOrder) {
+        item->SetX(alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), boxWidth));
+        item->SetY(currentY);
+        currentY += item->GetTotalHeight() + padding;
     }
     ExpandToChildren();
 }
@@ -1262,17 +1279,32 @@ std::string VBox::GetClassID() {
 }
 
 void HBox::SetPositionsOfItems() {
-    float currentX = 0.0f;
-    for (auto& item : ItemsInDrawingOrder) {
-        if (alignment.IsCentreColumnAlignment()) {
-            item->SetX(currentX + alignment.GetAlignedX(xAnchor - currentX, item->GetTotalWidth(), GetTotalWidth() - currentX));
-        } else item->SetX(currentX + alignment.GetAlignedX(xAnchor, item->GetTotalWidth(), width));
-        item->SetY(alignment.GetAlignedY(yAnchor, item->GetTotalHeight(), height));
+    if (ItemsInDrawingOrder.empty()) return;
 
-        currentX += padding + item->GetTotalWidth();
+    // nested containers arrange first, so they're measured at their real size
+    for (auto* item : ItemsInDrawingOrder) {
         if (IsContainer(item->GetFxID())) {
-            dynamic_cast<Container*>(item)->Order();
+            dynamic_cast<Container*>(item)->SetPositionsOfItems();
         }
+    }
+
+    float rowWidth = 0.0f;
+    float tallest = 0.0f;
+    for (const auto* item : ItemsInDrawingOrder) {
+        rowWidth += item->GetTotalWidth();
+        tallest = std::max(tallest, item->GetTotalHeight());
+    }
+    rowWidth += padding * (float)(ItemsInDrawingOrder.size() - 1);
+
+    // content bigger than the box aligns as if the box already fit it - ExpandToChildren grows it after
+    const float boxWidth  = std::max(width, rowWidth);
+    const float boxHeight = std::max(height, tallest);
+
+    float currentX = alignment.GetAlignedX(xAnchor, rowWidth, boxWidth);
+    for (auto* item : ItemsInDrawingOrder) {
+        item->SetX(currentX);
+        item->SetY(alignment.GetAlignedY(yAnchor, item->GetTotalHeight(), boxHeight));
+        currentX += item->GetTotalWidth() + padding;
     }
     ExpandToChildren();
 }
