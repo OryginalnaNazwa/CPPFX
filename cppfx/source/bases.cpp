@@ -145,7 +145,7 @@ bool TextItem::DoesTruncate() const {
     return truncates;
 }
 
-const std::string TextItem::GetClassID() {
+std::string TextItem::GetClassID() {
     return "TextItem";
 }
 
@@ -415,7 +415,7 @@ void Container::FitToChildren() {
     SetHeight(maxY - yAnchor);
 }
 
-const std::string Container::GetClassID() {
+std::string Container::GetClassID() {
     return "Container";
 }
 
@@ -426,7 +426,7 @@ void Box::SetPadding(float value) {
     needsOrdering = true;
 }
 
-const std::string Box::GetClassID() {
+std::string Box::GetClassID() {
     return "Box";
 }
 
@@ -497,7 +497,7 @@ size_t Chart::GetValuesSize() const {
     return values.size();
 }
 
-const std::string Chart::GetClassID() {
+std::string Chart::GetClassID() {
     return "Chart";
 }
 
@@ -507,6 +507,6 @@ void Shape::DoFocusAction(float /*elapsedTime*/) {
     return;
 }
 
-const std::string Shape::GetClassID() {
+std::string Shape::GetClassID() {
     return "Shape";
 }

@@ -249,7 +249,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 protected:
     explicit TextItem(const std::string& i) : Item(i), font(height / 4.0f), textMargin(10.0f), expandsToTextAutomatically(true), text(DecodeUtf8(i)), utf8Cache(i) {}
@@ -384,7 +384,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 protected:
     explicit Container(const std::string& i) : Item(i) {colour.SetColour(BLANK); priority = 10;}
@@ -425,7 +425,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 protected:
     explicit Box(const std::string& i) : Padded(), Container(i)  {}
@@ -511,7 +511,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 protected:
     explicit Chart(const std::string& i) : Item(i), font(height / 4.0f) {}
@@ -538,7 +538,7 @@ public:
     /**
      *  @see Item::GetClassID()
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 protected:
     explicit Shape(const std::string& i) : Item(i) {}

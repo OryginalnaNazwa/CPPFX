@@ -408,7 +408,7 @@ public:
      *  @note Static members are inherited: every widget must define its own,
      *        or it reports its base class's name.
      */
-    static const std::string GetClassID();
+    static std::string GetClassID();
 
 protected:
     std::string ID; ///< ID used by the user, variable.

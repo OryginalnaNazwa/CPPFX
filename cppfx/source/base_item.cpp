@@ -253,7 +253,7 @@ std::string Item::GetFxID() const {
     return fxID;
 }
 
-const std::string Item::GetClassID() {
+std::string Item::GetClassID() {
     return "Item";
 }
 
