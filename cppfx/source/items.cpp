@@ -439,6 +439,24 @@ void RadioGroup::RemoveButton(const std::string& label) {
     needsOrdering = true;
 }
 
+void RadioGroup::ChangeButtonLabel(const std::string& oldLabel, const std::string& newLabel) {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot change labels on no buttons.");
+    if (!IsLabelTaken(oldLabel)) CPPFX_THROW(std::out_of_range, "No button with label " + oldLabel + " found - cannot change it.");
+    if (oldLabel == newLabel) return;
+    if (newLabel == "") {
+        CPPFX_WARN("If for some reason you want no label, use ' '/ spaces.");
+        CPPFX_THROW(std::invalid_argument, "Cannot change label to an empty one.");
+    }
+    if (IsLabelTaken(newLabel)) CPPFX_THROW(std::invalid_argument, "Label " + newLabel + " already exists - cannot change another button to it.");
+
+    auto node = buttons.extract(oldLabel);
+    node.key() = newLabel;
+    node.mapped()->SetID(newLabel);
+    node.mapped()->SetText(newLabel);
+    buttons.insert(std::move(node));
+    needsOrdering = true;
+}
+
 bool RadioGroup::IsButtonPressed(const std::string& label) const {
     if (buttons.empty()) {
         CPPFX_THROW(std::runtime_error, "Cannot check whether a button is pressed because there's none.");
@@ -470,12 +488,14 @@ void RadioGroup::PressButton(const std::string& label) {
 }
 
 void RadioGroup::SetButtonsBackgroundColour(const Color& colour) {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot change background colour on no buttons.");
     for (auto& [key, button] : buttons) {
         button->colour.SetColour(colour);
     }
 }
 
 void RadioGroup::SetButtonsPressedColour(const Color& colour) {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot change pressed colour on no buttons.");
     for (auto& [key, button] : buttons) {
         button->pressedColour.SetColour(colour);
     }
@@ -487,6 +507,7 @@ void RadioGroup::SetButtonColours(const Color& backgroundColour, const Color& pr
 }
 
 void RadioGroup::SetButtonsHoverColour(const Color& colour) {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot change hover colour on no buttons.");
     for (auto& [key, button] : buttons) {
         // while hovered with the swap on, the hover colour currently sits in colour
         if (button->IsHovered() && button->onHover.IsSet()) button->colour.SetColour(colour);
@@ -495,12 +516,14 @@ void RadioGroup::SetButtonsHoverColour(const Color& colour) {
 }
 
 void RadioGroup::EnableButtonsHover() {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot enable hover on no buttons.");
     for (auto& [key, button] : buttons) {
         if (!button->onHover.IsSet()) button->SetHoverCallbacksToSwap();
     }
 }
 
 void RadioGroup::DisableButtonsHover() {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot disable hover on no buttons.");
     for (auto& [key, button] : buttons) {
         if (!button->onHover.IsSet()) continue;
         if (button->IsHovered()) button->SwapHoverColour();
@@ -510,6 +533,7 @@ void RadioGroup::DisableButtonsHover() {
 }
 
 std::string RadioGroup::GetHoveredButton() const {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "No button can be hovered as there's none.");
     for (const auto& button : buttonsInDrawingOrder) {
         if (button->IsHovered()) return button->GetID();
     }
@@ -517,12 +541,8 @@ std::string RadioGroup::GetHoveredButton() const {
 }
 
 void RadioGroup::SetLabelMargins(float margin) {
-    if (margin  < 0.0f) {
-        CPPFX_THROW(std::invalid_argument, "Cannot set buttons label margin to a negative value.");
-    }
-    if (buttons.empty()) {
-        CPPFX_THROW(std::runtime_error, "Cannot set buttons label margin because there's no buttons");
-    }
+    if (margin  < 0.0f) CPPFX_THROW(std::invalid_argument, "Cannot set buttons label margin to a negative value.");
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot set buttons label margin because there's no buttons");
 
     for (auto& [key, button] : buttons) {
         button->SetLabelMargin(margin);
@@ -531,12 +551,8 @@ void RadioGroup::SetLabelMargins(float margin) {
 }
 
 void RadioGroup::SetTextMargins(float margin) {
-    if (margin  < 0.0f) {
-        CPPFX_THROW(std::invalid_argument, "Cannot set buttons text margin to a negative value.");
-    }
-    if (buttons.empty()) {
-        CPPFX_THROW(std::runtime_error, "Cannot set buttons text margin because there's no buttons");
-    }
+    if (margin  < 0.0f) CPPFX_THROW(std::invalid_argument, "Cannot set buttons text margin to a negative value.");
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot set buttons text margin because there's no buttons");
 
     for (auto& [key, button] : buttons) {
         button->SetTextMargin(margin);
@@ -545,8 +561,25 @@ void RadioGroup::SetTextMargins(float margin) {
 }
 
 void RadioGroup::SetButtonAlignment(Alignment::Alignments alignment) {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot change alignment on no buttons.");
     for (auto& [key, button] : buttons) {
         button->alignment.SetAlignment(alignment);
+    }
+    needsOrdering = true;
+}
+
+void RadioGroup::SetButtonsFont(::Font font) {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot change font on no buttons.");
+    for (auto& [key, button] : buttons) {
+        button->font.SetFont(font);   // keeps each button's size/colour, swaps the atlas
+    }
+    needsOrdering = true;             // total width/height depend on the font
+}
+
+void RadioGroup::SetButtonsFont(const CPPFX::Font& font) {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot change font on no buttons.");
+    for (auto& [key, button] : buttons) {
+        button->font = font;          // shares the atlas, also copies size, spacing and colour
     }
     needsOrdering = true;
 }
@@ -579,6 +612,7 @@ bool RadioGroup::IsLabelTaken(const std::string& label) const {
 }
 
 void RadioGroup::UnpressButtons() {
+    if (buttons.empty()) CPPFX_THROW(std::runtime_error, "Cannot unpress nonexistent buttons.");
     for (auto& [key, button] : buttons) {
         button->Unpress();
     }
@@ -694,9 +728,7 @@ void RadioGroup::FitToButtons() {
 }
 
 void RadioGroup::SetButtonMargin(float distance) {
-    if (distance < 0.0f) {
-        CPPFX_THROW(std::invalid_argument, "Cannot set button margin to a negative value.");
-    }
+    if (distance < 0.0f) CPPFX_THROW(std::invalid_argument, "Cannot set button margin to a negative value.");
     buttonMargin = distance;
 }
 
@@ -705,9 +737,7 @@ float RadioGroup::GetButtonMargin() const {
 }
 
 void RadioGroup::SetGroupsNumber(int number) {
-    if (number < 1) {
-        CPPFX_THROW(std::invalid_argument, "There's no way to have less than 1 group.");
-    }
+    if (number < 1) CPPFX_THROW(std::invalid_argument, "There's no way to have less than 1 group.");
     groups = (size_t)(number);
     needsOrdering = true;
 }

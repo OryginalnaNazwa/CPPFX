@@ -218,9 +218,10 @@ public:
     }; ///< mark shown while pressed
     Alignment alignment; ///< which side of the box the label is on
 
-    CheckBox() : Item("CheckBox", 50.0f, 50.0f), PersistentState(), TextItem("CheckBox", 50.0f, 50.0f), alignment(Alignment::RIGHT), labelMargin(10.0f), shape(CheckBox::X) {
+    CheckBox() : Item("CheckBox", 50.0f, 50.0f), PersistentState("CheckBox", 50.0f, 50.0f), TextItem("CheckBox", 50.0f, 50.0f), alignment(Alignment::RIGHT), labelMargin(10.0f), shape(CheckBox::X) {
                     font.SetFontSize(height / 2.0f);
                     DoNotTruncate(); // perhaps a max width to which might truncate label?
+                    DoNotExpandToTextAutomatically();
                 }
 
     void DrawMyself(float elapsedTime) const override;
@@ -262,6 +263,13 @@ public:
     Shapes GetShape() const;
     std::string GetShapeString() const;
 
+    /** @details No-op - the label sits outside the box, so the box never grows to fit it. */
+    void ExpandToText() override {}
+    /** @details No-op - the label sits outside the box, so the box never resizes to fit it. */
+    void FitToText() override {}
+    using TextItem::Truncate;   // otherwise the override hides the other Truncate overloads
+    /** @details Never cuts - the label sits outside the box, so there's no width to cut to. */
+    std::string Truncate(const std::string& text, const CPPFX::Font& /*font*/, float /*maxWidth*/) const override { return text; }
 
     /**
      *  @see Item::GetClassID()
@@ -327,6 +335,7 @@ public:
      *  @throws std::out_of_range if the button wasn't found
      */
     void RemoveButton(const std::string& label);
+    void ChangeButtonLabel(const std::string& oldLabel, const std::string& newLabel);
 
     /**
      *  @brief Presses the given button
@@ -417,6 +426,8 @@ public:
      *  @see CheckBox::alignment
      */
     void SetButtonAlignment(Alignment::Alignments alignment);
+    void SetButtonsFont(::Font font);
+    void SetButtonsFont(const CPPFX::Font& font);
 
     void SetToVertical();
     void SetToHorizontal();
@@ -765,6 +776,10 @@ public:
         }
         if (IsLabelTaken(newLabel)) {
             CPPFX_THROW(std::invalid_argument, newLabel + " already is in the dropdown.");
+        }
+        if (newLabel == "") {
+            CPPFX_WARN("Use space (' ') if you want to have it actually empty.");
+            CPPFX_THROW(std::invalid_argument, "Cannot change label to an empty one.");
         }
         auto node = values.extract(oldLabel);
         node.key() = newLabel;

@@ -181,6 +181,7 @@ protected:
      *  @brief Sets pressed colour to GRAY (as darker default colour)
      */
     PersistentState() : Item(), pressedColour(GRAY), pressed(false) {}
+    PersistentState(const std::string& id, float w, float h) : Item(id, w, h), pressedColour(GRAY), pressed(false) {}
 
     bool pressed; ///< whether the item is pressed.
 };
