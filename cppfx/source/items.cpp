@@ -1233,13 +1233,11 @@ void VBox::SetPositionsOfItems() {
         }
     }
 
-    float stackHeight = 0.0f;
+    const float stackHeight = GetChildrenTotalLength();
     float widest = 0.0f;
     for (const auto* item : ItemsInDrawingOrder) {
-        stackHeight += item->GetTotalHeight();
         widest = std::max(widest, item->GetTotalWidth());
     }
-    stackHeight += padding * (float)(ItemsInDrawingOrder.size() - 1);
 
     // content bigger than the box aligns as if the box already fit it - ExpandToChildren grows it after
     const float boxWidth  = std::max(width, widest);
@@ -1262,12 +1260,13 @@ float VBox::GetTotalHeight() const {
     return heightSum;
 }
 
-float VBox::GetChildrenTotalLength() const  {
+float VBox::GetChildrenTotalLength() const {
+    if (ItemsInDrawingOrder.empty()) return 0.0f;
     float heightSum = 0.0f;
     for (const auto& child : ItemsInDrawingOrder) {
-        heightSum += child->GetTotalHeight() + padding;
+        heightSum += child->GetTotalHeight();
     }
-    return heightSum;
+    return heightSum + (padding * (float)(ItemsInDrawingOrder.size() - 1));
 }
 
 float VBox::GetItemsTotalHeight() const {
@@ -1288,13 +1287,11 @@ void HBox::SetPositionsOfItems() {
         }
     }
 
-    float rowWidth = 0.0f;
+    const float rowWidth = GetChildrenTotalLength();
     float tallest = 0.0f;
     for (const auto* item : ItemsInDrawingOrder) {
-        rowWidth += item->GetTotalWidth();
         tallest = std::max(tallest, item->GetTotalHeight());
     }
-    rowWidth += padding * (float)(ItemsInDrawingOrder.size() - 1);
 
     // content bigger than the box aligns as if the box already fit it - ExpandToChildren grows it after
     const float boxWidth  = std::max(width, rowWidth);
@@ -1318,11 +1315,12 @@ float HBox::GetTotalWidth() const {
 }
 
 float HBox::GetChildrenTotalLength() const {
+    if (ItemsInDrawingOrder.empty()) return 0.0f;
     float widthSum = 0.0f;
     for (const auto& child : ItemsInDrawingOrder) {
-        widthSum += child->GetTotalWidth() + padding;
+        widthSum += child->GetTotalWidth();
     }
-    return widthSum;
+    return widthSum + (padding * (float)(ItemsInDrawingOrder.size() - 1));
 }
 
 float HBox::GetItemsTotalWidth() const {
