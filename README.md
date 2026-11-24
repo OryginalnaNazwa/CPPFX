@@ -1,6 +1,6 @@
 # CPPFX
 A retained mode GUI library for raylib, inspired by JavaFX, written in C++.
-v.0.31.1
+v.0.32.0
 
 ## Based on raylib
 https://www.raylib.com/

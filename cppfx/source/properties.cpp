@@ -290,6 +290,42 @@ Colour Colour::Blend(const Colour& colour, const Colour& target, float t) {
     return c;
 }
 
+Color Colour::SetGreen(unsigned char value, Color colour) {
+    colour.g = value;
+    return colour;
+}
+
+void Colour::SetGreen(unsigned char value) {
+    SetColour(Colour::SetGreen(value, this->value));
+}
+
+Color Colour::SetRed(unsigned char value, Color colour) {
+    colour.r = value;
+    return colour;
+}
+
+void Colour::SetRed(unsigned char value) {
+    SetColour(Colour::SetRed(value, this->value));
+}
+
+Color Colour::SetBlue(unsigned char value, Color colour) {
+    colour.b = value;
+    return colour;
+}
+
+void Colour::SetBlue(unsigned char value) {
+    SetColour(Colour::SetBlue(value, this->value));
+}
+
+Color Colour::SetAlpha(unsigned char value, Color colour) {
+    colour.a = value;
+    return colour;
+}
+
+void Colour::SetAlpha(unsigned char value) {
+    SetColour(Colour::SetAlpha(value, this->value));
+}
+
 // - OverrideColour -
 
 void OverrideColour::SetColour(const std::string& col) {

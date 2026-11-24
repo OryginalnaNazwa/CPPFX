@@ -20,7 +20,6 @@ void Label::DrawMyself(float /*elapsedTime*/) const {
 
 void Label::DoFocusAction(float /*elapsedTime*/) {
     Defocus();
-    return;
 }
 
 std::string Label::GetClassID() {
@@ -62,7 +61,7 @@ void TextField::DrawMyself(float elapsedTime) const {
 void TextField::DoFocusAction(float /*elapsedTime*/) {
     if (IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE)) {
         if (caretPosition > 0) RemoveAt(--caretPosition);
-    } else if (IsKeyPressed(KEY_SUBMIT)) {
+    } else if (IsKeyPressed(key_submit)) {
         onSubmit.Arm();
         Defocus();
     } else if (IsKeyPressed(KEY_DELETE) || IsKeyPressedRepeat(KEY_DELETE)) {
@@ -97,8 +96,8 @@ bool TextField::IsPromptTextEmpty() const {
     return promptText.empty();
 }
 
-void TextField::SetSubmitKey(int key)      { KEY_SUBMIT = key; }
-void TextField::RestoreSubmitKey()         { KEY_SUBMIT = KEY_ENTER; }
+void TextField::SetSubmitKey(int key)      { key_submit = key; }
+void TextField::RestoreSubmitKey()         { key_submit = KEY_ENTER; }
 
 void TextField::GetCallbacks(std::vector<Callback*>& out) {
     TextItem::GetCallbacks(out);

@@ -167,6 +167,8 @@ public:
      */
     bool operator!=(const Colour& other) const;
 
+    operator Color() const { return value; }
+
     /**
      *  @brief Reduces this colour's opacity.
      *  @param factor 0.0 fully transparent, 1.0 unchanged
@@ -229,6 +231,15 @@ public:
      *  @returns The interpolated value, rounded.
      */
     static unsigned char Lerp(unsigned char value, unsigned char target, float factor);
+
+    static Color SetGreen(unsigned char value, Color colour);
+    void SetGreen(unsigned char value);
+    static Color SetRed(unsigned char value, Color colour);
+    void SetRed(unsigned char value);
+    static Color SetBlue(unsigned char value, Color colour);
+    void SetBlue(unsigned char value);
+    static Color SetAlpha(unsigned char value, Color colour);
+    void SetAlpha(unsigned char value);
 
 private:
     Color value;        ///< Raylib's colour

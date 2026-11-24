@@ -119,7 +119,7 @@ protected:
     std::string promptText; ///< string displayed when the text is empty
     size_t caretPosition = 0;
     size_t firstVisible = 0; ///< first character shown while focused - scrolls to keep the caret visible
-    int KEY_SUBMIT = KEY_ENTER; ///< the key that submits and defocuses the field. Default: KEY_ENTER
+    int key_submit = KEY_ENTER; ///< the key that submits and defocuses the field. Default: KEY_ENTER
 
     void GetCallbacks(std::vector<Callback*>& out) override;
 
