@@ -1785,72 +1785,155 @@ std::string PasswordField::GetClassID() {
 
 // --- ProgressIndicator ---
 
-void ProgressIndicator::SetProgress(float value) {
-    if ((value > 1.0f || value < 0.0f) && value != -1.0f) {
-        CPPFX_THROW(std::out_of_range, "Progress (" + std::to_string(value) + ") beyond valid range (-1.0f or 0.0f - 1.0f) - cannot set progress.");
-    } else {
-        this->value = value;
+float ProgressIndicator::GetSpinAngle(float elapsedTime, float revolutionDuration) const {
+    const float angle = (fmod(elapsedTime, revolutionDuration) / revolutionDuration) * 360.0f;
+    return clockwise ? angle : -angle;
+}
+
+void ProgressIndicator::DrawDots(float elapsedTime) const {
+    const Vector2 centre = TranslateXYToCentre();
+    const int count = dots.GetCount();
+    const float dotSize = dots.GetSize() * GetRadius();
+    const float orbit = GetRadius() - dotSize;
+    const float step = (clockwise ? 360.0f : -360.0f) / (float)count;
+    const float headAngle = startAngle + GetSpinAngle(elapsedTime, dots.GetRevolutionDuration());
+    const int trail = std::min(dots.GetTrailLength(), count - 1);
+    const float minimumAlpha = dots.GetMinimumAlpha();
+    const Color base = colour.GetColour();
+
+    for (int k = count - 1; k >= 0; --k) { // faintest first, so the head draws on top
+        const float angle = (headAngle - (step * (float)k)) * DEG2RAD;
+        const float alpha = (k <= trail)
+                          ? 1.0f - ((1.0f - minimumAlpha) * (float)k / (float)(trail + 1))
+                          : minimumAlpha;
+        Color dot = base;
+        dot.a = (unsigned char)((float)base.a * alpha);
+        DrawCircleV({centre.x + (std::cos(angle) * orbit), centre.y + (std::sin(angle) * orbit)}, dotSize, dot);
     }
 }
 
-void ProgressIndicator::IncreaseProgress(float change) {
-    value += change;
-    if (value > 1.0f) {
-        value = 1.0f;
-    } else if (value < 0.0f) {
-        value = 0.0f;
-    }
+void ProgressIndicator::DrawArc(float elapsedTime) const {
+    const Vector2 centre = TranslateXYToCentre();
+    const float outer = GetRadius();
+    const float inner = outer * (1.0f - arc.GetThickness());
+    const float head = startAngle + GetSpinAngle(elapsedTime, arc.GetRevolutionDuration());
+    const float tail = clockwise ? head - arc.GetLength() : head + arc.GetLength();
+
+    if (trackColour.GetColour().a > 0) DrawRing(centre, inner, outer, 0.0f, 360.0f, 0, trackColour.GetColour());
+    DrawRing(centre, inner, outer, std::min(head, tail), std::max(head, tail), 0, colour.GetColour());
 }
 
-void ProgressIndicator::DecreaseProgress(float change) {
-    value -= change;
-    if (value < 0.0f) {
-        value = 0.0f;
-    } else if (value > 1.0f) {
-        value = 1.0f;
-    }
+void ProgressIndicator::DrawCircleFill() const {
+    DrawFill(0.0f);
 }
 
-float ProgressIndicator::GetProgress() const {
-    return value;
+void ProgressIndicator::DrawRingFill() const {
+    DrawFill(GetRadius() * (1.0f - ring.GetThickness()));
 }
 
-int ProgressIndicator::GetProgressPercentage() const {
-    if (value == -1.0f) return -1;
-    return (int)(value * 100.0f);
+void ProgressIndicator::DrawFill(float innerRadius) const {
+    const Vector2 centre = TranslateXYToCentre();
+    const float outer = GetRadius();
+    const float fullTurn = clockwise ? 360.0f : -360.0f;
+    const float end = startAngle + (fullTurn * value);
+
+    auto drawSector = [&](float from, float to, const Color& tint) {
+        if (from == to || tint.a == 0) return;
+        const float low = std::min(from, to), high = std::max(from, to);
+        if (innerRadius <= 0.0f) DrawCircleSector(centre, outer, low, high, 0, tint);
+        else DrawRing(centre, innerRadius, outer, low, high, 0, tint);
+    };
+
+    drawSector(end, startAngle + fullTurn, trackColour.GetColour()); // unfilled part only
+    drawSector(startAngle, end, colour.GetColour());
 }
 
-void ProgressIndicator::MakeIndefinite() {
-    value = -1.0f;
-}
-
-bool ProgressIndicator::IsComplete() const {
-    if (value >= 1.0f) {
-        return true;
-    }
-    return false;
-}
-
-void ProgressIndicator::DoFocusAction(float /*elapsedTime*/) {
-    return;
-}
-
-void ProgressIndicator::SetShape(const ProgressIndicator::Shapes& shape) {
-    if (shape != ProgressIndicator::Shapes::RING && shape != ProgressIndicator::Shapes::DOTS && shape != ProgressIndicator::Shapes::CIRCLE ) {
-        if (shape == ProgressIndicator::Shapes::BAR) {
-            CPPFX_WARN("If you want a progress bar, use ProgressBar instead.");
-        }
+void ProgressIndicator::SetShape(Shapes shape) {
+    try {
+        ShapeToString(shape);
+    } catch (const std::invalid_argument&) {
         CPPFX_THROW(std::invalid_argument, "Invalid shape - cannot set shape.");
     }
     this->shape = shape;
 }
 
+void ProgressIndicator::SetShape(const std::string& shape) {
+    SetShape(StringToShape(shape));
+}
+
+ProgressIndicator::Shapes ProgressIndicator::GetShape() const {
+    return shape;
+}
+
+std::string ProgressIndicator::GetShapeString() const {
+    return ShapeToString(shape);
+}
+
+void ProgressIndicator::SetIndefiniteShape(Shapes shape) {
+    if (!IsIndefiniteCapable(shape)) {
+        CPPFX_THROW(std::invalid_argument, "Shape can't be drawn without a value - cannot set indefinite shape.");
+    }
+    indefiniteShape = shape;
+}
+
+void ProgressIndicator::SetIndefiniteShape(const std::string& shape) {
+    SetIndefiniteShape(StringToShape(shape));
+}
+
+ProgressIndicator::Shapes ProgressIndicator::GetIndefiniteShape() const {
+    return indefiniteShape;
+}
+
+std::string ProgressIndicator::GetIndefiniteShapeString() const {
+    return ShapeToString(indefiniteShape);
+}
+
+void ProgressIndicator::MakeClockwise() {
+    clockwise = true;
+}
+
+void ProgressIndicator::MakeCounterclockwise() {
+    clockwise = false;
+}
+
+void ProgressIndicator::SetClockwise(bool flag) {
+    clockwise = flag;
+}
+
+bool ProgressIndicator::IsClockwise() const {
+    return clockwise;
+}
+
+void ProgressIndicator::SetStartAngle(float degrees) {
+    startAngle = degrees;
+}
+
+float ProgressIndicator::GetStartAngle() const {
+    return startAngle;
+}
+
+std::string ProgressIndicator::GetClassID() {
+    return "ProgressIndicator";
+}
+
+bool ProgressIndicator::IsIndefiniteCapable(Shapes shape) {
+    switch (shape) {
+        case DOTS:
+        case ARC:
+            return true;
+        case CIRCLE:
+        case RING:
+            return false;
+    }
+    return false;
+}
+
 ProgressIndicator::Shapes ProgressIndicator::StringToShape(const std::string& shape) const {
-    static const std::unordered_map<std::string, ProgressIndicator::Shapes> shapeMap = {
-        {"RING", ProgressIndicator::Shapes::RING},
-        {"CIRCLE", ProgressIndicator::Shapes::CIRCLE},
-        {"DOTS", ProgressIndicator::Shapes::DOTS},
-        {"BAR", ProgressIndicator::Shapes::BAR}
+    static const std::unordered_map<std::string, Shapes> shapeMap = {
+        {"DOTS", DOTS},
+        {"ARC", ARC},
+        {"CIRCLE", CIRCLE},
+        {"RING", RING}
     };
 
     std::string normal = shape;
@@ -1862,149 +1945,145 @@ ProgressIndicator::Shapes ProgressIndicator::StringToShape(const std::string& sh
     CPPFX_THROW(std::invalid_argument, "Invalid shape (" + shape + ")");
 }
 
-std::string ProgressIndicator::ShapeToString(const ProgressIndicator::Shapes& shape) const {
-    static const std::unordered_map<ProgressIndicator::Shapes, std::string> stringMap = {
-        {ProgressIndicator::Shapes::RING,"RING"},
-        {ProgressIndicator::Shapes::CIRCLE, "CIRCLE"},
-        {ProgressIndicator::Shapes::DOTS, "DOTS"},
-        {ProgressIndicator::Shapes::BAR, "BAR"}
-    };
-
-    auto it = stringMap.find(shape);
-    if (it != stringMap.end()) return it->second;
-
+std::string ProgressIndicator::ShapeToString(Shapes shape) const {
+    switch (shape) {
+        case DOTS:   return "DOTS";
+        case ARC:    return "ARC";
+        case CIRCLE: return "CIRCLE";
+        case RING:   return "RING";
+    }
     CPPFX_THROW(std::invalid_argument, "Invalid shape");
 }
 
-void ProgressIndicator::SetShape(const std::string& shape) {
-    this->shape = StringToShape(shape);
-}
-
-ProgressIndicator::Shapes ProgressIndicator::GetShape() const {
-    return shape;
-}
-
-std::string ProgressIndicator::GetShapeString() const {
-    return ShapeToString(shape);
-}
-
-void ProgressIndicator::DrawMyself(float elapsedTime) const {
-    if (value == -1.0f || shape == Shapes::DOTS) {
-        int dotCount = 8;
-        float radius = width / 2.0f;
-        float dotRadius = radius / 6.0f; //TODO make stuff customisable
-        float angle = fmod(elapsedTime * 180.0f, 360.0f); // rotation speed
-        for (size_t i = 0; i < (size_t)(dotCount); i++) {
-            float dotAngle = angle + (360.0f / dotCount) * i;
-            float x = xAnchor + width / 2.0f + cos(dotAngle * DEG2RAD) * radius;
-            float y = yAnchor + height / 2.0f + sin(dotAngle * DEG2RAD) * radius;
-            float alpha = (float)i / dotCount; // fade trail //TODO fix proper fading, proper tail
-            DrawCircle(x, y, dotRadius, ColorAlpha(colour.GetColour(), alpha));
-        }
-    } else if (shape == Shapes::CIRCLE) {
-        DrawCircleSector(
-            {xAnchor + width / 2.0f, yAnchor + height / 2.0f},
-            width / 2.0f,
-            0, value * 360.0f,
-            32,
-            colour.GetColour()
-        );
-    } else if (shape == Shapes::RING) {
-        DrawRing(
-            {xAnchor + width / 2.0f, yAnchor + height / 2.0f},
-            width / 4.0f,
-            width / 2.0f,
-            0, value * 360.0f,
-            32,
-            colour.GetColour()
-        );
-    }
-    if (displayValue && value != -1) {
-        std::string valueString = value * 100.0f == (int)(value * 100.0f) ? TextFormat("%d", (int)(value * 100.0f)) : TextFormat("%.1f", value * 100.0f);
-        valueString += "%";
-        font.DrawAligned(valueString, Alignment::CENTRE, xAnchor, yAnchor, width, height);
+void ProgressIndicator::DrawProgress(float elapsedTime) const {
+    const Shapes drawn = (IsIndefinite() && !IsIndefiniteCapable(shape)) ? indefiniteShape : shape;
+    switch (drawn) {
+        case DOTS:   DrawDots(elapsedTime); break;
+        case ARC:    DrawArc(elapsedTime);  break;
+        case CIRCLE: DrawCircleFill();      break;
+        case RING:   DrawRingFill();        break;
     }
 }
 
-void ProgressIndicator::DoDisplayValue() {
-    displayValue = true;
+void ProgressIndicator::DrawValue() const {
+    const Vector2 corner = TranslateXYToCorner();
+    font.DrawAligned(FormatPercentage((float)GetFilledCount(1000) / 1000.0f), Alignment::CENTRE, corner.x, corner.y, width, width);
 }
 
-void ProgressIndicator::DoNotDisplayValue() {
-    displayValue = false;
+// --- ProgressIndicator::Dots ---
+
+void ProgressIndicator::Dots::SetCount(int count) {
+    if (count < 1) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Dot count less than 1 - cannot set it.");
+    }
+    this->count = count;
 }
 
-void ProgressIndicator::SetDisplayValue(const bool& flag) {
-    displayValue = flag;
+int ProgressIndicator::Dots::GetCount() const {
+    return count;
 }
 
-bool ProgressIndicator::IsDisplayingValue() const {
-    return displayValue;
+void ProgressIndicator::Dots::SetSize(float fraction) {
+    if (!(fraction > 0.0f && fraction < 1.0f)) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Dot size outside (0, 1) - cannot set it.");
+    }
+    size = fraction;
 }
 
-std::string ProgressIndicator::GetClassID() {
-    return "ProgressIndicator";
+float ProgressIndicator::Dots::GetSize() const {
+    return size;
+}
+
+void ProgressIndicator::Dots::SetTrailLength(int length) {
+    if (length < 0) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Negative trail length - cannot set it.");
+    }
+    trailLength = length;
+}
+
+int ProgressIndicator::Dots::GetTrailLength() const {
+    return trailLength;
+}
+
+void ProgressIndicator::Dots::SetMinimumAlpha(float alpha) {
+    if (!(alpha >= 0.0f && alpha <= 1.0f)) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Minimum alpha outside 0 - 1 - cannot set it.");
+    }
+    minimumAlpha = alpha;
+}
+
+float ProgressIndicator::Dots::GetMinimumAlpha() const {
+    return minimumAlpha;
+}
+
+void ProgressIndicator::Dots::SetRevolutionDuration(float seconds) {
+    if (!(seconds > 0.0f)) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Revolution duration must be positive - cannot set it.");
+    }
+    revolutionDuration = seconds;
+}
+
+float ProgressIndicator::Dots::GetRevolutionDuration() const {
+    return revolutionDuration;
+}
+
+// --- ProgressIndicator::Arc ---
+
+void ProgressIndicator::Arc::SetLength(float degrees) {
+    if (!(degrees > 0.0f && degrees < 360.0f)) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Arc length outside (0, 360) - cannot set it.");
+    }
+    length = degrees;
+}
+
+float ProgressIndicator::Arc::GetLength() const {
+    return length;
+}
+
+void ProgressIndicator::Arc::SetThickness(float fraction) {
+    if (!(fraction > 0.0f && fraction <= 1.0f)) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Arc thickness outside (0, 1] - cannot set it.");
+    }
+    thickness = fraction;
+}
+
+float ProgressIndicator::Arc::GetThickness() const {
+    return thickness;
+}
+
+void ProgressIndicator::Arc::SetRevolutionDuration(float seconds) {
+    if (!(seconds > 0.0f)) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Revolution duration must be positive - cannot set it.");
+    }
+    revolutionDuration = seconds;
+}
+
+float ProgressIndicator::Arc::GetRevolutionDuration() const {
+    return revolutionDuration;
+}
+
+// --- ProgressIndicator::Ring ---
+
+void ProgressIndicator::Ring::SetThickness(float fraction) {
+    if (!(fraction > 0.0f && fraction <= 1.0f)) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Ring thickness outside (0, 1] - cannot set it.");
+    }
+    thickness = fraction;
+}
+
+float ProgressIndicator::Ring::GetThickness() const {
+    return thickness;
 }
 
 // --- ProgressBar ---
 
-void ProgressBar::SetShape(const ProgressIndicator::Shapes& shape) {
-    if (shape != ProgressIndicator::Shapes::RING && shape != ProgressIndicator::Shapes::DOTS && shape != ProgressIndicator::Shapes::CIRCLE && shape != ProgressIndicator::Shapes::BAR) {
-        if (shape != BAR) {
-            CPPFX_WARN("ProgressBar should work at base shapes, but it's not recommended. Use ProgressIndicator instead and ProgressBar for bars only.");
-        }
-        CPPFX_THROW(std::invalid_argument, "Invalid shape - cannot set shape.");
-    }
-    this->shape = shape;
-}
-
-std::string ProgressBar::ShapeToString(const ProgressIndicator::Shapes& shape) const {
-    switch (shape) {
-        case ProgressIndicator::Shapes::RING: return "RING";
-        case ProgressIndicator::Shapes::CIRCLE:  return "CIRCLE";
-        case ProgressIndicator::Shapes::DOTS: return "DOTS";
-        case ProgressIndicator::Shapes::BAR: return "BAR";
-        default: CPPFX_THROW(std::invalid_argument, "Invalid shape");
-    }
-}
-
-void ProgressBar::SetShape(const std::string& shape) {
-    this->shape = StringToShape(shape);
-}
-
-void ProgressBar::DrawMyself(float elapsedTime) const {
-    if (shape != Shapes::BAR) {
-        ProgressIndicator::DrawMyself(elapsedTime);
-        return;
-    }
-    DrawRectangle(xAnchor, yAnchor, width, height, colour.GetColour());
-    if (segmented) {
-       float segmentWidth = ((width - (2.0f * barMargin)) - (gapBetweenSegments * (numberOfSegments - 1))) / numberOfSegments;
-        float step = segmentWidth + gapBetweenSegments;
-
-        float currentX = xAnchor + barMargin;
-        size_t filledSegments = std::min((size_t)(value * numberOfSegments), (size_t)numberOfSegments);
-        for (size_t i = 0; i < filledSegments; i++) {
-            DrawRectangle(currentX, yAnchor + barMargin, segmentWidth, height - (2.0f * barMargin), barColour.GetColour());
-            currentX += step;
-        }
-    } else DrawRectangle(xAnchor + barMargin , yAnchor + barMargin, value * (width - (2.0f * barMargin)), height - (2.0f * barMargin), barColour.GetColour());
-
-    if (displayValue && value != -1) {
-        std::string valueString = value * 100.0f == (int)(value * 100.0f) ? TextFormat("%d", (int)(value * 100.0f)) : TextFormat("%.1f", value * 100.0f);
-        valueString += "%";
-        font.DrawAligned(valueString, Alignment::CENTRE, xAnchor, yAnchor, width, height);
-    }
-}
-
 void ProgressBar::SetBarMargin(float value) {
     if (value < 0.0f) {
         CPPFX_THROW(std::invalid_argument, "Negative bar margin.");
-    } else if (value > height / 2.0f) {
-        CPPFX_THROW(std::out_of_range, "Bar margin value is greater than half of height.");
-    } else {
-        barMargin = value;
+    } else if (value > std::min(width, height) / 2.0f) {
+        CPPFX_THROW(std::out_of_range, "Bar margin value is greater than half of width or height.");
     }
+    barMargin = value;
 }
 
 float ProgressBar::GetBarMargin() const {
@@ -2014,9 +2093,8 @@ float ProgressBar::GetBarMargin() const {
 void ProgressBar::SetNumberOfSegments(int value) {
     if (value < 1) {
         CPPFX_THROW(std::invalid_argument, "Number of segments less than 1.");
-    } else {
-        numberOfSegments = value;
     }
+    numberOfSegments = value;
 }
 
 int ProgressBar::GetNumberOfSegments() const {
@@ -2026,11 +2104,10 @@ int ProgressBar::GetNumberOfSegments() const {
 void ProgressBar::SetGapBetweenSegments(float value) {
     if (value < 0.0f) {
         CPPFX_THROW(std::invalid_argument, "Negative width of gap between segments.");
-    } else if (((width - (2.0f * barMargin)) / numberOfSegments) + (value * numberOfSegments) > width - (2.0f * barMargin)) {
+    } else if (value * (float)(numberOfSegments - 1) >= GetInnerRectangle().width) {
         CPPFX_THROW(std::invalid_argument, "Gap between segments is too big.");
-    } else {
-        gapBetweenSegments = value;
     }
+    gapBetweenSegments = value;
 }
 
 float ProgressBar::GetGapBetweenSegments() const {
@@ -2050,7 +2127,7 @@ void ProgressBar::Solid() {
     segmented = false;
 }
 
-void ProgressBar::SetSegmented(const bool& flag) {
+void ProgressBar::SetSegmented(bool flag) {
     segmented = flag;
 }
 
@@ -2058,8 +2135,126 @@ bool ProgressBar::IsSegmented() const {
     return segmented;
 }
 
+void ProgressBar::SetChunkLength(float fraction) {
+    if (!(fraction > 0.0f && fraction <= 1.0f)) {
+        CPPFX_THROW(std::invalid_argument, "Chunk length outside (0, 1] - cannot set it.");
+    }
+    chunkLength = fraction;
+}
+
+float ProgressBar::GetChunkLength() const {
+    return chunkLength;
+}
+
+void ProgressBar::SetChunkSegments(int count) {
+    if (count < 1) {
+        CPPFX_THROW(std::invalid_argument, "Chunk segments less than 1 - cannot set them.");
+    }
+    chunkSegments = count;
+}
+
+int ProgressBar::GetChunkSegments() const {
+    return chunkSegments;
+}
+
+void ProgressBar::SetPassDuration(float seconds) {
+    if (!(seconds > 0.0f)) {
+        CPPFX_THROW(std::invalid_argument, "Pass duration must be positive - cannot set it.");
+    }
+    passDuration = seconds;
+}
+
+float ProgressBar::GetPassDuration() const {
+    return passDuration;
+}
+
+void ProgressBar::SetMotion(Motions motion) {
+    try {
+        MotionToString(motion);
+    } catch (const std::invalid_argument&) {
+        CPPFX_THROW(std::invalid_argument, "Invalid motion - cannot set motion.");
+    }
+    this->motion = motion;
+}
+
+void ProgressBar::SetMotion(const std::string& motion) {
+    SetMotion(StringToMotion(motion));
+}
+
+ProgressBar::Motions ProgressBar::GetMotion() const {
+    return motion;
+}
+
+std::string ProgressBar::GetMotionString() const {
+    return MotionToString(motion);
+}
+
 std::string ProgressBar::GetClassID() {
     return "ProgressBar";
+}
+
+ProgressBar::Motions ProgressBar::StringToMotion(const std::string& motion) const {
+    static const std::unordered_map<std::string, Motions> motionMap = {
+        {"WRAP", WRAP},
+        {"BOUNCE", BOUNCE}
+    };
+
+    std::string normal = motion;
+    std::transform(normal.begin(), normal.end(), normal.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+
+    auto it = motionMap.find(normal);
+    if (it != motionMap.end()) return it->second;
+
+    CPPFX_THROW(std::invalid_argument, "Invalid motion (" + motion + ")");
+}
+
+std::string ProgressBar::MotionToString(Motions motion) const {
+    switch (motion) {
+        case WRAP:   return "WRAP";
+        case BOUNCE: return "BOUNCE";
+    }
+    CPPFX_THROW(std::invalid_argument, "Invalid motion");
+}
+
+::Rectangle ProgressBar::GetInnerRectangle() const {
+    return ::Rectangle{xAnchor + barMargin, yAnchor + barMargin, width - (2.0f * barMargin), height - (2.0f * barMargin)};
+}
+
+float ProgressBar::GetSegmentWidth() const {
+    return (GetInnerRectangle().width - (gapBetweenSegments * (float)(numberOfSegments - 1))) / (float)numberOfSegments;
+}
+
+void ProgressBar::DrawProgress(float elapsedTime) const {
+    DrawRectangleRec(::Rectangle{xAnchor, yAnchor, width, height}, colour.GetColour());
+    if (IsIndefinite()) {
+        if (segmented) DrawSegmentedSweep(elapsedTime);
+        else DrawSweep(elapsedTime);
+    } else {
+        if (segmented) DrawSegments();
+        else DrawSolid();
+    }
+}
+
+void ProgressBar::DrawSolid() const {
+    const ::Rectangle inner = GetInnerRectangle();
+    DrawRectangleRec(::Rectangle{inner.x, inner.y, value * inner.width, inner.height}, barColour.GetColour());
+}
+
+void ProgressBar::DrawSegments() const {
+    const ::Rectangle inner = GetInnerRectangle();
+    const float segmentWidth = GetSegmentWidth();
+    const int filled = GetFilledCount(numberOfSegments);
+    for (int i = 0; i < filled; ++i) {
+        DrawRectangleRec(::Rectangle{inner.x + ((float)i * (segmentWidth + gapBetweenSegments)), inner.y, segmentWidth, inner.height}, barColour.GetColour());
+    }
+}
+
+// TODO
+void ProgressBar::DrawSweep(float /*elapsedTime*/) const {
+}
+
+// TODO
+void ProgressBar::DrawSegmentedSweep(float /*elapsedTime*/) const {
 }
 
 // --- Pressed button ---
@@ -2132,14 +2327,7 @@ void PieChart::DrawMyself(float /*elapsedTime*/) const {
 
         if (showPercentage) {
             const float textAngle = currentAngle + (180.0f * percent);
-            std::string valueString = (percent * 100.0f == (int)(percent * 100.0f))
-                ? TextFormat("%d", (int)(percent * 100.0f))
-                : TextFormat("%.1f", percent * 100.0f);
-            valueString += "%";
-
-            const float px = TranslateXToCentre() + (GetRadius() / 2.0f * (float)cos(textAngle * DEG2RAD));
-            const float py = TranslateYToCentre() + (GetRadius() / 2.0f * (float)sin(textAngle * DEG2RAD));
-            font.DrawAligned(valueString, Alignment::CENTRE, px, py, 0.0f, 0.0f);
+            const std::string valueString = FormatPercentage((float)percent);
         }
 
         if (showLabels) {

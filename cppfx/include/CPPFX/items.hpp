@@ -1862,92 +1862,157 @@ private:
 
 /**
  *  @class ProgressIndicator
- *  @brief Shows progress, or that something is ongoing.
- *  @details Has font. DOTS are circling dots, also drawn for indefinite progress whatever the shape.
- *  CIRCLE fills like a pie, RING like a ring. For a bar, use ProgressBar.
+ *  @brief Round progress indicator.
+ *  @details DOTS and ARC are spinners, CIRCLE fills like a pie, RING like a ring.
+ *           While indefinite, spinners are drawn as they are and the others are replaced by indefiniteShape.
+ *           Width is the diameter. Each shape's own settings are in dots, arc and ring. For a bar, use ProgressBar.
  */
-class ProgressIndicator : public Item {
+class ProgressIndicator : public ProgressItem, public virtual Circular {
 public:
-    enum Shapes {DOTS, CIRCLE, RING, BAR};
+    enum Shapes {DOTS, ARC, CIRCLE, RING};
 
-    Font font;
-
-    ProgressIndicator() : Item("ProgressIndicator"), font(height / 4.0f), shape(ProgressIndicator::Shapes::DOTS), displayValue(true), value(-1.0f)  {}
-    explicit ProgressIndicator(const std::string& i) : Item(i), font(height / 4.0f), shape(ProgressIndicator::Shapes::BAR), displayValue(true), value(-1.0f) {}
+    Colour trackColour; ///< unfilled part of CIRCLE and RING, and behind ARC. BLANK by default
 
     /**
-     *  @brief Sets progress value.
-     *  @param value 0 - 1, -1 is indefinite progress
-     *  @throws std::out_of_range if parameter is beyond the range.
+     *  @brief Settings of DOTS.
      */
-    void SetProgress(float value);
+    struct Dots : public NestedProperty {
+        friend ProgressIndicator;
+
+        /**
+         *  @param count number of dots, default 8
+         *  @throws std::invalid_argument if count is less than 1
+         */
+        void SetCount(int count);
+        int GetCount() const;
+        /**
+         *  @param fraction radius of a dot as a fraction of the indicator's radius, default 1/6
+         *  @throws std::invalid_argument if fraction is outside (0, 1)
+         */
+        void SetSize(float fraction);
+        float GetSize() const;
+        /**
+         *  @brief Sets how many dots fade behind the leading one.
+         *  @details Dots past the trail are drawn at the minimum alpha. Default is all of them.
+         *  @throws std::invalid_argument if length is negative
+         */
+        void SetTrailLength(int length);
+        int GetTrailLength() const;
+        /**
+         *  @param alpha the faintest a dot gets, default 0.15
+         *  @throws std::invalid_argument if alpha is outside 0 - 1
+         */
+        void SetMinimumAlpha(float alpha);
+        float GetMinimumAlpha() const;
+        /**
+         *  @param seconds how long one revolution takes, default 1
+         *  @throws std::invalid_argument if seconds is not positive
+         */
+        void SetRevolutionDuration(float seconds);
+        float GetRevolutionDuration() const;
+
+    private:
+        explicit Dots(Item* o) : NestedProperty(o), count(8), size(1.0f / 6.0f), trailLength(std::numeric_limits<int>::max()),
+                                 minimumAlpha(0.15f), revolutionDuration(1.0f) {}
+        int count;
+        float size; ///< fraction of the radius
+        int trailLength;
+        float minimumAlpha;
+        float revolutionDuration; ///< in seconds
+    } dots{this};
+
     /**
-     *  @brief Increases the progress value.
-     *  @details Clamps to 0 - 1.
-     *  @param change how much it will increase
+     *  @brief Settings of ARC.
      */
-    void IncreaseProgress(float change);
+    struct Arc : public NestedProperty {
+        friend ProgressIndicator;
+
+        /**
+         *  @param degrees default 90
+         *  @throws std::invalid_argument if degrees is outside (0, 360)
+         */
+        void SetLength(float degrees);
+        float GetLength() const;
+        /**
+         *  @param fraction of the radius, default 0.2. 1 makes it a wedge.
+         *  @throws std::invalid_argument if fraction is outside (0, 1]
+         */
+        void SetThickness(float fraction);
+        float GetThickness() const;
+        /**
+         *  @param seconds how long one revolution takes, default 1
+         *  @throws std::invalid_argument if seconds is not positive
+         */
+        void SetRevolutionDuration(float seconds);
+        float GetRevolutionDuration() const;
+
+    private:
+        explicit Arc(Item* o) : NestedProperty(o), length(90.0f), thickness(0.2f), revolutionDuration(1.0f) {}
+        float length; ///< in degrees
+        float thickness; ///< fraction of the radius
+        float revolutionDuration; ///< in seconds
+    } arc{this};
+
     /**
-     *  @brief Decreases the progress value.
-     *  @details Clamps to 0 - 1.
-     *  @param change how much it will decrease
+     *  @brief Settings of RING.
      */
-    void DecreaseProgress(float change);
+    struct Ring : public NestedProperty {
+        friend ProgressIndicator;
+
+        /**
+         *  @param fraction of the radius, default 0.2. 1 makes it a CIRCLE.
+         *  @throws std::invalid_argument if fraction is outside (0, 1]
+         */
+        void SetThickness(float fraction);
+        float GetThickness() const;
+
+    private:
+        explicit Ring(Item* o) : NestedProperty(o), thickness(0.2f) {}
+        float thickness; ///< fraction of the radius
+    } ring{this};
+
+    ProgressIndicator() : Item("ProgressIndicator", 100.0f, 100.0f), Circular(), ProgressItem("ProgressIndicator"),
+                          trackColour(BLANK), shape(DOTS), indefiniteShape(DOTS), clockwise(true), startAngle(-90.0f) {}
+
     /**
-     *  @brief Stops showing the percentage completed.
-     *  @details Sets the value to -1.
+     *  @param shape DOTS, ARC, CIRCLE or RING
+     *  @throws std::invalid_argument if shape is outside the enum
      */
-    void MakeIndefinite();
+    void SetShape(Shapes shape);
     /**
-     *  @brief Gets progress value.
-     *  @returns A value between 0 and 1 inclusive. -1 if indefinite.
+     *  @param shape name of the shape, e.g. "RING"
+     *  @throws std::invalid_argument if the name is unknown
      */
-    float GetProgress() const;
-    /**
-     *  @brief Gets progress value in percents.
-     *  @returns A whole number between 0 and 100 inclusive. -1 if indefinite.
-     */
-    int GetProgressPercentage() const;
-    /**
-     * @brief Checks whether the value is 100%
-     * @return true if value is 1, false otherwise.
-     */
-    bool IsComplete() const;
-    /**
-     *  @brief Sets new shape
-     *  @param shape DOTS, RING or CIRCLE
-     *  @throws std::invalid_argument for BAR or anything else
-     *  @note Prints a warning for BAR - use ProgressBar.
-     */
-    virtual void SetShape(const ProgressIndicator::Shapes& shape);
-    /**
-     *  @brief Sets new shape
-     *  @param shape a string containing the name of the shape - {"DOTS", "RING", "CIRCLE", "BAR"}
-     *  @throws std::invalid_argument if the parameter is outside the available list
-     */
-    virtual void SetShape(const std::string& shape);
+    void SetShape(const std::string& shape);
     Shapes GetShape() const;
     std::string GetShapeString() const;
 
     /**
-     *  @brief Displays value in percents.
-     *  @details Does not change the state from indefinite.
+     *  @brief Sets the shape drawn while indefinite, if the main shape can't be drawn without a value.
+     *  @param shape DOTS or ARC
+     *  @throws std::invalid_argument for shapes that need a value
      */
-    void DoDisplayValue();
+    void SetIndefiniteShape(Shapes shape);
     /**
-     *  @brief Doesn't display value in percents.
-     *  @details Does not change the state from indefinite.
+     *  @param shape name of the shape, e.g. "DOTS"
+     *  @throws std::invalid_argument if the name is unknown or the shape needs a value
      */
-    void DoNotDisplayValue();
-    /**
-     *  @brief Sets whether the indicator should display the numerical value (percentage) of progress.
-     *  @param flag true - enable, false - disable.
-     */
-    void SetDisplayValue(const bool& flag);
-    bool IsDisplayingValue() const;
+    void SetIndefiniteShape(const std::string& shape);
+    Shapes GetIndefiniteShape() const;
+    std::string GetIndefiniteShapeString() const;
 
-    void DrawMyself(float elapsedTime) const override;
-    void DoFocusAction(float elapsedTime) override;
+    /** @brief Fills and spins clockwise. Default. */
+    void MakeClockwise();
+    void MakeCounterclockwise();
+    void SetClockwise(bool flag);
+    bool IsClockwise() const;
+
+    /**
+     *  @brief Sets where CIRCLE and RING start filling, and where the spinners start.
+     *  @param degrees 0 is 3 o'clock, -90 is 12 o'clock. Default -90.
+     */
+    void SetStartAngle(float degrees);
+    float GetStartAngle() const;
 
     /**
      *  @see Item::GetClassID()
@@ -1956,101 +2021,129 @@ public:
 
 protected:
     Shapes shape;
-    bool displayValue; ///< whether displays the value in percents. Indefinite doesn't display value.
-    float value; ///< raw value of the progress - between 0 and 1, or -1 for indefinite
+    Shapes indefiniteShape; ///< drawn while indefinite if shape can't be
+    bool clockwise;
+    float startAngle; ///< in degrees
 
+    void DrawProgress(float elapsedTime) const override;
+    void DrawValue() const override; ///< centred on the circle
+    void DrawDots(float elapsedTime) const;
+    void DrawArc(float elapsedTime) const;
+    void DrawCircleFill() const;
+    void DrawRingFill() const;
+    float GetSpinAngle(float elapsedTime, float revolutionDuration) const; ///< current rotation of a spinner, in degrees
+    void DrawFill(float innerRadius) const; ///< draws CIRCLE and RING; an inner radius of 0 draws a pie
+
+    static bool IsIndefiniteCapable(Shapes shape);
     Shapes StringToShape(const std::string& shape) const;
-    virtual std::string ShapeToString(const ProgressIndicator::Shapes& shape) const;
+    std::string ShapeToString(Shapes shape) const;
 };
-
 
 /**
  *  @class ProgressBar
  *  @brief Horizontal progress bar.
- *  @details Can be solid or segmented. Can also use the ProgressIndicator shapes.
+ *  @details Can be solid or segmented. While indefinite, a chunk sweeps across the bar.
  */
-class ProgressBar : public ProgressIndicator {
+class ProgressBar : public ProgressItem {
 public:
+    enum Motions {WRAP, BOUNCE}; ///< how the indefinite chunk moves
+
     Colour barColour; ///< colour of the filled part
 
-    ProgressBar() : ProgressIndicator("ProgressBar"),
-                    barColour(GREEN), barMargin(5.0f), segmented(false), numberOfSegments(10), gapBetweenSegments(1.0f) {shape = ProgressIndicator::Shapes::BAR;}
-
-    void DrawMyself(float elapsedTime) const override;
+    ProgressBar() : Item("ProgressBar"), ProgressItem("ProgressBar"),
+                    barColour(GREEN), barMargin(5.0f), segmented(false), numberOfSegments(10), gapBetweenSegments(1.0f),
+                    chunkLength(0.25f), chunkSegments(3), passDuration(1.5f), motion(WRAP) {}
 
     /**
-     *  @brief Sets bar margin.
-     *  @param value new bar margin length
+     *  @param value distance between the edge of the bar and the filled part
+     *  @throws std::invalid_argument if value is negative
      *  @throws std::out_of_range if value is greater than half of the height
-     *  @throws std::invalid_argument if value is lower than 0
      */
     void SetBarMargin(float value);
     float GetBarMargin() const;
     /**
-     *  @brief Sets number of segments.
-     *  @param value new number of segments
      *  @throws std::invalid_argument if value is less than 1
      */
     void SetNumberOfSegments(int value);
     int GetNumberOfSegments() const;
     /**
-     *  @brief Sets length of the gap between segments.
-     *  @param value new gap length
-     *  @throws std::invalid_argument if value is negative or too big for the width and number of segments
+     *  @throws std::invalid_argument if value is negative or leaves no room for the segments
      */
     void SetGapBetweenSegments(float value);
     float GetGapBetweenSegments() const;
     /**
      *  @brief Sets the number of segments and the gap between them.
-     *  @details Calls setters for the fields.
-     *  @param number number of segments
-     *  @param gap length of the gap between segments
-     *  @throws std::invalid_argument if number or gap is negative, or gap is too big
-     *  @see ProgressBar::SetGapBetweenSegments
-     *  @see ProgressBar::SetNumberOfSegments
+     *  @see SetNumberOfSegments
+     *  @see SetGapBetweenSegments
      */
     void SetSegments(int number, float gap);
 
-    /**
-     *  @brief Segments the bar for display.
-     */
     void Segmented();
-    /**
-     *  @brief Turns off segmentation.
-     */
     void Solid();
-    /**
-     *  @brief Sets whether the bar should be segmented or not.
-     *  @param flag true - yes, false - no.
-     */
-    void SetSegmented(const bool& flag);
+    void SetSegmented(bool flag);
     bool IsSegmented() const;
 
     /**
-     *  @brief Sets new shape
-     *  @param shape DOTS, RING, CIRCLE or BAR
-     *  @throws std::invalid_argument if the parameter is outside the available list
+     *  @brief Sets the length of the indefinite chunk on a solid bar.
+     *  @param fraction of the inner width, default 0.25
+     *  @throws std::invalid_argument if fraction is outside (0, 1]
      */
-    void SetShape(const ProgressIndicator::Shapes& shape) override;
+    void SetChunkLength(float fraction);
+    float GetChunkLength() const;
     /**
-     *  @brief Sets new shape
-     *  @param shape a string containing the name of the shape - {"DOTS", "RING", "CIRCLE", "BAR"}
-     *  @throws std::invalid_argument if the parameter is outside the available list
+     *  @brief Sets how many segments are lit while indefinite on a segmented bar.
+     *  @param count default 3
+     *  @throws std::invalid_argument if count is less than 1
      */
-    void SetShape(const std::string& shape) override;
+    void SetChunkSegments(int count);
+    int GetChunkSegments() const;
+    /**
+     *  @brief Sets how long one pass of the chunk takes.
+     *  @param seconds default 1.5
+     *  @throws std::invalid_argument if seconds is not positive
+     */
+    void SetPassDuration(float seconds);
+    float GetPassDuration() const;
+    /**
+     *  @param motion WRAP or BOUNCE
+     *  @throws std::invalid_argument if motion is outside the enum
+     */
+    void SetMotion(Motions motion);
+    /**
+     *  @param motion name of the motion, e.g. "BOUNCE"
+     *  @throws std::invalid_argument if the name is unknown
+     */
+    void SetMotion(const std::string& motion);
+    Motions GetMotion() const;
+    std::string GetMotionString() const;
 
     /**
      *  @see Item::GetClassID()
      */
     static std::string GetClassID();
 
+protected:
+    void DrawProgress(float elapsedTime) const override;
+    void DrawSolid() const;
+    void DrawSegments() const;
+    void DrawSweep(float elapsedTime) const;
+    void DrawSegmentedSweep(float elapsedTime) const;
+    ::Rectangle GetInnerRectangle() const; ///< the bar inside barMargin
+    float GetSegmentWidth() const;
+    float GetSweepPhase(float elapsedTime) const; ///< 0 - 1 through the current pass, motion applied
+
+    Motions StringToMotion(const std::string& motion) const;
+    std::string MotionToString(Motions motion) const;
+
 private:
-    float barMargin; ///< the distance between the top/side of the main bar and the progress bar.
+    float barMargin; ///< distance between the edge of the bar and the filled part
     bool segmented;
     int numberOfSegments;
     float gapBetweenSegments;
-
-    std::string ShapeToString(const ProgressIndicator::Shapes& shape) const override;
+    float chunkLength; ///< fraction of the inner width
+    int chunkSegments;
+    float passDuration; ///< in seconds
+    Motions motion;
 };
 
 /**
@@ -2257,10 +2350,10 @@ private:
  *  @brief Pie chart of the Chart's values.
  *  @details Can show labels and percentages. Labels are shown only if every value has one, otherwise the values are shown instead.
  */
-class PieChart : public Chart, virtual public Circular {
+class PieChart : public Chart, virtual public Circular, public HasPercentages {
 public:
 
-    PieChart() : Item("PieChart"), Circular(), Chart("PieChart"), showLabels(false), showPercentage(false) {}
+    PieChart() : Item("PieChart"), Circular(), Chart("PieChart"), HasPercentages(false), showLabels(false) {}
 
     void DoFocusAction(float elapsedTime) override;
     void DrawMyself(float elapsedTime) const override;
