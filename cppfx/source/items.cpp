@@ -2075,15 +2075,128 @@ float ProgressIndicator::Ring::GetThickness() const {
     return thickness;
 }
 
+// --- ProgressBar::Sweep ---
+
+void ProgressBar::Sweep::SetLength(float fraction) {
+    if (!(fraction > 0.0f && fraction <= 1.0f)) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Sweep length outside (0, 1] - cannot set it.");
+    }
+    length = fraction;
+}
+
+float ProgressBar::Sweep::GetLength() const {
+    return length;
+}
+
+void ProgressBar::Sweep::SetPassDuration(float seconds) {
+    if (!(seconds > 0.0f)) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Pass duration must be positive - cannot set it.");
+    }
+    passDuration = seconds;
+}
+
+float ProgressBar::Sweep::GetPassDuration() const {
+    return passDuration;
+}
+
+void ProgressBar::Sweep::SetMotion(Motions motion) {
+    try {
+        MotionToString(motion);
+    } catch (const std::invalid_argument&) {
+        CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Invalid motion - cannot set motion.");
+    }
+    this->motion = motion;
+}
+
+void ProgressBar::Sweep::SetMotion(const std::string& motion) {
+    SetMotion(StringToMotion(motion));
+}
+
+ProgressBar::Sweep::Motions ProgressBar::Sweep::GetMotion() const {
+    return motion;
+}
+
+std::string ProgressBar::Sweep::GetMotionString() const {
+    return MotionToString(motion);
+}
+
+ProgressBar::Sweep::Motions ProgressBar::Sweep::StringToMotion(const std::string& motion) const {
+    static const std::unordered_map<std::string, Motions> motionMap = {
+        {"WRAP", WRAP},
+        {"BOUNCE", BOUNCE}
+    };
+
+    std::string normal = motion;
+    std::transform(normal.begin(), normal.end(), normal.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+
+    auto it = motionMap.find(normal);
+    if (it != motionMap.end()) return it->second;
+
+    CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Invalid motion (" + motion + ")");
+}
+
+std::string ProgressBar::Sweep::MotionToString(Motions motion) const {
+    switch (motion) {
+        case WRAP:   return "WRAP";
+        case BOUNCE: return "BOUNCE";
+    }
+    CPPFX_THROW_NO_ITEM(std::invalid_argument, owner->GetFxID(), owner->GetID(), "Invalid motion");
+}
+
 // --- ProgressBar ---
+
+void ProgressBar::SetShape(Shapes shape) {
+    try {
+        ShapeToString(shape);
+    } catch (const std::invalid_argument&) {
+        CPPFX_THROW(std::invalid_argument, "Invalid shape - cannot set shape.");
+    }
+    this->shape = shape;
+}
+
+void ProgressBar::SetShape(const std::string& shape) {
+    SetShape(StringToShape(shape));
+}
+
+ProgressBar::Shapes ProgressBar::GetShape() const {
+    return shape;
+}
+
+std::string ProgressBar::GetShapeString() const {
+    return ShapeToString(shape);
+}
+
+ProgressBar::Shapes ProgressBar::StringToShape(const std::string& shape) const {
+    static const std::unordered_map<std::string, Shapes> shapeMap = {
+        {"FILL", FILL},
+        {"SWEEP", SWEEP}
+    };
+
+    std::string normal = shape;
+    std::transform(normal.begin(), normal.end(), normal.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+
+    auto it = shapeMap.find(normal);
+    if (it != shapeMap.end()) return it->second;
+
+    CPPFX_THROW(std::invalid_argument, "Invalid shape (" + shape + ")");
+}
+
+std::string ProgressBar::ShapeToString(Shapes shape) const {
+    switch (shape) {
+        case FILL:  return "FILL";
+        case SWEEP: return "SWEEP";
+    }
+    CPPFX_THROW(std::invalid_argument, "Invalid shape");
+}
 
 void ProgressBar::SetBarMargin(float value) {
     if (value < 0.0f) {
         CPPFX_THROW(std::invalid_argument, "Negative bar margin.");
-    } else if (value > std::min(width, height) / 2.0f) {
-        CPPFX_THROW(std::out_of_range, "Bar margin value is greater than half of width or height.");
     }
     barMargin = value;
+    if (barMargin > GetMaxBarMargin()) {
+        CPPFX_WARN("In " + fxID + " " + ID + ": bar margin " + std::to_string(value) + " doesn't fit - drawn as " + std::to_string(GetMaxBarMargin()) + ".");
+    }
 }
 
 float ProgressBar::GetBarMargin() const {
@@ -2095,6 +2208,9 @@ void ProgressBar::SetNumberOfSegments(int value) {
         CPPFX_THROW(std::invalid_argument, "Number of segments less than 1.");
     }
     numberOfSegments = value;
+    if (gapBetweenSegments > GetMaxGap()) {
+        CPPFX_WARN("In " + fxID + " " + ID + ": gap between segments doesn't fit " + std::to_string(value) + " segments - drawn as " + std::to_string(GetMaxGap()) + ".");
+    }
 }
 
 int ProgressBar::GetNumberOfSegments() const {
@@ -2104,10 +2220,11 @@ int ProgressBar::GetNumberOfSegments() const {
 void ProgressBar::SetGapBetweenSegments(float value) {
     if (value < 0.0f) {
         CPPFX_THROW(std::invalid_argument, "Negative width of gap between segments.");
-    } else if (value * (float)(numberOfSegments - 1) >= GetInnerRectangle().width) {
-        CPPFX_THROW(std::invalid_argument, "Gap between segments is too big.");
     }
     gapBetweenSegments = value;
+    if (gapBetweenSegments > GetMaxGap()) {
+        CPPFX_WARN("In " + fxID + " " + ID + ": gap between segments " + std::to_string(value) + " doesn't fit - drawn as " + std::to_string(GetMaxGap()) + ".");
+    }
 }
 
 float ProgressBar::GetGapBetweenSegments() const {
@@ -2115,8 +2232,17 @@ float ProgressBar::GetGapBetweenSegments() const {
 }
 
 void ProgressBar::SetSegments(int number, float gap) {
-    SetNumberOfSegments(number);
-    SetGapBetweenSegments(gap);
+    if (number < 1) {
+        CPPFX_THROW(std::invalid_argument, "Number of segments less than 1.");
+    }
+    if (gap < 0.0f) {
+        CPPFX_THROW(std::invalid_argument, "Negative width of gap between segments.");
+    }
+    numberOfSegments = number;
+    gapBetweenSegments = gap;
+    if (gapBetweenSegments > GetMaxGap()) {
+        CPPFX_WARN("In " + fxID + " " + ID + ": gap between segments " + std::to_string(gap) + " doesn't fit " + std::to_string(number) + " segments - drawn as " + std::to_string(GetMaxGap()) + ".");
+    }
 }
 
 void ProgressBar::Segmented() {
@@ -2135,98 +2261,53 @@ bool ProgressBar::IsSegmented() const {
     return segmented;
 }
 
-void ProgressBar::SetChunkLength(float fraction) {
-    if (!(fraction > 0.0f && fraction <= 1.0f)) {
-        CPPFX_THROW(std::invalid_argument, "Chunk length outside (0, 1] - cannot set it.");
-    }
-    chunkLength = fraction;
-}
-
-float ProgressBar::GetChunkLength() const {
-    return chunkLength;
-}
-
-void ProgressBar::SetChunkSegments(int count) {
-    if (count < 1) {
-        CPPFX_THROW(std::invalid_argument, "Chunk segments less than 1 - cannot set them.");
-    }
-    chunkSegments = count;
-}
-
-int ProgressBar::GetChunkSegments() const {
-    return chunkSegments;
-}
-
-void ProgressBar::SetPassDuration(float seconds) {
-    if (!(seconds > 0.0f)) {
-        CPPFX_THROW(std::invalid_argument, "Pass duration must be positive - cannot set it.");
-    }
-    passDuration = seconds;
-}
-
-float ProgressBar::GetPassDuration() const {
-    return passDuration;
-}
-
-void ProgressBar::SetMotion(Motions motion) {
-    try {
-        MotionToString(motion);
-    } catch (const std::invalid_argument&) {
-        CPPFX_THROW(std::invalid_argument, "Invalid motion - cannot set motion.");
-    }
-    this->motion = motion;
-}
-
-void ProgressBar::SetMotion(const std::string& motion) {
-    SetMotion(StringToMotion(motion));
-}
-
-ProgressBar::Motions ProgressBar::GetMotion() const {
-    return motion;
-}
-
-std::string ProgressBar::GetMotionString() const {
-    return MotionToString(motion);
-}
-
 std::string ProgressBar::GetClassID() {
     return "ProgressBar";
 }
 
-ProgressBar::Motions ProgressBar::StringToMotion(const std::string& motion) const {
-    static const std::unordered_map<std::string, Motions> motionMap = {
-        {"WRAP", WRAP},
-        {"BOUNCE", BOUNCE}
-    };
-
-    std::string normal = motion;
-    std::transform(normal.begin(), normal.end(), normal.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
-
-    auto it = motionMap.find(normal);
-    if (it != motionMap.end()) return it->second;
-
-    CPPFX_THROW(std::invalid_argument, "Invalid motion (" + motion + ")");
+float ProgressBar::GetMaxBarMargin() const {
+    return std::min(width, height) / 2.0f;
 }
 
-std::string ProgressBar::MotionToString(Motions motion) const {
-    switch (motion) {
-        case WRAP:   return "WRAP";
-        case BOUNCE: return "BOUNCE";
-    }
-    CPPFX_THROW(std::invalid_argument, "Invalid motion");
+float ProgressBar::GetEffectiveBarMargin() const {
+    return std::min(barMargin, GetMaxBarMargin());
+}
+
+float ProgressBar::GetMaxGap() const {
+    if (numberOfSegments < 2) return std::numeric_limits<float>::max(); // no gaps to fit
+    const float innerWidth = width - (2.0f * GetEffectiveBarMargin());
+    return std::max(0.0f, (innerWidth - ((float)numberOfSegments * minimumSegmentWidth)) / (float)(numberOfSegments - 1));
+}
+
+float ProgressBar::GetEffectiveGap() const {
+    return std::min(gapBetweenSegments, GetMaxGap());
 }
 
 ::Rectangle ProgressBar::GetInnerRectangle() const {
-    return ::Rectangle{xAnchor + barMargin, yAnchor + barMargin, width - (2.0f * barMargin), height - (2.0f * barMargin)};
+    const float margin = GetEffectiveBarMargin();
+    return ::Rectangle{xAnchor + margin, yAnchor + margin, width - (2.0f * margin), height - (2.0f * margin)};
 }
 
 float ProgressBar::GetSegmentWidth() const {
-    return (GetInnerRectangle().width - (gapBetweenSegments * (float)(numberOfSegments - 1))) / (float)numberOfSegments;
+    return (GetInnerRectangle().width - (GetEffectiveGap() * (float)(numberOfSegments - 1))) / (float)numberOfSegments;
+}
+
+int ProgressBar::GetSweepSegments() const {
+    return std::clamp((int)std::lround(sweep.GetLength() * (float)numberOfSegments), 1, numberOfSegments);
+}
+
+float ProgressBar::GetSweepPhase(float elapsedTime) const {
+    const float duration = sweep.GetPassDuration();
+    if (sweep.GetMotion() == Sweep::BOUNCE) {
+        const float t = fmod(elapsedTime, 2.0f * duration) / duration; // 0 - 2: there and back
+        return (t <= 1.0f) ? t : 2.0f - t;
+    }
+    return fmod(elapsedTime, duration) / duration;
 }
 
 void ProgressBar::DrawProgress(float elapsedTime) const {
     DrawRectangleRec(::Rectangle{xAnchor, yAnchor, width, height}, colour.GetColour());
-    if (IsIndefinite()) {
+    if (IsIndefinite() || shape == SWEEP) {
         if (segmented) DrawSegmentedSweep(elapsedTime);
         else DrawSweep(elapsedTime);
     } else {
@@ -2240,21 +2321,41 @@ void ProgressBar::DrawSolid() const {
     DrawRectangleRec(::Rectangle{inner.x, inner.y, value * inner.width, inner.height}, barColour.GetColour());
 }
 
-void ProgressBar::DrawSegments() const {
+void ProgressBar::DrawSegment(int index) const {
     const ::Rectangle inner = GetInnerRectangle();
     const float segmentWidth = GetSegmentWidth();
+    DrawRectangleRec(::Rectangle{inner.x + ((float)index * (segmentWidth + GetEffectiveGap())), inner.y, segmentWidth, inner.height}, barColour.GetColour());
+}
+
+void ProgressBar::DrawSegments() const {
     const int filled = GetFilledCount(numberOfSegments);
-    for (int i = 0; i < filled; ++i) {
-        DrawRectangleRec(::Rectangle{inner.x + ((float)i * (segmentWidth + gapBetweenSegments)), inner.y, segmentWidth, inner.height}, barColour.GetColour());
+    for (int i = 0; i < filled; ++i) DrawSegment(i);
+}
+
+void ProgressBar::DrawSweep(float elapsedTime) const {
+    const ::Rectangle inner = GetInnerRectangle();
+    const float chunk = sweep.GetLength();
+    const float phase = GetSweepPhase(elapsedTime);
+    const float start = (sweep.GetMotion() == Sweep::WRAP)
+                      ? (phase * (1.0f + chunk)) - chunk // slides in from the left edge and out past the right
+                      : phase * (1.0f - chunk);          // stays inside the bar
+    const float left = std::max(start, 0.0f), right = std::min(start + chunk, 1.0f);
+    if (right <= left) return;
+    DrawRectangleRec(::Rectangle{inner.x + (left * inner.width), inner.y, (right - left) * inner.width, inner.height}, barColour.GetColour());
+}
+
+void ProgressBar::DrawSegmentedSweep(float elapsedTime) const {
+    const int lit = GetSweepSegments();
+    const float phase = GetSweepPhase(elapsedTime);
+    int first;
+    if (sweep.GetMotion() == Sweep::WRAP) {
+        const int positions = numberOfSegments + lit - 1; // enters and leaves one segment at a time
+        first = std::min((int)(phase * (float)positions), positions - 1) - (lit - 1);
+    } else {
+        const int positions = numberOfSegments - lit + 1; // stays inside the bar
+        first = std::min((int)(phase * (float)positions), positions - 1);
     }
-}
-
-// TODO
-void ProgressBar::DrawSweep(float /*elapsedTime*/) const {
-}
-
-// TODO
-void ProgressBar::DrawSegmentedSweep(float /*elapsedTime*/) const {
+    for (int i = std::max(first, 0); i < std::min(first + lit, numberOfSegments); ++i) DrawSegment(i);
 }
 
 // --- Pressed button ---

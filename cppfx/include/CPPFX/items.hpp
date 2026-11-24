@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <vector>
 #include <raylib.h>
+#include <limits>
 
 #include "base_item.hpp"
 #include "bases.hpp"
@@ -2042,39 +2043,99 @@ protected:
 /**
  *  @class ProgressBar
  *  @brief Horizontal progress bar.
- *  @details Can be solid or segmented. While indefinite, a chunk sweeps across the bar.
+ *  @details FILL fills up, SWEEP is a chunk moving across. Either can be solid or segmented.
+ *           While indefinite, FILL is replaced by SWEEP. Sweep's own settings are in sweep.
  */
 class ProgressBar : public ProgressItem {
 public:
-    enum Motions {WRAP, BOUNCE}; ///< how the indefinite chunk moves
+    enum Shapes {FILL, SWEEP};
 
-    Colour barColour; ///< colour of the filled part
+    Colour barColour; ///< colour of the filled part and the sweep
+
+    /**
+     *  @brief Settings of SWEEP.
+     */
+    struct Sweep : public NestedProperty {
+        friend ProgressBar;
+
+        enum Motions {WRAP, BOUNCE}; ///< how the sweep moves
+
+        /**
+         *  @brief Sets the length of the sweeping chunk.
+         *  @details On a segmented bar, rounded to whole segments, at least one.
+         *  @param fraction of the inner width, default 0.25
+         *  @throws std::invalid_argument if fraction is outside (0, 1]
+         */
+        void SetLength(float fraction);
+        float GetLength() const;
+        /**
+         *  @param seconds how long one pass takes, default 1.5
+         *  @throws std::invalid_argument if seconds is not positive
+         */
+        void SetPassDuration(float seconds);
+        float GetPassDuration() const;
+        /**
+         *  @param motion WRAP or BOUNCE, default WRAP
+         *  @throws std::invalid_argument if motion is outside the enum
+         */
+        void SetMotion(Motions motion);
+        /**
+         *  @param motion name of the motion, e.g. "BOUNCE"
+         *  @throws std::invalid_argument if the name is unknown
+         */
+        void SetMotion(const std::string& motion);
+        Motions GetMotion() const;
+        std::string GetMotionString() const;
+
+    private:
+        explicit Sweep(Item* o) : NestedProperty(o), length(0.25f), passDuration(1.5f), motion(WRAP) {}
+        float length; ///< fraction of the inner width
+        float passDuration; ///< in seconds
+        Motions motion;
+
+        Motions StringToMotion(const std::string& motion) const;
+        std::string MotionToString(Motions motion) const;
+    } sweep{this};
 
     ProgressBar() : Item("ProgressBar"), ProgressItem("ProgressBar"),
-                    barColour(GREEN), barMargin(5.0f), segmented(false), numberOfSegments(10), gapBetweenSegments(1.0f),
-                    chunkLength(0.25f), chunkSegments(3), passDuration(1.5f), motion(WRAP) {}
+                    barColour(GREEN), shape(FILL), barMargin(5.0f), segmented(false), numberOfSegments(10), gapBetweenSegments(1.0f) {}
+
+    /**
+     *  @param shape FILL or SWEEP
+     *  @throws std::invalid_argument if shape is outside the enum
+     */
+    void SetShape(Shapes shape);
+    /**
+     *  @param shape name of the shape, e.g. "SWEEP"
+     *  @throws std::invalid_argument if the name is unknown
+     */
+    void SetShape(const std::string& shape);
+    Shapes GetShape() const;
+    std::string GetShapeString() const;
 
     /**
      *  @param value distance between the edge of the bar and the filled part
      *  @throws std::invalid_argument if value is negative
-     *  @throws std::out_of_range if value is greater than half of the height
+     *  @note Prints a warning if it doesn't fit the bar. It's kept, and drawn clamped while it doesn't fit.
      */
     void SetBarMargin(float value);
     float GetBarMargin() const;
     /**
      *  @throws std::invalid_argument if value is less than 1
+     *  @note Prints a warning if the gap no longer fits.
      */
     void SetNumberOfSegments(int value);
     int GetNumberOfSegments() const;
     /**
-     *  @throws std::invalid_argument if value is negative or leaves no room for the segments
+     *  @throws std::invalid_argument if value is negative
+     *  @note Prints a warning if it doesn't fit the bar. It's kept, and drawn clamped while it doesn't fit.
      */
     void SetGapBetweenSegments(float value);
     float GetGapBetweenSegments() const;
     /**
      *  @brief Sets the number of segments and the gap between them.
-     *  @see SetNumberOfSegments
-     *  @see SetGapBetweenSegments
+     *  @throws std::invalid_argument if number is less than 1 or gap is negative
+     *  @note Prints a warning if the gap doesn't fit. It's kept, and drawn clamped while it doesn't fit.
      */
     void SetSegments(int number, float gap);
 
@@ -2084,66 +2145,40 @@ public:
     bool IsSegmented() const;
 
     /**
-     *  @brief Sets the length of the indefinite chunk on a solid bar.
-     *  @param fraction of the inner width, default 0.25
-     *  @throws std::invalid_argument if fraction is outside (0, 1]
-     */
-    void SetChunkLength(float fraction);
-    float GetChunkLength() const;
-    /**
-     *  @brief Sets how many segments are lit while indefinite on a segmented bar.
-     *  @param count default 3
-     *  @throws std::invalid_argument if count is less than 1
-     */
-    void SetChunkSegments(int count);
-    int GetChunkSegments() const;
-    /**
-     *  @brief Sets how long one pass of the chunk takes.
-     *  @param seconds default 1.5
-     *  @throws std::invalid_argument if seconds is not positive
-     */
-    void SetPassDuration(float seconds);
-    float GetPassDuration() const;
-    /**
-     *  @param motion WRAP or BOUNCE
-     *  @throws std::invalid_argument if motion is outside the enum
-     */
-    void SetMotion(Motions motion);
-    /**
-     *  @param motion name of the motion, e.g. "BOUNCE"
-     *  @throws std::invalid_argument if the name is unknown
-     */
-    void SetMotion(const std::string& motion);
-    Motions GetMotion() const;
-    std::string GetMotionString() const;
-
-    /**
      *  @see Item::GetClassID()
      */
     static std::string GetClassID();
 
 protected:
+    Shapes shape;
+
     void DrawProgress(float elapsedTime) const override;
     void DrawSolid() const;
     void DrawSegments() const;
+    void DrawSegment(int index) const; ///< draws one filled segment
     void DrawSweep(float elapsedTime) const;
     void DrawSegmentedSweep(float elapsedTime) const;
+
     ::Rectangle GetInnerRectangle() const; ///< the bar inside barMargin
     float GetSegmentWidth() const;
+    int GetSweepSegments() const; ///< sweep length in whole segments, at least one
     float GetSweepPhase(float elapsedTime) const; ///< 0 - 1 through the current pass, motion applied
 
-    Motions StringToMotion(const std::string& motion) const;
-    std::string MotionToString(Motions motion) const;
+    float GetMaxBarMargin() const; ///< the largest margin that fits
+    float GetEffectiveBarMargin() const; ///< the margin as drawn
+    float GetMaxGap() const; ///< the largest gap that leaves every segment minimumSegmentWidth wide
+    float GetEffectiveGap() const; ///< the gap as drawn
+
+    Shapes StringToShape(const std::string& shape) const;
+    std::string ShapeToString(Shapes shape) const;
 
 private:
     float barMargin; ///< distance between the edge of the bar and the filled part
     bool segmented;
     int numberOfSegments;
     float gapBetweenSegments;
-    float chunkLength; ///< fraction of the inner width
-    int chunkSegments;
-    float passDuration; ///< in seconds
-    Motions motion;
+
+    static constexpr float minimumSegmentWidth = 1.0f; ///< in pixels
 };
 
 /**
