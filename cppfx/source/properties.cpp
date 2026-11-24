@@ -591,8 +591,17 @@ void CPPFX::Font::LoadFont(const std::string& fileName) {
 
     // The deleter is what makes this work: when the last Font sharing this
     // atlas goes away, the atlas is unloaded, exactly once.
-    font = std::shared_ptr<::Font>(new ::Font(loaded),
-                                   [](::Font* f) { ::UnloadFont(*f); delete f; });
+    font = std::shared_ptr<::Font>(new ::Font(loaded), [](::Font* f) {
+            if (::IsWindowReady()) {
+                ::UnloadFont(*f);
+            } else {
+                // context is gone and took the texture with it; free only CPU memory
+                CPPFX_WARN("Font unloaded after Close() call. Use UnloadFont first.");
+                ::UnloadFontData(f->glyphs, f->glyphCount);
+                ::MemFree(f->recs);
+            }
+            delete f;
+        });
     loadedFrom = fileName;
     warnedCodepoints.clear();
 
