@@ -1,5 +1,5 @@
-# Builds and tests CPPFX on Linux and Windows, and publishes a draft
-# release when a version tag is pushed.
+# Builds and tests CPPFX on Linux and Windows, and publishes a release
+# when a version tag is pushed.
 
 name: build
 
