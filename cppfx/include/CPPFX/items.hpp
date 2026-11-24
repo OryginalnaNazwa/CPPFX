@@ -2410,7 +2410,6 @@ public:
 
 private:
     bool showLabels;
-    bool showPercentage;
 };
 
 /**
