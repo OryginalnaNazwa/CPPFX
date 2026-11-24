@@ -389,12 +389,13 @@ std::string Property::GetFxID() const {
 }
 
 // --- Border ---
+
 void Border::DrawMyself(float x, float y, float width, float height) const {
     if (thickness > 0.0f) {
         if (drawMyself) {
             drawMyself(x, y, width, height);
         } else {
-            DrawRectangleLinesEx({x - thickness, y - thickness, width + (2 * thickness), height + (2 * thickness)}, thickness, colour.GetColour());
+            DrawRectangleLinesEx({x - thickness, y - thickness, width + (2.0f * thickness), height + (2.0f * thickness)}, thickness, colour.GetColour());
         }
     }
 }

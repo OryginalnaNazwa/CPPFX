@@ -1,5 +1,6 @@
 #include "harness.hpp"
 
+#include <exception>
 #include <iostream>
 
 namespace fxtest {
@@ -11,6 +12,15 @@ namespace {
     bool skippedCurrentTest  = false;
     std::string skipReason;
     int  testsSkipped        = 0;
+
+    /// Counts an exception that escaped a test body as one failed check.
+    void ReportEscape(const std::string& what) {
+        ++checksRun;
+        ++checksFailed;
+        ++failedInCurrentTest;
+        std::cerr << "  FAILED: " << what
+                  << "\n    thrown out of the test body, so the rest of it didn't run\n";
+    }
 }
 
 std::vector<TestCase>& Registry() {
@@ -48,7 +58,14 @@ int RunAll() {
         skipReason.clear();
 
         std::cout << "[ RUN  ] " << test.name << "\n";
-        test.fn();
+        // One test throwing must not take the rest of the run down with it.
+        try {
+            test.fn();
+        } catch (const std::exception& e) {
+            ReportEscape(std::string("uncaught exception: ") + e.what());
+        } catch (...) {
+            ReportEscape("uncaught exception of a non-standard type");
+        }
 
         // A test that failed a check before skipping is a failure, not a skip.
         if (failedInCurrentTest > 0) {

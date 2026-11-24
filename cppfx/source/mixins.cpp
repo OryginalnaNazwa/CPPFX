@@ -1,6 +1,7 @@
 #include "../include/CPPFX/mixins.hpp"
 #include <stdexcept>  // for invalid_argument
 #include <string>     // for operator+, allocator, char_traits, basic_string
+#include <cmath>
 
 using namespace CPPFX;
 
@@ -11,7 +12,7 @@ bool Circular::WasIClicked(Vector2 mousePosition) const {
     return false;
 }
 
-void Circular::MakeRadiusBased() {
+void Circular::MakeCentreBased() {
     xyIsCentre = true;
 }
 
@@ -150,4 +151,28 @@ void Padded::SetPadding(float value) {
 
 float Padded::GetPadding() const {
     return padding;
+}
+
+// --- HasPercentages ---
+
+void HasPercentages::DoShowPercentage() {
+    showPercentage = true;
+}
+
+void HasPercentages::DoNotShowPercentage() {
+    showPercentage = false;
+}
+
+void HasPercentages::SetShowingPercentage(bool flag) {
+    showPercentage = flag;
+}
+
+bool HasPercentages::IsShowingPercentage() const {
+    return showPercentage;
+}
+
+std::string HasPercentages::FormatPercentage(float fraction) {
+    const int tenths = (int)std::lround(fraction * 1000.0f);
+    if (tenths % 10 == 0) return TextFormat("%d%%", tenths / 10);
+    return TextFormat("%.1f%%", (float)tenths / 10.0f);
 }

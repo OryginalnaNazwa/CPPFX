@@ -433,6 +433,84 @@ protected:
 };
 
 /**
+ *  @class ProgressItem
+ *  @brief Base of the progress widgets.
+ *  @details Holds the value (0 - 1), the indefinite flag and the percentage display.
+ *           Starts indefinite at 0. Setting or changing the value makes it definite.
+ */
+class ProgressItem : public virtual Item, public HasPercentages {
+public:
+    Font font;
+
+    /**
+     *  @brief Draws the progress, then the percentage if definite and displaying the value.
+     */
+    void DrawMyself(float elapsedTime) const override;
+    void DoFocusAction(float elapsedTime) override;
+
+    /**
+     *  @brief Sets progress value.
+     *  @details Makes the item definite.
+     *  @param value 0 - 1
+     *  @throws std::out_of_range if value is outside 0 - 1
+     */
+    void SetProgress(float value);
+    /**
+     *  @brief Increases the progress value.
+     *  @details Clamps to 0 - 1. Makes the item definite.
+     *  @param change how much it will increase, can be negative
+     */
+    void IncreaseProgress(float change);
+    /**
+     *  @brief Decreases the progress value.
+     *  @details Clamps to 0 - 1. Makes the item definite.
+     *  @param change how much it will decrease, can be negative
+     */
+    void DecreaseProgress(float change);
+    /**
+     *  @returns value between 0 and 1. While indefinite, the last value.
+     */
+    float GetProgress() const;
+    /**
+     *  @returns whole number between 0 and 100. While indefinite, the last value.
+     */
+    int GetProgressPercentage() const;
+
+    /** @brief Shows that something is ongoing, without a value. Keeps the last value. */
+    void MakeIndefinite();
+    /** @brief Shows the value again. */
+    void MakeDefinite();
+    void SetIndefinite(bool flag);
+    bool IsIndefinite() const;
+
+    /** @returns true if definite and at 100% */
+    bool IsComplete() const;
+    /** @returns true if definite and at 0% */
+    bool IsNotStarted() const;
+
+    /** @brief Displays the value in percents while definite. */
+    void DoDisplayValue();
+    /** @brief Doesn't display the value in percents. */
+    void DoNotDisplayValue();
+    void SetDisplayValue(bool flag);
+    bool IsDisplayingValue() const;
+
+protected:
+    explicit ProgressItem(const std::string& i) : Item(i), HasPercentages(true), font(height / 4.0f), value(0.0f), indefinite(true) {}
+
+    int GetFilledCount(int total) const; ///< how many of total parts are filled, never counting one before it's reached
+
+    float value; ///< 0 - 1, kept while indefinite
+    bool indefinite;
+    bool displayValue; ///< whether the percentage is shown while definite
+
+    /** @brief Draws the widget itself, without the percentage. */
+    virtual void DrawProgress(float elapsedTime) const = 0;
+    /** @brief Draws the percentage. Centred on the item by default. */
+    virtual void DrawValue() const;
+};
+
+/**
  *  @class Chart
  *  @brief Base for charts and data analysis tools.
  *  @details Holds values, each with an optional label.

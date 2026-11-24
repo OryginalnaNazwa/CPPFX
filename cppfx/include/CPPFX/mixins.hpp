@@ -35,7 +35,7 @@ public:
     /**
      *  @brief Sets x,y as the centre of the circle.
      */
-    void MakeRadiusBased();
+    void MakeCentreBased();
     /**
      *  @brief Sets x,y as the top left corner of the circle.
      *  @details Circle inside a square of width by width. Default.
@@ -128,15 +128,14 @@ protected:
     /**
      *  @brief Constructor for circular items.
      *  @details Sets a custom border drawing method.
-     *  @note Remember to draw the border first! It's drawn as a filled circle of
-     *        radius + thickness, so draw it before the item itself.
      *  @see Border
      */
     Circular() : Item(), xyIsCentre(false) {
         border.SetDrawingMethod([this](float, float, float, float){
-            DrawCircle(TranslateXToCentre(), TranslateYToCentre(), GetRadius() + border.GetThickness(), border.colour.GetColour());
+            DrawRing(TranslateXYToCentre(), GetRadius(), GetRadius() + border.GetThickness(), 0.0f, 360.0f, 0, border.colour.GetColour());
         });
     }
+    ~Circular() = default;
 
     bool xyIsCentre; ///< whether the x,y coordinates represent the centre of the circle or the top-left corner
 };
@@ -182,6 +181,7 @@ protected:
      */
     PersistentState() : Item(), pressedColour(GRAY), pressed(false) {}
     PersistentState(const std::string& id, float w, float h) : Item(id, w, h), pressedColour(GRAY), pressed(false) {}
+    ~PersistentState() = default;
 
     bool pressed; ///< whether the item is pressed.
 };
@@ -210,6 +210,7 @@ protected:
      *  @brief Default padding is 10.
      */
     Padded() : Item(), padding(10.0f) {}
+    ~Padded() = default;
 
     float padding; ///< distance between children
 };
@@ -246,6 +247,7 @@ public:
 protected:
 
     Embedded() : Item() {}
+    ~Embedded() = default;
 
     void SetX(float x) override { Item::SetX(x); }
     void SetY(float y) override { Item::SetY(y); }
@@ -268,6 +270,31 @@ protected:
     void MoveUpPriority() override { Item::MoveUpPriority(); }
     void MoveDownPriority() override { Item::MoveDownPriority(); }
     size_t GetPriority() const override { return Item::GetPriority(); }
+};
+
+/**
+ *  @class HasPercentages
+ *  @brief Used for widgets that can show percentages.
+ *  @details Holds whether they're shown and formats them.
+ */
+class HasPercentages {
+public:
+    void DoShowPercentage();
+    void DoNotShowPercentage();
+    void SetShowingPercentage(bool flag);
+    bool IsShowingPercentage() const;
+
+protected:
+    explicit HasPercentages(bool show) : showPercentage(show) {}
+    ~HasPercentages() = default;
+
+    bool showPercentage;
+
+    /**
+     *  @brief Formats a fraction as a percentage, rounded to one decimal place.
+     *  @param fraction e.g. 0.425 gives "42.5%", 0.42 gives "42%"
+     */
+    static std::string FormatPercentage(float fraction);
 };
 
 }

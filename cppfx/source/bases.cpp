@@ -4,6 +4,7 @@
 #include <iterator>   // for distance
 #include <stdexcept>  // for out_of_range, invalid_argument
 #include <limits>    // for numeric_limits
+#include <cmath>
 
 using namespace CPPFX;
 
@@ -419,7 +420,7 @@ std::string Container::GetClassID() {
     return "Container";
 }
 
-    // --- Box ---
+// --- Box ---
 
 void Box::SetPadding(float value) {
     Padded::SetPadding(value);
@@ -428,6 +429,94 @@ void Box::SetPadding(float value) {
 
 std::string Box::GetClassID() {
     return "Box";
+}
+
+// --- ProgressItem ---
+
+void ProgressItem::DrawMyself(float elapsedTime) const {
+    DrawProgress(elapsedTime);
+    border.DrawMyself(xAnchor, yAnchor, width, height);
+    if (!indefinite && showPercentage) DrawValue();
+}
+
+void ProgressItem::DoFocusAction(float /*elapsedTime*/) {
+    return;
+}
+
+void ProgressItem::SetProgress(float value) {
+    if (!(value >= 0.0f && value <= 1.0f)) {
+        CPPFX_THROW(std::out_of_range, "Progress (" + std::to_string(value) + ") beyond valid range (0.0f - 1.0f) - cannot set progress.");
+    }
+    this->value = value;
+    MakeDefinite();
+}
+
+void ProgressItem::IncreaseProgress(float change) {
+    value = std::clamp(value + change, 0.0f, 1.0f);
+    MakeDefinite();
+}
+
+void ProgressItem::DecreaseProgress(float change) {
+    IncreaseProgress(-change);
+}
+
+float ProgressItem::GetProgress() const {
+    return value;
+}
+
+int ProgressItem::GetProgressPercentage() const {
+    return GetFilledCount(100);
+}
+
+void ProgressItem::MakeIndefinite() {
+    indefinite = true;
+}
+
+void ProgressItem::MakeDefinite() {
+    indefinite = false;
+}
+
+void ProgressItem::SetIndefinite(bool flag) {
+    indefinite = flag;
+}
+
+bool ProgressItem::IsIndefinite() const {
+    return indefinite;
+}
+
+bool ProgressItem::IsComplete() const {
+    if (indefinite) return false;
+    return value >= 1.0f;
+}
+
+bool ProgressItem::IsNotStarted() const {
+    if (indefinite) return false;
+    return value <= 0.0f;
+}
+
+void ProgressItem::DoDisplayValue() {
+    displayValue = true;
+}
+
+void ProgressItem::DoNotDisplayValue() {
+    displayValue = false;
+}
+
+void ProgressItem::SetDisplayValue(bool flag) {
+    displayValue = flag;
+}
+
+bool ProgressItem::IsDisplayingValue() const {
+    return displayValue;
+}
+
+void ProgressItem::DrawValue() const {
+    font.DrawAligned(FormatPercentage((float)GetFilledCount(1000) / 1000.0f), Alignment::CENTRE, xAnchor, yAnchor, width, height);
+}
+
+int ProgressItem::GetFilledCount(int total) const {
+    constexpr float epsilon = 1e-3f; // absorbs float error, e.g. 0.29f * 100 = 28.9999
+    return std::clamp((int)std::floor((value * (float)total) + epsilon), 0, total);
 }
 
 // --- Chart ---
