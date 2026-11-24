@@ -134,7 +134,7 @@ protected:
      */
     Circular() : Item(), xyIsCentre(false) {
         border.SetDrawingMethod([this](float, float, float, float){
-            DrawCircle(TranslateXToCentre(), TranslateYToCentre(), GetRadius() + border.GetThickness(), border.colour.GetColour());
+            DrawRing(TranslateXYToCentre(), GetRadius(), GetRadius() + border.GetThickness(), 0.0f, 360.0f, 0, border.colour.GetColour());
         });
     }
     ~Circular() = default;
