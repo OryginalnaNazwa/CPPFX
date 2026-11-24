@@ -435,6 +435,7 @@ std::string Box::GetClassID() {
 
 void ProgressItem::DrawMyself(float elapsedTime) const {
     DrawProgress(elapsedTime);
+    border.DrawMyself(xAnchor, yAnchor, width, height);
     if (!indefinite && showPercentage) DrawValue();
 }
 

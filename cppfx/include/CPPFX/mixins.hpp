@@ -35,7 +35,7 @@ public:
     /**
      *  @brief Sets x,y as the centre of the circle.
      */
-    void MakeRadiusBased();
+    void MakeCentreBased();
     /**
      *  @brief Sets x,y as the top left corner of the circle.
      *  @details Circle inside a square of width by width. Default.
@@ -128,8 +128,6 @@ protected:
     /**
      *  @brief Constructor for circular items.
      *  @details Sets a custom border drawing method.
-     *  @note Remember to draw the border first! It's drawn as a filled circle of
-     *        radius + thickness, so draw it before the item itself.
      *  @see Border
      */
     Circular() : Item(), xyIsCentre(false) {

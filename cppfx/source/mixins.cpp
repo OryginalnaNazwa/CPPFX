@@ -12,7 +12,7 @@ bool Circular::WasIClicked(Vector2 mousePosition) const {
     return false;
 }
 
-void Circular::MakeRadiusBased() {
+void Circular::MakeCentreBased() {
     xyIsCentre = true;
 }
 

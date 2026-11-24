@@ -2328,6 +2328,10 @@ void PieChart::DrawMyself(float /*elapsedTime*/) const {
         if (showPercentage) {
             const float textAngle = currentAngle + (180.0f * percent);
             const std::string valueString = FormatPercentage((float)percent);
+
+            const float px = TranslateXToCentre() + (GetRadius() / 2.0f * (float)cos(textAngle * DEG2RAD));
+            const float py = TranslateYToCentre() + (GetRadius() / 2.0f * (float)sin(textAngle * DEG2RAD));
+            font.DrawAligned(valueString, Alignment::CENTRE, px, py, 0.0f, 0.0f);
         }
 
         if (showLabels) {
