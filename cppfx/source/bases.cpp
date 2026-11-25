@@ -495,19 +495,19 @@ bool ProgressItem::IsNotStarted() const {
 }
 
 void ProgressItem::DoDisplayValue() {
-    displayValue = true;
+    DoShowPercentage();
 }
 
 void ProgressItem::DoNotDisplayValue() {
-    displayValue = false;
+    DoNotShowPercentage();
 }
 
 void ProgressItem::SetDisplayValue(bool flag) {
-    displayValue = flag;
+    SetShowingPercentage(flag);
 }
 
 bool ProgressItem::IsDisplayingValue() const {
-    return displayValue;
+    return IsShowingPercentage();
 }
 
 void ProgressItem::DrawValue() const {

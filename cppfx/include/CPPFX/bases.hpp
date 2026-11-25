@@ -502,7 +502,6 @@ protected:
 
     float value; ///< 0 - 1, kept while indefinite
     bool indefinite;
-    bool displayValue; ///< whether the percentage is shown while definite
 
     /** @brief Draws the widget itself, without the percentage. */
     virtual void DrawProgress(float elapsedTime) const = 0;
