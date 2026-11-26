@@ -26,7 +26,7 @@ void SaveToFile(CPPFX::GUI& gui) {
     }
     const std::unordered_set<std::string> todos = gui.GetItemsIDs();
     for (const auto& todo : todos) {
-        if (todo.contains(gui.GetAutomaticIDPrefix())) { // since all interface widgets were not created with ID, the only ones with not automatic ID are todos
+        if (gui.IsIDAutomatic(todo)) { // since all interface widgets were not created with ID, the only ones with not automatic ID are todos
             continue;
         }
         file << todo << std::endl;

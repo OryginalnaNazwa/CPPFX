@@ -7,7 +7,7 @@ https://www.raylib.com/
 https://github.com/raysan5/raylib
 
 ## Requirements
-raylib 6.0, mingw-w64 64bit or GNU C++ Compiler (those were tested), C++23
+raylib 6.0, mingw-w64 64bit or GNU C++ Compiler (those were tested), C++20
 
 ## Setup
 Compiler path: ../CPPFX/include (append /CPPFX if you're sure there won't be include conflicts with files named the same. Then in the code just #include <CPPFX.hpp>)
