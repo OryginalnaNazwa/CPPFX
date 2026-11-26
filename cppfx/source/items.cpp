@@ -1636,7 +1636,6 @@ void EditableSpinner::DoFocusAction(float elapsedTime, Vector2 mousePosition) {
                 value = std::stof(editArea.GetText());
             } catch (const std::invalid_argument&) {
                 //do nothing. Doesn't change the value.
-                editArea.DrawMyself(elapsedTime);
             } catch (const std::out_of_range&) {
                 value = editArea.GetText().starts_with('-') ? std::numeric_limits<float>::lowest()
                                                             : std::numeric_limits<float>::max();

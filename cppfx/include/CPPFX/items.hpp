@@ -146,7 +146,7 @@ protected:
 class EmbeddedTextField : public TextField, public virtual Embedded {
 public:
 
-    EmbeddedTextField() : Item("EmbeddedTextField"), Embedded(), TextField() {}
+    EmbeddedTextField() : Item("EmbeddedTextField"), Embedded(), TextField() { DoNotExpandToTextAutomatically(); }
 
     void DoFocusAction(float elapsedTime) override;
 };

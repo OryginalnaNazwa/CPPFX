@@ -56,6 +56,7 @@ void GUI::Close() {
     needsSorting = false;
     graveyard.clear();
     hits.clear();
+    elapsedTime = 0.0f;
 }
 
 void GUI::CollectHits(Vector2 screenMouse, Vector2 worldMouse) {
