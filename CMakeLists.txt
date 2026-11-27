@@ -20,9 +20,9 @@ project(CPPFX
         VERSION ${CPPFX_VERSION_MAJOR}.${CPPFX_VERSION_MINOR}.${CPPFX_VERSION_PATCH}
         LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)          # -std=c++23, not -std=gnu++23
+set(CMAKE_CXX_EXTENSIONS OFF)          # -std=c++20, not -std=gnu++20
 
 # Examples and tests are built when CPPFX is the project being built, and
 # skipped when someone pulls it into their own build as a subdirectory -

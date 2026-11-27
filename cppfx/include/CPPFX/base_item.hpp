@@ -43,7 +43,7 @@ public:
      *  @param h height
      */
     Item(const std::string& i, float w, float h)
-        : ID(""), xAnchor(0.0f), yAnchor(0.0f), height(h), width(w), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), screenBased(false), fxID(i) {}
+        : ID(""), xAnchor(0.0f), yAnchor(0.0f), height(h), width(w), focused(false), visible(true), inactive(false), eatsClick(true), priority(3), hovered(false), screenBased(false), fxID(i) {}
 
     virtual ~Item() = default;
 
