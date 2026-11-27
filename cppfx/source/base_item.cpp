@@ -2,6 +2,9 @@
 
 #include <stdexcept>  // for invalid_argument
 #include <utility>    // for swap
+#include <algorithm>  // for any_of
+#include <stdexcept>  // for invalid_argument
+#include <utility>    // for swap
 
 using namespace CPPFX;
 
